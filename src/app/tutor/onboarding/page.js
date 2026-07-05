@@ -517,7 +517,7 @@ export default function TutorOnboarding() {
             </div>
             <UploadBox label="Latest Degree / Transcript" hint="Required for Academic Verified badge" accept="image/*,.pdf" icon={BookOpen} value={degree} onChange={setDegree} />
             <div>
-              <label style={{ display: 'block', fontWeight: 600, marginBottom: '10px', fontSize: '14px' }}>Additional Certificates <span style={{ color: 'var(--stone)', fontWeight: 400' }}>(optional)</span></label>
+              <label style={{ display: 'block', fontWeight: 600, marginBottom: '10px', fontSize: '14px' }}>Additional Certificates <span style={{ color: 'var(--stone)', fontWeight: 400 }}>(optional)</span></label>
               {certificates.map((cert, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                   <div style={{ flex: 1, backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-md)', padding: '8px 12px', fontSize: '13px', color: 'var(--brand-green-dark)', fontWeight: 500 }}>
@@ -755,7 +755,7 @@ export default function TutorOnboarding() {
                 <DollarSign size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
                 <Input type="number" placeholder="e.g. 3500" min="0" value={hourlyRate} onChange={e => setHourlyRate(e.target.value)} style={{ paddingLeft: '40px' }} />
               </div>
-              <p style={{ fontSize: '12px', color: 'var(--stone)', marginTop: '6px' }}>This will be shown as "Rs {hourlyRate || '0'}/hr" on your profile. You can always negotiate with clients.</p>
+              <p style={{ fontSize: '12px', color: 'var(--stone)', marginTop: '6px' }}>This will be shown as &quot;Rs {hourlyRate || '0'}/hr&quot; on your profile. You can always negotiate with clients.</p>
             </div>
           </div>
         );
@@ -780,7 +780,7 @@ export default function TutorOnboarding() {
             </div>
             <UploadBox label="Short Intro Video (optional)" hint="Max 60 seconds · MP4 or MOV · Max 50MB" accept="video/*" icon={Video} value={introVideo} onChange={setIntroVideo} />
             <div style={{ backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-md)', padding: '16px', fontSize: '14px', color: 'var(--brand-green-dark)', fontWeight: 500 }}>
-              🎉 You're almost done! After submitting, your profile will be reviewed by our admin team. You'll be notified when you are approved.
+              🎉 You&apos;re almost done! After submitting, your profile will be reviewed by our admin team. You&apos;ll be notified when you are approved.
             </div>
           </div>
         );
