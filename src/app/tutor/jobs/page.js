@@ -354,7 +354,7 @@ export default function FindJobs() {
       {/* How it works (Shared Component from Homepage, Tutor perspective) */}
       <section style={{ padding: '80px 0', backgroundColor: 'var(--surface)' }}>
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 'var(--spacing-xxl)', alignItems: 'center' }}>
+          <div className="grid-split" style={{ gap: 'var(--spacing-xxl)', alignItems: 'center' }}>
             <div>
               <h2 style={{ fontSize: '32px', fontWeight: 700, marginBottom: '24px' }}>
                 Get Verified and Start Earning.

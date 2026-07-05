@@ -1,9 +1,12 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '../ui/Button';
-import { Search } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 export function Navbar() {
+  const [isOpen, setIsOpen] = useState(false);
+
   const navStyle = {
     backgroundColor: 'var(--canvas)',
     borderBottom: '1px solid var(--hairline)',
@@ -27,6 +30,14 @@ export function Navbar() {
     marginRight: 'var(--spacing-md)',
     fontSize: '14px',
     fontWeight: 500,
+  };
+
+  const mobileLinkStyle = {
+    color: 'var(--ink)',
+    fontSize: '18px',
+    fontWeight: 600,
+    padding: '8px 0',
+    borderBottom: '1px solid var(--hairline)',
   };
 
   const rightActionsStyle = {
@@ -58,16 +69,41 @@ export function Navbar() {
             FindTutors.pk
           </Link>
           
-          <Link href="/client/search" style={linkStyle}>Find Tutors</Link>
-          <Link href="/tutor/jobs" style={linkStyle}>Find Jobs</Link>
-          <Link href="/#how-it-works" style={linkStyle}>How It Works</Link>
-          <Link href="/contact" style={linkStyle}>Contact Us</Link>
+          <div className="nav-links">
+            <Link href="/client/search" style={linkStyle}>Find Tutors</Link>
+            <Link href="/tutor/jobs" style={linkStyle}>Find Jobs</Link>
+            <Link href="/#how-it-works" style={linkStyle}>How It Works</Link>
+            <Link href="/contact" style={linkStyle}>Contact Us</Link>
+          </div>
         </div>
 
-        <div style={rightActionsStyle}>
+        <div style={rightActionsStyle} className="nav-links">
           <Link href="/login" style={linkStyle}>Sign In</Link>
           <Link href="/register">
             <Button variant="primary">Join Free</Button>
+          </Link>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button 
+          className="nav-mobile-btn" 
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label="Toggle menu"
+        >
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Mobile Drawer Overlay */}
+      <div className={`nav-mobile-overlay ${isOpen ? 'open' : ''}`}>
+        <Link href="/client/search" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Tutors</Link>
+        <Link href="/tutor/jobs" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Jobs</Link>
+        <Link href="/#how-it-works" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>How It Works</Link>
+        <Link href="/contact" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Contact Us</Link>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+          <Link href="/login" onClick={() => setIsOpen(false)} style={{ textAlign: 'center', fontWeight: 600, color: 'var(--ink)' }}>Sign In</Link>
+          <Link href="/register" onClick={() => setIsOpen(false)}>
+            <Button variant="primary" style={{ width: '100%' }}>Join Free</Button>
           </Link>
         </div>
       </div>

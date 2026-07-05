@@ -141,28 +141,29 @@ export default function TutorProfile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadData = async () => {
-    const supabase = createClient();
-    const { data: { user: u } } = await supabase.auth.getUser();
-    setUser(u);
+  useEffect(() => {
+    const loadData = async () => {
+      const supabase = createClient();
+      const { data: { user: u } } = await supabase.auth.getUser();
+      setUser(u);
 
-    if (id.startsWith('mock-')) {
-      const found = MOCK_TUTORS.find(t => t.id === id) || MOCK_TUTORS[0];
-      setTutor(found);
-      setExperience(found.experience || []);
-      setCategories(found.categories || []);
-    } else {
-      const { data: profile } = await supabase.from('profiles').select('*').eq('id', id).single();
-      if (profile) setTutor(profile);
-      const { data: exp } = await supabase.from('tutor_experience').select('*').eq('tutor_id', id).order('sort_order');
-      setExperience(exp || []);
-      const { data: cats } = await supabase.from('tutor_categories').select('*').eq('tutor_id', id);
-      setCategories(cats || []);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => { loadData(); }, [id]);
+      if (id.startsWith('mock-')) {
+        const found = MOCK_TUTORS.find(t => t.id === id) || MOCK_TUTORS[0];
+        setTutor(found);
+        setExperience(found.experience || []);
+        setCategories(found.categories || []);
+      } else {
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', id).single();
+        if (profile) setTutor(profile);
+        const { data: exp } = await supabase.from('tutor_experience').select('*').eq('tutor_id', id).order('sort_order');
+        setExperience(exp || []);
+        const { data: cats } = await supabase.from('tutor_categories').select('*').eq('tutor_id', id);
+        setCategories(cats || []);
+      }
+      setLoading(false);
+    };
+    loadData();
+  }, [id]);
 
   const isUnlocked = !!user;
 
@@ -255,7 +256,7 @@ export default function TutorProfile() {
         </div>
 
         {/* ── Stats Row ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '32px' }}>
+        <div className="grid-4col" style={{ gap: '12px', marginBottom: '32px' }}>
           {[
             { icon: Clock, label: 'Hourly Rate', value: isUnlocked ? displayRate : <span style={{ color: 'var(--stone)', fontStyle: 'italic', fontSize: '13px' }}>Sign in to view</span> },
             { icon: Briefcase, label: 'Experience', value: tutor.experience_years ? `${tutor.experience_years}+ Years` : 'N/A' },
@@ -270,7 +271,7 @@ export default function TutorProfile() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '32px', alignItems: 'flex-start' }}>
+        <div className="grid-profile" style={{ gap: '32px', alignItems: 'flex-start' }}>
           {/* ── Left Column ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 

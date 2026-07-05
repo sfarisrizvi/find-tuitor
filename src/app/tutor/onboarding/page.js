@@ -483,7 +483,7 @@ export default function TutorOnboarding() {
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <StepHeader step={1} title="Profile Photo & Cover" desc="A great photo makes a strong first impression on parents and students." />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="grid-2col" style={{ gap: '20px' }}>
               <UploadBox label="Profile Photo *" hint="JPG or PNG, min 200×200px" accept="image/*" icon={Camera} value={avatarFile} onChange={setAvatarFile} />
               <UploadBox label="Cover Banner" hint="Wide image, 1200×400px ideal" accept="image/*" value={coverFile} onChange={setCoverFile} />
             </div>
@@ -511,7 +511,7 @@ export default function TutorOnboarding() {
               <AlertCircle size={16} color="#B8860B" style={{ flexShrink: 0, marginTop: '2px' }} />
               <p style={{ margin: 0, fontSize: '13px', color: '#7A5C00' }}>All documents are stored in an encrypted, private folder and are never shared or deleted even upon account closure.</p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="grid-2col" style={{ gap: '16px' }}>
               <UploadBox label="CNIC / Passport – Front" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicFront} onChange={setCnicFront} />
               <UploadBox label="CNIC / Passport – Back" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicBack} onChange={setCnicBack} />
             </div>
@@ -598,7 +598,7 @@ export default function TutorOnboarding() {
             {experiences.map((exp, idx) => (
               <div key={idx} style={{ position: 'relative', borderLeft: '3px solid var(--brand-green-dark)', paddingLeft: '20px', paddingBottom: '8px' }}>
                 <div style={{ position: 'absolute', left: '-8px', top: '0', width: '13px', height: '13px', borderRadius: '50%', backgroundColor: 'var(--brand-green-dark)' }} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                <div className="grid-2col" style={{ gap: '12px', marginBottom: '12px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--stone)' }}>INSTITUTION / SCHOOL *</label>
                     <Input placeholder="e.g. City Grammar School" value={exp.institution} onChange={e => updateExp(idx, 'institution', e.target.value)} />
@@ -736,7 +736,7 @@ export default function TutorOnboarding() {
             </div>
             <div>
               <label style={{ display: 'block', fontWeight: 600, marginBottom: '12px', fontSize: '14px' }}>Available Time Slots</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div className="grid-2col" style={{ gap: '10px' }}>
                 {TIME_SLOTS.map(({ key, label, sub }) => {
                   const active = availSlots[key];
                   return (

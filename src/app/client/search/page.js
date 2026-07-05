@@ -423,7 +423,7 @@ export default function SearchTutors() {
       {/* How it works (Shared Component from Homepage) */}
       <section style={{ padding: '80px 0', backgroundColor: 'var(--surface)' }}>
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 'var(--spacing-xxl)', alignItems: 'center' }}>
+          <div className="grid-split" style={{ gap: 'var(--spacing-xxl)', alignItems: 'center' }}>
             <div>
               <h2 style={{ fontSize: '32px', fontWeight: 700, marginBottom: '24px' }}>
                 The Academy Model is Broken. <span style={{ color: 'var(--brand-green-dark)' }}>Here is How We Fixed It.</span>

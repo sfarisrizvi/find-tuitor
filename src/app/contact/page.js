@@ -45,7 +45,7 @@ export default function Contact() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 'var(--spacing-xxl)', alignItems: 'start' }}>
+        <div className="grid-split" style={{ gap: 'var(--spacing-xxl)', alignItems: 'start' }}>
           
           {/* Left Side: Contact Information */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>

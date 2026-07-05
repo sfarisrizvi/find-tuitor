@@ -193,9 +193,7 @@ export default function Home() {
         }} />
 
         <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+          <div className="grid-2col" style={{
             gap: 'var(--spacing-xxl)',
             alignItems: 'center'
           }}>
@@ -468,7 +466,7 @@ export default function Home() {
       {/* 5. Why Choose Us? (The Feature Deep Dive) */}
       <section id="how-it-works" style={{ padding: '100px 0', backgroundColor: 'var(--surface)' }}>
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 'var(--spacing-xxl)', alignItems: 'center' }}>
+          <div className="grid-split" style={{ gap: 'var(--spacing-xxl)', alignItems: 'center' }}>
             <div>
               <h2 style={{ fontSize: '38px', fontWeight: 700, marginBottom: '24px', lineHeight: '1.2' }}>
                 The Academy Model is Broken. <span style={{ color: 'var(--brand-green-dark)' }}>Here is How We Fixed It.</span>
