@@ -784,9 +784,23 @@ function SearchContent() {
                       <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Hourly Rate</div>
                       <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--brand-green-dark)' }}>Rs {tutor.hourly_rate || 'N/A'}</div>
                     </div>
-                    <Link href={`/tutors/${tutor.id}`}>
-                      <Button variant="outline" style={{ height: '36px', padding: '0 16px', fontSize: '13px' }}>View Profile</Button>
-                    </Link>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <Link href={`/tutors/${tutor.id}`}>
+                        <Button variant="outline" style={{ height: '36px', padding: '0 14px', fontSize: '13px', borderRadius: '999px', border: '1px solid var(--hairline-strong)', color: 'var(--slate)', fontWeight: 500 }}>
+                          View Profile
+                        </Button>
+                      </Link>
+                      <Button 
+                        variant="primary" 
+                        style={{ 
+                          height: '36px', padding: '0 16px', fontSize: '13px', borderRadius: '999px', 
+                          backgroundColor: 'var(--brand-green-dark)', color: '#fff', border: 'none', 
+                          fontWeight: 600, cursor: 'pointer'
+                        }}
+                      >
+                        Book Demo
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
