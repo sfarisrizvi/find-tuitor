@@ -501,7 +501,7 @@ function SearchContent() {
               `}</style>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))',
                 gap: '24px',
                 paddingBottom: '40px'
               }}>
@@ -513,7 +513,7 @@ function SearchContent() {
           ) : (
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))',
               gap: '24px',
               paddingBottom: showAuthOverlay ? '140px' : '40px'
             }}>
