@@ -456,9 +456,29 @@ function SearchContent() {
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--stone)' }}>
-              Loading results...
-            </div>
+            <>
+              <style>{`
+                @keyframes shimmer {
+                  0% { background-position: -200% 0; }
+                  100% { background-position: 200% 0; }
+                }
+                .skeleton-pulse {
+                  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite linear;
+                }
+              `}</style>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gap: '24px',
+                paddingBottom: '40px'
+              }}>
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <TutorCardSkeleton key={idx} />
+                ))}
+              </div>
+            </>
           ) : (
             <div style={{
               display: 'grid',
@@ -584,6 +604,43 @@ function SearchContent() {
         </div>
       </div>
     </div>
+  );
+}
+
+function TutorCardSkeleton() {
+  return (
+    <Card style={{ display: 'flex', flexDirection: 'column', height: '360px', padding: '24px', position: 'relative', border: '1px solid var(--hairline-strong)', backgroundColor: 'var(--canvas)' }}>
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+        {/* Avatar Skeleton */}
+        <div className="skeleton-pulse" style={{ width: '64px', height: '64px', borderRadius: '50%', flexShrink: 0 }} />
+        {/* Text Skeleton */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center' }}>
+          <div className="skeleton-pulse" style={{ height: '18px', width: '75%', borderRadius: '4px' }} />
+          <div className="skeleton-pulse" style={{ height: '14px', width: '55%', borderRadius: '4px' }} />
+          <div className="skeleton-pulse" style={{ height: '14px', width: '45%', borderRadius: '4px' }} />
+        </div>
+      </div>
+      {/* Bio lines */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, marginBottom: '20px' }}>
+        <div className="skeleton-pulse" style={{ height: '14px', width: '100%', borderRadius: '4px' }} />
+        <div className="skeleton-pulse" style={{ height: '14px', width: '90%', borderRadius: '4px' }} />
+        <div className="skeleton-pulse" style={{ height: '14px', width: '60%', borderRadius: '4px' }} />
+      </div>
+      {/* Badges */}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '20px' }}>
+        <div className="skeleton-pulse" style={{ height: '24px', width: '60px', borderRadius: '999px' }} />
+        <div className="skeleton-pulse" style={{ height: '24px', width: '75px', borderRadius: '999px' }} />
+        <div className="skeleton-pulse" style={{ height: '24px', width: '50px', borderRadius: '999px' }} />
+      </div>
+      {/* Footer */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid var(--hairline-strong)' }}>
+        <div>
+          <div className="skeleton-pulse" style={{ height: '11px', width: '60px', borderRadius: '2px', marginBottom: '4px' }} />
+          <div className="skeleton-pulse" style={{ height: '20px', width: '80px', borderRadius: '4px' }} />
+        </div>
+        <div className="skeleton-pulse" style={{ height: '36px', width: '100px', borderRadius: '6px' }} />
+      </div>
+    </Card>
   );
 }
 
