@@ -122,7 +122,7 @@ function SearchContent() {
         backgroundColor: 'var(--canvas)', 
         borderBottom: '1px solid var(--hairline-strong)',
         position: 'sticky',
-        top: 0,
+        top: '64px',
         zIndex: 40,
         padding: '16px 24px'
       }}>
@@ -219,7 +219,13 @@ function SearchContent() {
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
-          gap: '24px'
+          gap: '24px',
+          position: 'sticky',
+          top: '152px',
+          alignSelf: 'flex-start',
+          maxHeight: 'calc(100vh - 180px)',
+          overflowY: 'auto',
+          paddingRight: '8px'
         }} className={`sidebar-filters ${showFilters ? 'open' : ''}`}>
           
           {/* Price Range */}
