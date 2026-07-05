@@ -1,4 +1,9 @@
+const fs = require('fs');
 
+const oldCode = fs.readFileSync('landing_temp.jsx', 'utf8');
+const newCode = fs.readFileSync('src/app/client/search/page.js', 'utf8');
+
+const combined = `
 'use client';
 import React, { useEffect, useState } from 'react';
 import { Card } from '../../../components/ui/Card';
@@ -165,7 +170,7 @@ export default function SearchTutors() {
                   {tutor.featured && (<span style={{ position: 'absolute', top: '12px', right: '12px', backgroundColor: 'var(--brand-green-soft)', color: 'var(--brand-green-dark)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Featured</span>)}
                   <div>
                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '20px' }}>
-                      <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden' }}><img src={`https://ui-avatars.com/api/?name=${tutor.full_name}&background=001E2B&color=00ED64&size=100`} alt={tutor.full_name} style={{ width: '100%', height: '100%' }} /></div>
+                      <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden' }}><img src={\`https://ui-avatars.com/api/?name=\${tutor.full_name}&background=001E2B&color=00ED64&size=100\`} alt={tutor.full_name} style={{ width: '100%', height: '100%' }} /></div>
                       <div>
                         <h4 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 600 }}>{tutor.full_name}</h4>
                         <span style={{ fontSize: '13px', color: 'var(--brand-green-dark)', fontWeight: 500 }}><MapPin size={12} style={{ display: 'inline', marginRight: '4px' }} /> {tutor.city || 'Pakistan'}</span>
@@ -337,7 +342,7 @@ export default function SearchTutors() {
         </div>
       </div>
       <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', padding: '24px', gap: '32px' }}>
-        <div style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '24px' }} className={`sidebar-filters ${showFilters ? 'open' : ''}`}>
+        <div style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '24px' }} className={\`sidebar-filters \${showFilters ? 'open' : ''}\`}>
           <div>
             <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Price Range (Rs/hr)</h3>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -400,7 +405,7 @@ export default function SearchTutors() {
         <div style={{ flex: 1, position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)', margin: 0 }}>
-              {loading ? 'Searching...' : `${tutors.length} Tutors Found`}
+              {loading ? 'Searching...' : \`\${tutors.length} Tutors Found\`}
             </h2>
           </div>
           {loading ? (
@@ -415,7 +420,7 @@ export default function SearchTutors() {
                     </div>
                   )}
                   <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'var(--surface)', flexShrink: 0, backgroundImage: tutor.avatar_url ? `url(${tutor.avatar_url})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--hairline)' }}>
+                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'var(--surface)', flexShrink: 0, backgroundImage: tutor.avatar_url ? \`url(\${tutor.avatar_url})\` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--hairline)' }}>
                       {!tutor.avatar_url && <User size={28} color="var(--stone)" />}
                     </div>
                     <div>
@@ -424,7 +429,7 @@ export default function SearchTutors() {
                         {tutor.verified && <ShieldCheck size={16} color="var(--brand-teal)" />}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--steel)', marginBottom: '4px' }}>
-                        <MapPin size={14} /> {tutor.city} {tutor.area && `- ${tutor.area}`}
+                        <MapPin size={14} /> {tutor.city} {tutor.area && \`- \${tutor.area}\`}
                       </div>
                       {tutor.rating > 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#f59e0b', fontWeight: 600 }}>
@@ -445,7 +450,7 @@ export default function SearchTutors() {
                       <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Hourly Rate</div>
                       <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--brand-green-dark)' }}>Rs {tutor.hourly_rate || 'N/A'}</div>
                     </div>
-                    <Link href={`/tutors/${tutor.id}`}>
+                    <Link href={\`/tutors/\${tutor.id}\`}>
                       <Button variant="outline" style={{ height: '36px', padding: '0 16px', fontSize: '13px' }}>View Profile</Button>
                     </Link>
                   </div>
@@ -478,3 +483,7 @@ export default function SearchTutors() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/app/client/search/page.js', combined);
+console.log('Successfully merged!');
