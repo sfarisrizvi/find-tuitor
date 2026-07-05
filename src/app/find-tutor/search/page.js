@@ -541,61 +541,112 @@ function SearchContent() {
 
                   <div style={{ height: '1px', backgroundColor: 'var(--hairline)' }} />
 
-                  {/* Price Range */}
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Price Range</label>
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--brand-green-dark)' }}>
-                        Rs {filters.min_price ? parseInt(filters.min_price).toLocaleString() : '1,000'} - {filters.max_price ? parseInt(filters.max_price).toLocaleString() : '50,000'}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--stone)' }}>
-                          <span>Min: Rs {filters.min_price ? parseInt(filters.min_price).toLocaleString() : '1,000'}</span>
-                          <span>1,000</span>
+                  {/* Price Range (Double handle range slider) */}
+                  {(() => {
+                    const minVal = filters.min_price ? parseInt(filters.min_price) : 1000;
+                    const maxVal = filters.max_price ? parseInt(filters.max_price) : 50000;
+                    const minPercent = ((minVal - 1000) / (50000 - 1000)) * 100;
+                    const maxPercent = ((maxVal - 1000) / (50000 - 1000)) * 100;
+                    return (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Price Range</label>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--brand-green-dark)' }}>
+                            Rs {minVal.toLocaleString()} - {maxVal.toLocaleString()}
+                          </span>
                         </div>
-                        <input 
-                          type="range"
-                          min="1000"
-                          max="50000"
-                          step="500"
-                          value={filters.min_price || 1000}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            handleFilterChange('min_price', val);
-                            if (filters.max_price && parseInt(val) > parseInt(filters.max_price)) {
-                              handleFilterChange('max_price', val);
-                            }
-                          }}
-                          style={{ width: '100%', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
-                        />
-                      </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--stone)' }}>
-                          <span>Max: Rs {filters.max_price ? parseInt(filters.max_price).toLocaleString() : '50,000'}</span>
-                          <span>50,000</span>
-                        </div>
-                        <input 
-                          type="range"
-                          min="1000"
-                          max="50000"
-                          step="500"
-                          value={filters.max_price || 50000}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            handleFilterChange('max_price', val);
-                            if (filters.min_price && parseInt(val) < parseInt(filters.min_price)) {
-                              handleFilterChange('min_price', val);
+                        <div style={{ position: 'relative', width: '100%', height: '28px', marginTop: '4px' }}>
+                          <style>{`
+                            .dual-range-input::-webkit-slider-thumb {
+                              height: 18px;
+                              width: 18px;
+                              border-radius: 50%;
+                              background: #ffffff;
+                              border: 2px solid var(--brand-green-dark);
+                              cursor: pointer;
+                              pointer-events: auto;
+                              -webkit-appearance: none;
+                              box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+                              position: relative;
+                              z-index: 10;
                             }
-                          }}
-                          style={{ width: '100%', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
-                        />
+                            .dual-range-input::-moz-range-thumb {
+                              height: 18px;
+                              width: 18px;
+                              border-radius: 50%;
+                              background: #ffffff;
+                              border: 2px solid var(--brand-green-dark);
+                              cursor: pointer;
+                              pointer-events: auto;
+                              box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+                              position: relative;
+                              z-index: 10;
+                            }
+                          `}</style>
+
+                          {/* Visual track background */}
+                          <div style={{
+                            position: 'absolute', left: 0, right: 0, top: '11px', height: '6px',
+                            backgroundColor: 'var(--hairline-strong)', borderRadius: '999px', zIndex: 1
+                          }} />
+                          
+                          {/* Visual track active range progress */}
+                          <div style={{
+                            position: 'absolute', top: '11px', height: '6px',
+                            left: `${minPercent}%`, right: `${100 - maxPercent}%`,
+                            backgroundColor: 'var(--brand-green-dark)', borderRadius: '999px', zIndex: 2
+                          }} />
+
+                          {/* Min Slider Thumb */}
+                          <input 
+                            type="range"
+                            min="1000"
+                            max="50000"
+                            step="500"
+                            value={minVal}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (val < maxVal) {
+                                handleFilterChange('min_price', val.toString());
+                              }
+                            }}
+                            className="dual-range-input"
+                            style={{
+                              position: 'absolute', width: '100%', top: 0, left: 0, height: '28px',
+                              background: 'none', pointerEvents: 'none', WebkitAppearance: 'none', appearance: 'none',
+                              margin: 0, zIndex: 3
+                            }}
+                          />
+
+                          {/* Max Slider Thumb */}
+                          <input 
+                            type="range"
+                            min="1000"
+                            max="50000"
+                            step="500"
+                            value={maxVal}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (val > minVal) {
+                                handleFilterChange('max_price', val.toString());
+                              }
+                            }}
+                            className="dual-range-input"
+                            style={{
+                              position: 'absolute', width: '100%', top: 0, left: 0, height: '28px',
+                              background: 'none', pointerEvents: 'none', WebkitAppearance: 'none', appearance: 'none',
+                              margin: 0, zIndex: 4
+                            }}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--stone)', marginTop: '4px' }}>
+                          <span>Rs 1,000</span>
+                          <span>Rs 50,000</span>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
 
                   <div style={{ height: '1px', backgroundColor: 'var(--hairline)' }} />
 
