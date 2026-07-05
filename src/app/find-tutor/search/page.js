@@ -283,6 +283,24 @@ function SearchContent() {
             <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
           </div>
 
+          {/* Gender Dropdown */}
+          <div style={{ position: 'relative', minWidth: '140px' }}>
+            <User size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+            <select
+              value={filters.gender}
+              onChange={(e) => handleFilterChange('gender', e.target.value)}
+              style={{
+                width: '100%', height: '40px', paddingLeft: '36px', paddingRight: '12px',
+                borderRadius: '999px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
+                fontSize: '14px', cursor: 'pointer', outline: 'none', appearance: 'none'
+              }}
+            >
+              <option value="">Any Gender</option>
+              {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+            <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
+          </div>
+
           {/* Search query input */}
           <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
@@ -424,36 +442,6 @@ function SearchContent() {
                 onChange={(e) => handleFilterChange('max_price', e.target.value)} 
                 style={{ height: '36px', fontSize: '14px' }} 
               />
-            </div>
-          </div>
-
-          <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
-
-          {/* Gender */}
-          <div>
-            <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Gender</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {['Any', 'Male', 'Female'].map(g => {
-                const val = g === 'Any' ? '' : g;
-                const active = filters.gender === val;
-                return (
-                  <button
-                    key={g}
-                    onClick={() => handleFilterChange('gender', val)}
-                    style={{
-                      padding: '6px 16px',
-                      borderRadius: '999px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      border: active ? '1.5px solid var(--brand-green-dark)' : '1px solid var(--hairline-strong)',
-                      backgroundColor: active ? 'var(--brand-green-soft)' : '#fff',
-                      color: active ? 'var(--brand-green-dark)' : 'var(--stone)',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >{g}</button>
-                )
-              })}
             </div>
           </div>
 
