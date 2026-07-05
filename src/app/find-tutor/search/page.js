@@ -504,10 +504,10 @@ function SearchContent() {
                 onClick={() => setShowSortDropdown(!showSortDropdown)}
                 style={{ 
                   display: 'flex', alignItems: 'center', gap: '8px', height: '36px', 
-                  borderRadius: '8px', border: '1px solid var(--hairline-strong)', 
+                  borderRadius: '999px', border: '1px solid var(--hairline-strong)', 
                   backgroundColor: showSortDropdown ? 'var(--brand-green-soft)' : '#fff',
                   color: showSortDropdown ? 'var(--brand-green-dark)' : 'var(--slate)',
-                  fontWeight: 500, fontSize: '13px', padding: '0 12px'
+                  fontWeight: 500, fontSize: '13px', padding: '0 16px'
                 }}
               >
                 <SlidersHorizontal size={14} />
@@ -616,7 +616,7 @@ function SearchContent() {
                             onClick={() => toggleExperience(exp.value)}
                             style={{
                               padding: '6px 12px',
-                              borderRadius: '6px',
+                              borderRadius: '999px',
                               fontSize: '12px',
                               fontWeight: 500,
                               border: isChecked ? '1.5px solid var(--brand-green-dark)' : '1px solid var(--hairline-strong)',
