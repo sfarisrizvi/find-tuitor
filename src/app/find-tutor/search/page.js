@@ -23,6 +23,7 @@ function SearchContent() {
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [filters, setFilters] = useState({
     city: initialCity,
     subject: '',
@@ -31,7 +32,7 @@ function SearchContent() {
     min_price: '',
     max_price: '',
     gender: '',
-    min_experience: '',
+    min_experience: [], // Array for multiple selection
     verified: false,
     immediate_hiring: false,
     modes: []
@@ -46,10 +47,17 @@ function SearchContent() {
     { id: 'tutor_home', label: 'Tutor Home' }
   ];
 
+  // Debounce search query by 1000ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 1000);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
   // Helper to dynamically get subjects by level
   const getSubjectOptions = (level) => {
     if (!level) {
-      // By default when no level selected, show default subjects
       return ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing'];
     }
     switch (level) {
@@ -75,6 +83,10 @@ function SearchContent() {
     // If subject is 'Other', fetch all tutors for that level and filter client-side for custom subject relevance
     const querySubject = (currentFilters.subject && currentFilters.subject !== 'Other') ? [currentFilters.subject] : null;
 
+    // Resolve min experience threshold from selected checkboxes (use the lowest selected minimum threshold)
+    const expVals = (currentFilters.min_experience || []).map(e => parseInt(e)).filter(e => !isNaN(e));
+    const resolvedMinExp = expVals.length > 0 ? Math.min(...expVals) : null;
+
     const rpcParams = {
       p_city: currentFilters.city || null,
       p_subjects: querySubject,
@@ -84,7 +96,7 @@ function SearchContent() {
       p_immediate_hiring: currentFilters.immediate_hiring || null,
       p_min_price: currentFilters.min_price ? parseFloat(currentFilters.min_price) : null,
       p_max_price: currentFilters.max_price ? parseFloat(currentFilters.max_price) : null,
-      p_min_experience: currentFilters.min_experience ? parseInt(currentFilters.min_experience) : null,
+      p_min_experience: resolvedMinExp,
       p_modes: currentFilters.modes.length > 0 ? currentFilters.modes : null
     };
 
@@ -129,6 +141,20 @@ function SearchContent() {
     fetchTutors(newFilters);
   };
 
+  const toggleExperience = (val) => {
+    let newExps = [...filters.min_experience];
+    if (val === '') {
+      newExps = [];
+    } else {
+      if (newExps.includes(val)) {
+        newExps = newExps.filter(e => e !== val);
+      } else {
+        newExps.push(val);
+      }
+    }
+    handleFilterChange('min_experience', newExps);
+  };
+
   const toggleMode = (modeId) => {
     let newModes = [...filters.modes];
     if (newModes.includes(modeId)) {
@@ -142,8 +168,8 @@ function SearchContent() {
   // Client-side text keyword and dynamic BS/MS subject relevance filter
   const filteredTutors = tutors.filter(tutor => {
     let matchesQuery = true;
-    if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase();
+    if (debouncedQuery) {
+      const lowerQuery = debouncedQuery.toLowerCase();
       matchesQuery = (
         tutor.full_name.toLowerCase().includes(lowerQuery) ||
         (tutor.bio && tutor.bio.toLowerCase().includes(lowerQuery)) ||
@@ -380,17 +406,22 @@ function SearchContent() {
                 { value: '3', label: '3+ Years' },
                 { value: '5', label: '5+ Years' },
                 { value: '10', label: '10+ Years' },
-              ].map((exp) => (
-                <label key={exp.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={filters.min_experience === exp.value}
-                    onChange={() => handleFilterChange('min_experience', exp.value)}
-                    style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
-                  />
-                  {exp.label}
-                </label>
-              ))}
+              ].map((exp) => {
+                const isChecked = exp.value === '' 
+                  ? filters.min_experience.length === 0 
+                  : filters.min_experience.includes(exp.value);
+                return (
+                  <label key={exp.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={isChecked}
+                      onChange={() => toggleExperience(exp.value)}
+                      style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                    />
+                    {exp.label}
+                  </label>
+                );
+              })}
             </div>
           </div>
 
