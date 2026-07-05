@@ -20,7 +20,13 @@ const RANGE_LEVELS = ['Kindergarten', 'Primary', 'Secondary', 'Matric', 'Inter',
 const LEVEL_SUBJECTS = {
   'Matric': ['Arts', 'Biology', 'Computer'],
   'Inter': ['Arts', 'Pre-Engineering', 'Pre-Medical', 'Commerce', 'ICs', 'O Levels'],
-  'BS/MS': ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing', 'Other']
+  'BS/MS': [
+    'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer Science', 'Urdu', 'AI', 'Digital Marketing',
+    'Data Science', 'Software Engineering', 'Cybersecurity', 'Information Technology', 'Electrical Engineering',
+    'Mechanical Engineering', 'Civil Engineering', 'Biotechnology', 'Environmental Sciences', 'Psychology',
+    'Sociology', 'Economics', 'Business Administration', 'Finance & Accounting', 'Mass Communication',
+    'International Relations', 'Political Science', 'Statistics', 'Architecture', 'Fine Arts', 'Other'
+  ]
 };
 
 const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -32,10 +38,23 @@ const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + mi
 const randomFloat = (min, max) => (Math.random() * (max - min) + min).toFixed(2);
 
 const FIRST_NAMES = {
-  'Male': ['Ahmad', 'Ali', 'Bilal', 'Hamza', 'Usman', 'Mustafa', 'Zain', 'Omer', 'Fahad', 'Saad'],
-  'Female': ['Ayesha', 'Sana', 'Fatima', 'Zainab', 'Mariam', 'Hina', 'Sara', 'Amna', 'Khadija', 'Sadia']
+  'Male': [
+    'Ahmad', 'Ali', 'Bilal', 'Hamza', 'Hasnain', 'Mustafa', 'Zain', 'Ausjah', 'Murtaza', 'Aqeel',
+    'Abbas', 'Zayan', 'Ibrahim', 'Qambar', 'Ayaan', 'Sulman', 'Haider', 'Hur', 'Asad', 'Imran',
+    'Arsalan', 'Mehdi', 'Shehryar', 'Taimoor', 'Kumail', 'Junaid', 'Farhan', 'Saad', 'Nabeel', 'Shahzad'
+  ],
+  'Female': [
+    'Zainab', 'Sana', 'Fatima', 'Ayat', 'Mariam', 'Hina', 'Sara', 'Rida', 'Khadija', 'Sadia',
+    'Marziya', 'Amna', 'Maham', 'Eshal', 'Anaya', 'Hania', 'Iqra', 'Nimra', 'Mahnoor', 'Laiba',
+    'Zoya', 'Aliza', 'Kinza', 'Wajiha', 'Rimsha', 'Fiza', 'Mehak', 'Jannat', 'Kiran', 'Sakeena'
+  ]
 };
-const LAST_NAMES = ['Khan', 'Ahmed', 'Tariq', 'Shah', 'Rizvi', 'Naim', 'Malik', 'Butt', 'Sheikh', 'Dar'];
+
+const LAST_NAMES = [
+  'Khan', 'Kardar', 'Bukhari', 'Shah', 'Rizvi', 'Naqvi', 'Malik', 'Butt', 'Sheikh', 'Dar',
+  'Ahmed', 'Qureshi', 'Siddiqui', 'Rehman', 'Javed', 'Abbasi', 'Bajwa', 'Chaudhry', 'Gill', 'Lodhi',
+  'Mir', 'Raja', 'Tareen', 'Zaidi', 'Ghias', 'Hashmi', 'Farooq', 'Ansari', 'Iqbal', 'Hussain'
+];
 
 async function seed() {
   const client = new Client({
@@ -47,6 +66,11 @@ async function seed() {
     await client.connect();
     console.log('Connected to Supabase database. Starting mock tutor seeding with dynamic levels/subjects...');
 
+    // Clear existing mock tutors to prevent unique constraint failures
+    console.log('Cleaning up existing mock tutors...');
+    await client.query("DELETE FROM public.profiles WHERE id IN (SELECT id FROM auth.users WHERE email LIKE 'mock.tutor.%@findtutor.test')");
+    await client.query("DELETE FROM auth.users WHERE email LIKE 'mock.tutor.%@findtutor.test'");
+
     // Generate 100 tutors
     for (let i = 1; i <= 100; i++) {
       const id = crypto.randomUUID();
@@ -55,10 +79,10 @@ async function seed() {
       const firstName = randomItem(FIRST_NAMES[gender]);
       const lastName = randomItem(LAST_NAMES);
       const fullName = `${gender === 'Male' ? 'Sir' : 'Miss'} ${firstName} ${lastName}`;
-      
+
       const city = randomItem(CITIES);
       const area = randomItem(AREAS[city]);
-      const hourlyRate = randomInt(500, 6000);
+      const hourlyRate = randomInt(1, 12) * 500;
       const experience = randomInt(1, 15);
       const isVerified = Math.random() > 0.3; // 70% verified
       const isImmediate = Math.random() > 0.6; // 40% immediate
@@ -114,7 +138,7 @@ async function seed() {
           onboarding_step = 4
         WHERE id = $1
       `, [
-        id, city, area, gender, hourlyRate, experience, isVerified, isImmediate, 
+        id, city, area, gender, hourlyRate, experience, isVerified, isImmediate,
         rating, reviewsCount, myModes, myLanguages, bio
       ]);
 

@@ -43,7 +43,7 @@ async function seed() {
       const gender = randomItem(GENDERS);
       const name = gender === 'Male' ? `Mr. Tutor ${i}` : `Miss Tutor ${i}`;
       
-      const hourlyRate = randomInt(500, 5000);
+      const hourlyRate = randomInt(1, 10) * 500;
       const experience = randomInt(1, 15);
       const isVerified = Math.random() > 0.3; // 70% verified
       const isImmediate = Math.random() > 0.5; // 50% immediate

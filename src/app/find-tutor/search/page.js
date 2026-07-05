@@ -43,7 +43,13 @@ function SearchContent() {
   const LEVEL_SUBJECTS = {
     'Matric': ['Arts', 'Biology', 'Computer'],
     'Inter': ['Arts', 'Pre-Engineering', 'Pre-Medical', 'Commerce', 'ICs', 'O Levels'],
-    'BS/MS': ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing', 'Other']
+    'BS/MS': [
+      'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer Science', 'Urdu', 'AI', 'Digital Marketing',
+      'Data Science', 'Software Engineering', 'Cybersecurity', 'Information Technology', 'Electrical Engineering',
+      'Mechanical Engineering', 'Civil Engineering', 'Biotechnology', 'Environmental Sciences', 'Psychology',
+      'Sociology', 'Economics', 'Business Administration', 'Finance & Accounting', 'Mass Communication',
+      'International Relations', 'Political Science', 'Statistics', 'Architecture', 'Fine Arts', 'Other'
+    ]
   };
 
   const CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
@@ -65,23 +71,8 @@ function SearchContent() {
 
   // Helper to dynamically get subjects by level
   const getSubjectOptions = (level) => {
-    if (!level) {
-      return ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing'];
-    }
-    switch (level) {
-      case 'Kindergarten':
-      case 'Primary':
-      case 'Secondary':
-        return []; // Disabled
-      case 'Matric':
-        return ['Arts', 'Biology', 'Computer'];
-      case 'Inter':
-        return ['Arts', 'Pre-Engineering', 'Pre-Medical', 'Commerce', 'ICs', 'O Levels'];
-      case 'BS/MS':
-        return ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing', 'Other'];
-      default:
-        return [];
-    }
+    if (!level) return [];
+    return LEVEL_SUBJECTS[level] || [];
   };
 
   const fetchTutors = async (currentFilters) => {
@@ -295,13 +286,6 @@ function SearchContent() {
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           
-          <Link href="/find-tutor" style={{ textDecoration: 'none' }}>
-            <div style={{ fontWeight: 600, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px', marginRight: '12px', cursor: 'pointer' }}>
-              <Search size={20} color="var(--brand-green-dark)" />
-              Find Tutors
-            </div>
-          </Link>
-
           {/* City Dropdown */}
           <div style={{ position: 'relative', minWidth: '160px' }}>
             <MapPin size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
