@@ -26,9 +26,9 @@ function SearchContent() {
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [filters, setFilters] = useState({
     city: initialCity,
-    subject: '',
+    subjects: [], // Array for multiple subjects selection
     custom_subject: '',
-    level: '',
+    levels: [], // Array for multiple levels selection
     min_price: '',
     max_price: '',
     gender: '',
@@ -80,8 +80,10 @@ function SearchContent() {
     setLoading(true);
     const supabase = createClient();
     
-    // If subject is 'Other', fetch all tutors for that level and filter client-side for custom subject relevance
-    const querySubject = (currentFilters.subject && currentFilters.subject !== 'Other') ? [currentFilters.subject] : null;
+    // If subjects array includes 'Other', fetch all tutors for that level and filter client-side for custom subject relevance
+    const querySubject = (currentFilters.subjects && currentFilters.subjects.length > 0)
+      ? currentFilters.subjects.filter(s => s !== 'Other')
+      : null;
 
     // Resolve min experience threshold from selected checkboxes (use the lowest selected minimum threshold)
     const expVals = (currentFilters.min_experience || []).map(e => parseInt(e)).filter(e => !isNaN(e));
@@ -89,8 +91,8 @@ function SearchContent() {
 
     const rpcParams = {
       p_city: currentFilters.city || null,
-      p_subjects: querySubject,
-      p_levels: currentFilters.level ? [currentFilters.level] : null,
+      p_subjects: querySubject && querySubject.length > 0 ? querySubject : null,
+      p_levels: currentFilters.levels && currentFilters.levels.length > 0 ? currentFilters.levels : null,
       p_gender: currentFilters.gender || null,
       p_verified: currentFilters.verified || null,
       p_immediate_hiring: currentFilters.immediate_hiring || null,
@@ -124,19 +126,6 @@ function SearchContent() {
 
   const handleFilterChange = (key, value) => {
     let newFilters = { ...filters, [key]: value };
-    
-    if (key === 'level') {
-      const options = getSubjectOptions(value);
-      if (options.length === 0 || !options.includes(filters.subject)) {
-        newFilters.subject = '';
-        newFilters.custom_subject = '';
-      }
-    }
-    
-    if (key === 'subject' && value !== 'Other') {
-      newFilters.custom_subject = '';
-    }
-
     setFilters(newFilters);
     fetchTutors(newFilters);
   };
@@ -153,6 +142,52 @@ function SearchContent() {
       }
     }
     handleFilterChange('min_experience', newExps);
+  };
+
+  const toggleLevel = (lvl) => {
+    let newLevels = [...filters.levels];
+    if (newLevels.includes(lvl)) {
+      newLevels = newLevels.filter(l => l !== lvl);
+    } else {
+      newLevels.push(lvl);
+    }
+    
+    let newFilters = { ...filters, levels: newLevels };
+    
+    // Clean up checked subjects if they are no longer in valid subject options
+    let validSubjects = [];
+    if (newLevels.length > 0) {
+      const unique = new Set();
+      newLevels.forEach(l => getSubjectOptions(l).forEach(s => unique.add(s)));
+      validSubjects = Array.from(unique);
+    } else {
+      validSubjects = getSubjectOptions('');
+    }
+    
+    newFilters.subjects = filters.subjects.filter(s => validSubjects.includes(s));
+    if (!newFilters.subjects.includes('Other')) {
+      newFilters.custom_subject = '';
+    }
+    
+    setFilters(newFilters);
+    fetchTutors(newFilters);
+  };
+
+  const toggleSubjectFilter = (subj) => {
+    let newSubjects = [...filters.subjects];
+    if (newSubjects.includes(subj)) {
+      newSubjects = newSubjects.filter(s => s !== subj);
+    } else {
+      newSubjects.push(subj);
+    }
+    
+    let newFilters = { ...filters, subjects: newSubjects };
+    if (!newSubjects.includes('Other')) {
+      newFilters.custom_subject = '';
+    }
+    
+    setFilters(newFilters);
+    fetchTutors(newFilters);
   };
 
   const toggleMode = (modeId) => {
@@ -178,7 +213,9 @@ function SearchContent() {
     }
 
     let matchesCustomSubject = true;
-    if (filters.level === 'BS/MS' && filters.subject === 'Other' && filters.custom_subject) {
+    const levelIsBSMS = filters.levels.includes('BS/MS');
+    const subjectIsOther = filters.subjects.includes('Other');
+    if (levelIsBSMS && subjectIsOther && filters.custom_subject) {
       const text = filters.custom_subject.toLowerCase();
       const isMathRelated = text.includes('algebra') || text.includes('calculus') || text.includes('math') || text.includes('linear') || text.includes('stat');
       const isPhysicsRelated = text.includes('physic') || text.includes('mechanic') || text.includes('thermo') || text.includes('quantum');
@@ -228,17 +265,6 @@ function SearchContent() {
             </div>
           </Link>
 
-          {/* Search query input */}
-          <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-            <Input 
-              placeholder="Search by keyword..." 
-              value={searchQuery} 
-              onChange={(e) => setSearchQuery(e.target.value)} 
-              style={{ height: '40px', paddingLeft: '36px', fontSize: '14px', border: '1px solid var(--hairline-strong)', borderRadius: '999px', backgroundColor: '#fff' }} 
-            />
-          </div>
-
           {/* City Dropdown */}
           <div style={{ position: 'relative', minWidth: '160px' }}>
             <MapPin size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
@@ -257,63 +283,17 @@ function SearchContent() {
             <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
           </div>
 
-          {/* Level Dropdown */}
-          <div style={{ position: 'relative', minWidth: '160px' }}>
-            <Award size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-            <select
-              value={filters.level}
-              onChange={(e) => handleFilterChange('level', e.target.value)}
-              style={{
-                width: '100%', height: '40px', paddingLeft: '36px', paddingRight: '12px',
-                borderRadius: '999px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                fontSize: '14px', cursor: 'pointer', outline: 'none', appearance: 'none'
-              }}
-            >
-              <option value="">Any Level/Class</option>
-              {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-            </select>
-            <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
+          {/* Search query input */}
+          <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+            <Input 
+              placeholder="Search by keyword..." 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+              style={{ height: '40px', paddingLeft: '36px', fontSize: '14px', border: '1px solid var(--hairline-strong)', borderRadius: '999px', backgroundColor: '#fff' }} 
+            />
           </div>
 
-          {/* Subject Dropdown */}
-          <div style={{ position: 'relative', minWidth: '160px' }}>
-            <BookOpen size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: ['Kindergarten', 'Primary', 'Secondary'].includes(filters.level) ? 'var(--hairline)' : 'var(--stone)' }} />
-            <select
-              value={filters.subject}
-              disabled={['Kindergarten', 'Primary', 'Secondary'].includes(filters.level)}
-              onChange={(e) => handleFilterChange('subject', e.target.value)}
-              style={{
-                width: '100%', height: '40px', paddingLeft: '36px', paddingRight: '12px',
-                borderRadius: '999px', border: '1px solid var(--hairline-strong)', 
-                backgroundColor: ['Kindergarten', 'Primary', 'Secondary'].includes(filters.level) ? 'var(--surface)' : '#fff',
-                color: ['Kindergarten', 'Primary', 'Secondary'].includes(filters.level) ? 'var(--stone)' : 'var(--ink)',
-                fontSize: '14px', cursor: ['Kindergarten', 'Primary', 'Secondary'].includes(filters.level) ? 'not-allowed' : 'pointer', outline: 'none', appearance: 'none'
-              }}
-            >
-              {['Kindergarten', 'Primary', 'Secondary'].includes(filters.level) ? (
-                <option value="">Subject Disabled</option>
-              ) : (
-                <>
-                  <option value="">Any Subject</option>
-                  {getSubjectOptions(filters.level).map(s => <option key={s} value={s}>{s}</option>)}
-                </>
-              )}
-            </select>
-            <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
-          </div>
-
-          {/* BS/MS Custom Subject Input */}
-          {filters.level === 'BS/MS' && filters.subject === 'Other' && (
-            <div style={{ flex: 1, minWidth: '220px' }}>
-              <Input
-                placeholder="Type BS/MS Subject (e.g. Linear Algebra)"
-                value={filters.custom_subject}
-                onChange={(e) => handleFilterChange('custom_subject', e.target.value)}
-                style={{ height: '40px', fontSize: '14px', border: '1px solid var(--hairline-strong)', borderRadius: '999px', backgroundColor: '#fff' }}
-              />
-            </div>
-          )}
-          
           <Button 
             className="mobile-filter-btn" 
             variant="outline" 
@@ -341,6 +321,89 @@ function SearchContent() {
           overflowY: 'auto',
           paddingRight: '8px'
         }} className={`sidebar-filters ${showFilters ? 'open' : ''}`}>
+
+          {/* Grade / Level Filter */}
+          <div>
+            <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Grade / Level</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {LEVELS.map(lvl => {
+                const isChecked = filters.levels.includes(lvl);
+                return (
+                  <label key={lvl} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={isChecked}
+                      onChange={() => toggleLevel(lvl)}
+                      style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                    />
+                    {lvl}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
+
+          {/* Subjects Filter */}
+          <div>
+            <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Subjects</h3>
+            {(() => {
+              const activeLevels = filters.levels;
+              let subjectOptions = [];
+              if (activeLevels.length === 0) {
+                subjectOptions = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing'];
+              } else {
+                const unique = new Set();
+                activeLevels.forEach(lvl => {
+                  getSubjectOptions(lvl).forEach(s => unique.add(s));
+                });
+                subjectOptions = Array.from(unique);
+              }
+
+              if (subjectOptions.length === 0) {
+                return (
+                  <div style={{ fontSize: '13px', color: 'var(--stone)', fontStyle: 'italic' }}>
+                    General curriculum (no subject selection required).
+                  </div>
+                );
+              }
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {subjectOptions.map(subj => {
+                    const isChecked = filters.subjects.includes(subj);
+                    return (
+                      <div key={subj} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
+                          <input 
+                            type="checkbox" 
+                            checked={isChecked}
+                            onChange={() => toggleSubjectFilter(subj)}
+                            style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                          />
+                          {subj}
+                        </label>
+                        
+                        {subj === 'Other' && isChecked && (
+                          <div style={{ paddingLeft: '24px', marginTop: '4px' }}>
+                            <Input
+                              placeholder="e.g. Linear Algebra"
+                              value={filters.custom_subject}
+                              onChange={(e) => handleFilterChange('custom_subject', e.target.value)}
+                              style={{ height: '32px', fontSize: '13px', padding: '0 8px', border: '1px solid var(--hairline-strong)', borderRadius: '4px', backgroundColor: '#fff', width: '100%' }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+
+          <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
           
           {/* Price Range */}
           <div>

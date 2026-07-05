@@ -12,10 +12,16 @@ const AREAS = {
   'Attock': ['Pleasure Park', 'Cantt Area', 'People Colony']
 };
 const GENDERS = ['Male', 'Female'];
-const SUBJECTS = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing'];
-const LEVELS = ['Class 9', 'Class 10', 'O Levels', 'A Levels', 'MDCAT', 'ECAT'];
 const LANGUAGES = ['English', 'Urdu', 'Punjabi', 'Pashto'];
 const MODES = ['online', 'home_tuition', 'tutor_home'];
+
+// Dynamic Level and Subject settings mapping
+const RANGE_LEVELS = ['Kindergarten', 'Primary', 'Secondary', 'Matric', 'Inter', 'BS/MS'];
+const LEVEL_SUBJECTS = {
+  'Matric': ['Arts', 'Biology', 'Computer'],
+  'Inter': ['Arts', 'Pre-Engineering', 'Pre-Medical', 'Commerce', 'ICs', 'O Levels'],
+  'BS/MS': ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing', 'Other']
+};
 
 const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const randomItems = (arr, count) => {
@@ -39,7 +45,7 @@ async function seed() {
 
   try {
     await client.connect();
-    console.log('Connected to Supabase database. Starting mock tutor seeding...');
+    console.log('Connected to Supabase database. Starting mock tutor seeding with dynamic levels/subjects...');
 
     // Generate 100 tutors
     for (let i = 1; i <= 100; i++) {
@@ -60,7 +66,13 @@ async function seed() {
       const reviewsCount = randomInt(0, 50);
       const myModes = randomItems(MODES, randomInt(1, 2));
       const myLanguages = randomItems(LANGUAGES, randomInt(1, 2));
-      const bio = `Hi, I am ${fullName}, a dedicated tutor specializing in ${randomItem(SUBJECTS)}. I offer home and online coaching with customized worksheets.`;
+
+      // Choose a dynamic teaching range
+      const startIdx = randomInt(0, 3); // Starts between Kindergarten and Matric
+      const endIdx = randomInt(startIdx, 5); // Ends between startIdx and BS/MS
+      const activeLevels = RANGE_LEVELS.slice(startIdx, endIdx + 1);
+
+      const bio = `Hi, I am ${fullName}, a dedicated tutor teaching grades ${activeLevels.join(' to ')}. I specialize in home and online coaching.`;
 
       // 1. Insert into auth.users (so profiles trigger fires and creates profile correctly)
       const rawUserMetaData = JSON.stringify({
@@ -106,16 +118,28 @@ async function seed() {
         rating, reviewsCount, myModes, myLanguages, bio
       ]);
 
-      // 3. Insert random levels & subjects in tutor_categories
-      const tutorSubjects = randomItems(SUBJECTS, randomInt(1, 3));
-      for (const subject of tutorSubjects) {
-        const tutorLevels = randomItems(LEVELS, randomInt(1, 2));
-        for (const level of tutorLevels) {
+      // 3. Insert categories dynamically for active levels
+      for (const level of activeLevels) {
+        const hasSubjects = ['Matric', 'Inter', 'BS/MS'].includes(level);
+        const subjects = LEVEL_SUBJECTS[level] || [];
+
+        if (hasSubjects && subjects.length > 0) {
+          // Select 1 or 2 random subjects for this level
+          const selectedSubs = randomItems(subjects, randomInt(1, 2));
+          for (const subject of selectedSubs) {
+            await client.query(`
+              INSERT INTO public.tutor_categories (tutor_id, level, category, subject)
+              VALUES ($1, $2, 'Academic', $3)
+              ON CONFLICT DO NOTHING
+            `, [id, level, subject]);
+          }
+        } else {
+          // Level without subjects (KG, Primary, Secondary) gets subject = null row
           await client.query(`
             INSERT INTO public.tutor_categories (tutor_id, level, category, subject)
-            VALUES ($1, $2, 'Academic', $3)
+            VALUES ($1, $2, 'Academic', NULL)
             ON CONFLICT DO NOTHING
-          `, [id, level, subject]);
+          `, [id, level]);
         }
       }
 
@@ -124,7 +148,7 @@ async function seed() {
       }
     }
 
-    console.log('Seeding complete! 100 highly diversified mock tutors are now live.');
+    console.log('Seeding complete! 100 highly diversified mock tutors with dynamic categories are now live.');
 
   } catch (err) {
     console.error('Seeding failed:', err);
