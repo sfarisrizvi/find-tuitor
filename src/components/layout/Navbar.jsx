@@ -70,7 +70,7 @@ export function Navbar() {
           </Link>
           
           <div className="nav-links">
-            <Link href="/client/search" style={linkStyle}>Find Tutors</Link>
+            <Link href="/find-tutor" style={linkStyle}>Find Tutors</Link>
             <Link href="/tutor/jobs" style={linkStyle}>Find Jobs</Link>
             <Link href="/#how-it-works" style={linkStyle}>How It Works</Link>
             <Link href="/contact" style={linkStyle}>Contact Us</Link>
@@ -96,7 +96,7 @@ export function Navbar() {
 
       {/* Mobile Drawer Overlay */}
       <div className={`nav-mobile-overlay ${isOpen ? 'open' : ''}`}>
-        <Link href="/client/search" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Tutors</Link>
+        <Link href="/find-tutor" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Tutors</Link>
         <Link href="/tutor/jobs" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Jobs</Link>
         <Link href="/#how-it-works" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>How It Works</Link>
         <Link href="/contact" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Contact Us</Link>

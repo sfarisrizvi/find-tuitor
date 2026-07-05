@@ -231,7 +231,7 @@ export default function Home() {
               </p>
 
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '40px' }}>
-                <Link href="/client/search">
+                <Link href="/find-tutor">
                   <Button variant="primary" style={{ padding: '16px 32px', fontSize: '16px', backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)' }}>
                     Find a Tutor (Post Free Job)
                   </Button>
@@ -651,7 +651,7 @@ export default function Home() {
           <p style={{ fontSize: '18px', color: 'var(--on-dark-muted)', marginBottom: '40px', lineHeight: '1.6' }}>
             Take 2 minutes to post your specific tuition requirements. Let top-rated local specialists compete for your job with custom budget proposals.
           </p>
-          <Link href="/client/search">
+          <Link href="/find-tutor">
             <Button variant="primary" style={{ padding: '18px 36px', fontSize: '16px', backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', fontWeight: 600 }}>
               Post a Tuition Job for Free
             </Button>

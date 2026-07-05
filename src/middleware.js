@@ -36,7 +36,8 @@ export async function middleware(request) {
                         url.pathname === '/register' || 
                         url.pathname === '/signup' || 
                         url.pathname === '/contact' || 
-                        url.pathname === '/client/search' || 
+                        url.pathname === '/find-tutor' || 
+                        url.pathname.startsWith('/find-tutor/') || 
                         url.pathname === '/tutor/jobs' || 
                         url.pathname.startsWith('/tutors/');
 

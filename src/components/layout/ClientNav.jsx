@@ -31,7 +31,7 @@ export function ClientNav() {
 
   const links = [
     { name: 'Dashboard', path: '/client/dashboard' },
-    { name: 'Search Tutors', path: '/client/search' },
+    { name: 'Search Tutors', path: '/find-tutor' },
     { name: 'My Jobs', path: '/client/jobs' },
     { name: 'Messages', path: '/client/messages' },
     { name: 'Wallet', path: '/client/wallet' },

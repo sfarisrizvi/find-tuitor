@@ -58,10 +58,10 @@ export function Footer() {
 
         <div>
           <h4 style={headerStyle}>Find Tutors</h4>
-          <Link href="/client/search" style={linkStyle}>Search Educators</Link>
+          <Link href="/find-tutor" style={linkStyle}>Search Educators</Link>
           <Link href="/client/jobs/new" style={linkStyle}>Post a Requirement</Link>
-          <Link href="/client/search" style={linkStyle}>Local Board Specialists</Link>
-          <Link href="/client/search" style={linkStyle}>Cambridge Tutors</Link>
+          <Link href="/find-tutor" style={linkStyle}>Local Board Specialists</Link>
+          <Link href="/find-tutor" style={linkStyle}>Cambridge Tutors</Link>
         </div>
 
         <div>
