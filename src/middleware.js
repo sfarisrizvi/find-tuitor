@@ -34,6 +34,7 @@ export async function middleware(request) {
   const isPublicRoute = url.pathname === '/' || 
                         url.pathname === '/login' || 
                         url.pathname === '/register' || 
+                        url.pathname === '/signup' || 
                         url.pathname === '/contact' || 
                         url.pathname === '/client/search' || 
                         url.pathname === '/tutor/jobs' || 

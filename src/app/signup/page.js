@@ -5,20 +5,17 @@ import { Button } from '../../components/ui/Button';
 import { createClient } from '../../utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Lock, Phone, MapPin, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Users, BookOpen, Eye, EyeOff } from 'lucide-react';
 
-const PAKISTANI_CITIES = [
-  'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad',
-  'Multan', 'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala',
-  'Hyderabad', 'Abbottabad', 'Bahawalpur', 'Sargodha', 'Sukkur',
-  'Larkana', 'Sheikhupura', 'Rahim Yar Khan', 'Gujrat', 'Mardan'
+const ROLES = [
+  { value: 'parent', label: 'Parent', desc: 'Booking a tutor for my children', icon: Users },
+  { value: 'student', label: 'Student', desc: 'Looking for a tutor for myself', icon: BookOpen },
 ];
 
-export default function Register() {
+export default function Signup() {
+  const [roleSelection, setRoleSelection] = useState('parent');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [city, setCity] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,15 +29,14 @@ export default function Register() {
     setError('');
     if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
-    if (!phone) { setError('Phone number is required.'); return; }
-    if (!city) { setError('Please select your city.'); return; }
 
     setLoading(true);
+    const clientType = roleSelection; // parent or student
 
     const supabase = createClient();
     const { error: signupError } = await supabase.auth.signUp({
       email, password,
-      options: { data: { full_name: fullName, role: 'tutor' } }
+      options: { data: { full_name: fullName, role: 'client', client_type: clientType } }
     });
 
     if (signupError) {
@@ -49,13 +45,8 @@ export default function Register() {
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('profiles').update({ phone, city }).eq('id', user.id);
-    }
-    
     setLoading(false);
-    router.push('/tutor/onboarding');
+    router.push('/client/onboarding');
   };
 
   const triggerToast = (msg) => {
@@ -85,12 +76,12 @@ export default function Register() {
       }}>
         
         {/* Header */}
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '28px' }}>
           <h1 style={{ fontSize: '36px', fontWeight: 700, margin: '0 0 10px 0', color: 'var(--ink)' }}>
-            Join as a Tutor
+            Create your account
           </h1>
           <p style={{ color: 'var(--steel)', fontSize: '15px', lineHeight: '1.6', margin: 0 }}>
-            Create your profile, set your rates, and teach students across Pakistan on <strong>FindTutors.pk</strong>
+            Join thousands of families and tutors across Pakistan on <strong>FindTutors.pk</strong>
           </p>
         </div>
 
@@ -110,6 +101,70 @@ export default function Register() {
 
         <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
+          {/* Role Cards Selector */}
+          <div>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '10px', fontSize: '14px', color: 'var(--ink)' }}>
+              I am a...
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {ROLES.map(({ value, label, desc, icon: Icon }) => {
+                const selected = roleSelection === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRoleSelection(value)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '10px 14px',
+                      borderRadius: '16px',
+                      border: selected
+                        ? '2px solid var(--brand-green-dark)'
+                        : '1.5px solid var(--hairline-strong)',
+                      backgroundColor: selected ? 'var(--brand-green-soft)' : 'var(--canvas)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '10px',
+                      backgroundColor: selected ? 'var(--brand-green-dark)' : 'var(--surface-soft)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      <Icon size={16} color={selected ? '#fff' : 'var(--steel)'} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--ink)' }}>{label}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--steel)', marginTop: '1px' }}>{desc}</div>
+                    </div>
+                    {selected && (
+                      <div style={{
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--brand-green-dark)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <span style={{ color: '#fff', fontSize: '11px', fontWeight: 700 }}>✓</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Full Name */}
           <div style={{ position: 'relative' }}>
             <User size={18} style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
@@ -146,51 +201,6 @@ export default function Register() {
                 fontSize: '14px',
               }}
             />
-          </div>
-
-          {/* Phone Number */}
-          <div style={{ position: 'relative' }}>
-            <Phone size={18} style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-            <Input
-              type="tel"
-              placeholder="Phone Number (e.g. +92 300 1234567)"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              required
-              style={{
-                paddingLeft: '48px',
-                borderRadius: '999px',
-                height: '48px',
-                borderColor: 'var(--hairline-strong)',
-                fontSize: '14px',
-              }}
-            />
-          </div>
-
-          {/* City Selection */}
-          <div style={{ position: 'relative' }}>
-            <MapPin size={18} style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', zIndex: 1 }} />
-            <select
-              value={city}
-              onChange={e => setCity(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                height: '48px',
-                paddingLeft: '48px',
-                paddingRight: '16px',
-                borderRadius: '999px',
-                border: '1.5px solid var(--hairline-strong)',
-                backgroundColor: 'var(--canvas)',
-                fontSize: '14px',
-                color: city ? 'var(--ink)' : 'var(--stone)',
-                cursor: 'pointer',
-                outline: 'none',
-              }}
-            >
-              <option value="">Select your city</option>
-              {PAKISTANI_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
           </div>
 
           {/* Password */}
@@ -265,7 +275,7 @@ export default function Register() {
               cursor: 'pointer',
             }}
           >
-            {loading ? 'Creating Tutor Account...' : 'Create Tutor Account'}
+            {loading ? 'Creating account...' : 'Create Account'}
           </Button>
 
           {/* Divider */}
@@ -317,7 +327,7 @@ export default function Register() {
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: 'var(--steel)' }}>
-            Parent or Student? <Link href="/signup" style={{ color: 'var(--brand-green-dark)', fontWeight: 600 }}>Create Account here</Link>
+            Tutor or Teacher? <Link href="/register" style={{ color: 'var(--brand-green-dark)', fontWeight: 600 }}>Join here</Link>
           </div>
         </form>
 

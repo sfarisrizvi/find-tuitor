@@ -79,7 +79,7 @@ export function Navbar() {
 
         <div style={rightActionsStyle} className="nav-links">
           <Link href="/login" style={linkStyle}>Sign In</Link>
-          <Link href="/register">
+          <Link href="/signup">
             <Button variant="primary">Join Free</Button>
           </Link>
         </div>
@@ -102,7 +102,7 @@ export function Navbar() {
         <Link href="/contact" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Contact Us</Link>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
           <Link href="/login" onClick={() => setIsOpen(false)} style={{ textAlign: 'center', fontWeight: 600, color: 'var(--ink)' }}>Sign In</Link>
-          <Link href="/register" onClick={() => setIsOpen(false)}>
+          <Link href="/signup" onClick={() => setIsOpen(false)}>
             <Button variant="primary" style={{ width: '100%' }}>Join Free</Button>
           </Link>
         </div>
