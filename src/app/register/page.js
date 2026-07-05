@@ -7,12 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { User, Mail, Lock, Phone, MapPin, Eye, EyeOff } from 'lucide-react';
 
-const PAKISTANI_CITIES = [
-  'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad',
-  'Multan', 'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala',
-  'Hyderabad', 'Abbottabad', 'Bahawalpur', 'Sargodha', 'Sukkur',
-  'Larkana', 'Sheikhupura', 'Rahim Yar Khan', 'Gujrat', 'Mardan'
-];
+const PAKISTANI_CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
 
 export default function Register() {
   const [fullName, setFullName] = useState('');

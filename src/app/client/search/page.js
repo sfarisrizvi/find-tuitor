@@ -6,7 +6,7 @@ import { Input } from '../../../components/ui/Input';
 import Link from 'next/link';
 import { 
   Search, MapPin, Star, ShieldCheck, Clock, ChevronDown, 
-  Award, BookOpen, Zap, Filter, SlidersHorizontal, Map, Users
+  Award, BookOpen, Zap, Filter, SlidersHorizontal, Map, Users, User, Lock
 } from 'lucide-react';
 import { createClient } from '../../../utils/supabase/client';
 
@@ -33,7 +33,7 @@ export default function SearchTutors() {
   });
 
   // Example Static Data for Dropdowns
-  const CITIES = ['Islamabad', 'Lahore', 'Karachi', 'Rawalpindi', 'Peshawar'];
+  const CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
   const SUBJECTS = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing'];
   const LEVELS = ['Class 9', 'Class 10', 'O Levels', 'A Levels', 'MDCAT', 'ECAT'];
   const GENDERS = ['Male', 'Female'];
@@ -42,33 +42,6 @@ export default function SearchTutors() {
     { id: 'home_tuition', label: 'Home Tuition' },
     { id: 'tutor_home', label: 'Tutor Home' }
   ];
-
-  // Initialize
-  useEffect(() => {
-    const init = async () => {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      fetchTutors(filters);
-    };
-    init();
-  }, []);
-
-  const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    fetchTutors(newFilters);
-  };
-
-  const toggleMode = (modeId) => {
-    let newModes = [...filters.modes];
-    if (newModes.includes(modeId)) {
-      newModes = newModes.filter(m => m !== modeId);
-    } else {
-      newModes.push(modeId);
-    }
-    handleFilterChange('modes', newModes);
-  };
 
   const fetchTutors = async (currentFilters) => {
     setLoading(true);
@@ -98,6 +71,35 @@ export default function SearchTutors() {
     }
     setLoading(false);
   };
+
+  // Initialize
+  useEffect(() => {
+    const init = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      fetchTutors(filters);
+    };
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleFilterChange = (key, value) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    fetchTutors(newFilters);
+  };
+
+  const toggleMode = (modeId) => {
+    let newModes = [...filters.modes];
+    if (newModes.includes(modeId)) {
+      newModes = newModes.filter(m => m !== modeId);
+    } else {
+      newModes.push(modeId);
+    }
+    handleFilterChange('modes', newModes);
+  };
+
 
   // Determine how many results to show based on auth status
   const displayedTutors = session ? tutors : tutors.slice(0, 3);
