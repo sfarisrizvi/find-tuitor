@@ -26,6 +26,7 @@ function SearchContent() {
   const [filters, setFilters] = useState({
     city: initialCity,
     subject: '',
+    custom_subject: '',
     level: '',
     min_price: '',
     max_price: '',
@@ -37,8 +38,7 @@ function SearchContent() {
   });
 
   const CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
-  const SUBJECTS = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing'];
-  const LEVELS = ['Class 9', 'Class 10', 'O Levels', 'A Levels', 'MDCAT', 'ECAT'];
+  const LEVELS = ['Kindergarten', 'Primary', 'Secondary', 'Matric', 'Inter', 'BS/MS'];
   const GENDERS = ['Male', 'Female'];
   const MODES = [
     { id: 'online', label: 'Online' },
@@ -46,13 +46,38 @@ function SearchContent() {
     { id: 'tutor_home', label: 'Tutor Home' }
   ];
 
+  // Helper to dynamically get subjects by level
+  const getSubjectOptions = (level) => {
+    if (!level) {
+      // By default when no level selected, show default subjects
+      return ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing'];
+    }
+    switch (level) {
+      case 'Kindergarten':
+      case 'Primary':
+      case 'Secondary':
+        return []; // Disabled
+      case 'Matric':
+        return ['Arts', 'Biology', 'Computer'];
+      case 'Inter':
+        return ['Arts', 'Pre-Engineering', 'Pre-Medical', 'Commerce', 'ICs', 'O Levels'];
+      case 'BS/MS':
+        return ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing', 'Other'];
+      default:
+        return [];
+    }
+  };
+
   const fetchTutors = async (currentFilters) => {
     setLoading(true);
     const supabase = createClient();
     
+    // If subject is 'Other', fetch all tutors for that level and filter client-side for custom subject relevance
+    const querySubject = (currentFilters.subject && currentFilters.subject !== 'Other') ? [currentFilters.subject] : null;
+
     const rpcParams = {
       p_city: currentFilters.city || null,
-      p_subjects: currentFilters.subject ? [currentFilters.subject] : null,
+      p_subjects: querySubject,
       p_levels: currentFilters.level ? [currentFilters.level] : null,
       p_gender: currentFilters.gender || null,
       p_verified: currentFilters.verified || null,
@@ -86,7 +111,20 @@ function SearchContent() {
   }, []);
 
   const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
+    let newFilters = { ...filters, [key]: value };
+    
+    if (key === 'level') {
+      const options = getSubjectOptions(value);
+      if (options.length === 0 || !options.includes(filters.subject)) {
+        newFilters.subject = '';
+        newFilters.custom_subject = '';
+      }
+    }
+    
+    if (key === 'subject' && value !== 'Other') {
+      newFilters.custom_subject = '';
+    }
+
     setFilters(newFilters);
     fetchTutors(newFilters);
   };
@@ -101,15 +139,44 @@ function SearchContent() {
     handleFilterChange('modes', newModes);
   };
 
-  // Client-side text keyword filter
+  // Client-side text keyword and dynamic BS/MS subject relevance filter
   const filteredTutors = tutors.filter(tutor => {
-    if (!searchQuery) return true;
-    const lowerQuery = searchQuery.toLowerCase();
-    return (
-      tutor.full_name.toLowerCase().includes(lowerQuery) ||
-      (tutor.bio && tutor.bio.toLowerCase().includes(lowerQuery)) ||
-      (tutor.about && tutor.about.toLowerCase().includes(lowerQuery))
-    );
+    let matchesQuery = true;
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      matchesQuery = (
+        tutor.full_name.toLowerCase().includes(lowerQuery) ||
+        (tutor.bio && tutor.bio.toLowerCase().includes(lowerQuery)) ||
+        (tutor.about && tutor.about.toLowerCase().includes(lowerQuery))
+      );
+    }
+
+    let matchesCustomSubject = true;
+    if (filters.level === 'BS/MS' && filters.subject === 'Other' && filters.custom_subject) {
+      const text = filters.custom_subject.toLowerCase();
+      const isMathRelated = text.includes('algebra') || text.includes('calculus') || text.includes('math') || text.includes('linear') || text.includes('stat');
+      const isPhysicsRelated = text.includes('physic') || text.includes('mechanic') || text.includes('thermo') || text.includes('quantum');
+      const isChemistryRelated = text.includes('chem') || text.includes('organic');
+      
+      const tutorSubjects = tutor.categories?.map(c => c.subject?.toLowerCase()) || [];
+      
+      if (isMathRelated && tutorSubjects.includes('mathematics')) {
+        matchesCustomSubject = true;
+      } else if (isPhysicsRelated && tutorSubjects.includes('physics')) {
+        matchesCustomSubject = true;
+      } else if (isChemistryRelated && tutorSubjects.includes('chemistry')) {
+        matchesCustomSubject = true;
+      } else {
+        // Fallback checks
+        matchesCustomSubject = (
+          tutor.bio?.toLowerCase().includes(text) ||
+          tutor.qualification?.toLowerCase().includes(text) ||
+          tutorSubjects.some(s => s && s.includes(text))
+        );
+      }
+    }
+
+    return matchesQuery && matchesCustomSubject;
   });
 
   const displayedTutors = session ? filteredTutors : filteredTutors.slice(0, 3);
@@ -164,24 +231,6 @@ function SearchContent() {
             <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
           </div>
 
-          {/* Subject Dropdown */}
-          <div style={{ position: 'relative', minWidth: '160px' }}>
-            <BookOpen size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-            <select
-              value={filters.subject}
-              onChange={(e) => handleFilterChange('subject', e.target.value)}
-              style={{
-                width: '100%', height: '40px', paddingLeft: '36px', paddingRight: '12px',
-                borderRadius: '999px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                fontSize: '14px', cursor: 'pointer', outline: 'none', appearance: 'none'
-              }}
-            >
-              <option value="">Any Subject</option>
-              {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
-          </div>
-
           {/* Level Dropdown */}
           <div style={{ position: 'relative', minWidth: '160px' }}>
             <Award size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
@@ -199,6 +248,45 @@ function SearchContent() {
             </select>
             <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
           </div>
+
+          {/* Subject Dropdown */}
+          <div style={{ position: 'relative', minWidth: '160px' }}>
+            <BookOpen size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: ['Kindergarten', 'Primary', 'Secondary'].includes(filters.level) ? 'var(--hairline)' : 'var(--stone)' }} />
+            <select
+              value={filters.subject}
+              disabled={['Kindergarten', 'Primary', 'Secondary'].includes(filters.level)}
+              onChange={(e) => handleFilterChange('subject', e.target.value)}
+              style={{
+                width: '100%', height: '40px', paddingLeft: '36px', paddingRight: '12px',
+                borderRadius: '999px', border: '1px solid var(--hairline-strong)', 
+                backgroundColor: ['Kindergarten', 'Primary', 'Secondary'].includes(filters.level) ? 'var(--surface)' : '#fff',
+                color: ['Kindergarten', 'Primary', 'Secondary'].includes(filters.level) ? 'var(--stone)' : 'var(--ink)',
+                fontSize: '14px', cursor: ['Kindergarten', 'Primary', 'Secondary'].includes(filters.level) ? 'not-allowed' : 'pointer', outline: 'none', appearance: 'none'
+              }}
+            >
+              {['Kindergarten', 'Primary', 'Secondary'].includes(filters.level) ? (
+                <option value="">Subject Disabled</option>
+              ) : (
+                <>
+                  <option value="">Any Subject</option>
+                  {getSubjectOptions(filters.level).map(s => <option key={s} value={s}>{s}</option>)}
+                </>
+              )}
+            </select>
+            <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
+          </div>
+
+          {/* BS/MS Custom Subject Input */}
+          {filters.level === 'BS/MS' && filters.subject === 'Other' && (
+            <div style={{ flex: 1, minWidth: '220px' }}>
+              <Input
+                placeholder="Type BS/MS Subject (e.g. Linear Algebra)"
+                value={filters.custom_subject}
+                onChange={(e) => handleFilterChange('custom_subject', e.target.value)}
+                style={{ height: '40px', fontSize: '14px', border: '1px solid var(--hairline-strong)', borderRadius: '999px', backgroundColor: '#fff' }}
+              />
+            </div>
+          )}
           
           <Button 
             className="mobile-filter-btn" 
@@ -284,22 +372,26 @@ function SearchContent() {
 
           {/* Experience */}
           <div>
-            <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Min Experience (Years)</h3>
-            <select
-              value={filters.min_experience}
-              onChange={(e) => handleFilterChange('min_experience', e.target.value)}
-              style={{
-                width: '100%', height: '36px', paddingLeft: '12px', paddingRight: '12px',
-                borderRadius: '8px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                fontSize: '14px', cursor: 'pointer', outline: 'none'
-              }}
-            >
-              <option value="">Any Experience</option>
-              <option value="1">1+ Years</option>
-              <option value="3">3+ Years</option>
-              <option value="5">5+ Years</option>
-              <option value="10">10+ Years</option>
-            </select>
+            <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Min Experience</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[
+                { value: '', label: 'Any Experience' },
+                { value: '1', label: '1+ Years' },
+                { value: '3', label: '3+ Years' },
+                { value: '5', label: '5+ Years' },
+                { value: '10', label: '10+ Years' },
+              ].map((exp) => (
+                <label key={exp.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={filters.min_experience === exp.value}
+                    onChange={() => handleFilterChange('min_experience', exp.value)}
+                    style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                  />
+                  {exp.label}
+                </label>
+              ))}
+            </div>
           </div>
 
           <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
