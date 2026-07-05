@@ -12,86 +12,12 @@ import {
 // ============================================================
 // TEACHING CATEGORIES DATA
 // ============================================================
-const TEACHING_CATEGORIES = [
-  {
-    level: 'primary',
-    label: 'Primary Level',
-    desc: 'Class 1 – Class 8',
-    categories: [
-      { key: 'primary_general', label: 'General Primary (Class 1–5)' },
-      { key: 'primary_middle', label: 'Middle School (Class 6–8)' },
-    ]
-  },
-  {
-    level: 'secondary',
-    label: 'Secondary / Matric',
-    desc: 'Class 9–10 (SSC)',
-    categories: [
-      { key: 'secondary_science', label: 'Science Group', sub: ['Physics', 'Chemistry', 'Biology', 'Mathematics', 'Computer Science'] },
-      { key: 'secondary_arts', label: 'Arts Group', sub: ['Urdu', 'English', 'Islamiat', 'Pakistan Studies', 'History'] },
-    ]
-  },
-  {
-    level: 'inter',
-    label: 'Intermediate / FSc / FA',
-    desc: 'Class 11–12 (HSSC)',
-    categories: [
-      { key: 'inter_pre_eng', label: 'Pre-Engineering (Maths, Physics, Chemistry)' },
-      { key: 'inter_pre_med', label: 'Pre-Medical (Biology, Physics, Chemistry)' },
-      { key: 'inter_ics', label: 'ICS – Computer Science' },
-      { key: 'inter_arts', label: 'FA – Arts' },
-      { key: 'inter_commerce', label: 'I.Com – Commerce' },
-    ]
-  },
-  {
-    level: 'cambridge',
-    label: 'Cambridge (O / A Levels)',
-    desc: 'CAIE Curriculum',
-    categories: [
-      { key: 'cambridge_o_level', label: 'O Levels', sub: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer Science', 'Economics'] },
-      { key: 'cambridge_a_level', label: 'A Levels', sub: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Economics', 'Accounting', 'Psychology'] },
-    ]
-  },
-  {
-    level: 'bs_ms',
-    label: 'BS / MS University',
-    desc: 'Undergraduate & Postgraduate',
-    categories: [
-      { key: 'bs_engineering', label: 'Engineering (EE, CS, ME, Civil)' },
-      { key: 'bs_medical', label: 'Medical / MBBS Sciences' },
-      { key: 'bs_cs_it', label: 'CS & IT' },
-      { key: 'bs_business', label: 'Business & Commerce' },
-      { key: 'bs_social', label: 'Social Sciences & Arts' },
-    ]
-  },
-  {
-    level: 'entry_test',
-    label: 'Entry Tests',
-    desc: 'Competitive exam preparation',
-    categories: [
-      { key: 'mdcat', label: 'MDCAT (Medical)' },
-      { key: 'ecat', label: 'ECAT (Engineering)' },
-      { key: 'net', label: 'NET (NUST)' },
-      { key: 'nat', label: 'NAT (NTS)' },
-      { key: 'gat', label: 'GAT (NTS Graduate)' },
-      { key: 'hat', label: 'HAT (HEC)' },
-      { key: 'gre', label: 'GRE / GMAT' },
-      { key: 'issb', label: 'ISSB (Armed Forces)' },
-      { key: 'sat', label: 'SAT / ACT' },
-    ]
-  },
-  {
-    level: 'consultancy',
-    label: 'General Consultancy',
-    desc: 'Counselling & guidance',
-    categories: [
-      { key: 'career_counselling', label: 'Career & Study Abroad Counselling' },
-      { key: 'university_apps', label: 'University Application Guidance' },
-      { key: 'language_english', label: 'English Language (IELTS / TOEFL / Spoken)' },
-      { key: 'quran_islamic', label: 'Quran / Islamic Studies' },
-    ]
-  },
-];
+const RANGE_LEVELS = ['Kindergarten', 'Primary', 'Secondary', 'Matric', 'Inter', 'BS/MS'];
+const LEVEL_SUBJECTS = {
+  'Matric': ['Arts', 'Biology', 'Computer'],
+  'Inter': ['Arts', 'Pre-Engineering', 'Pre-Medical', 'Commerce', 'ICs', 'O Levels'],
+  'BS/MS': ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing', 'Other']
+};
 
 const LANGUAGES = ['English', 'Urdu', 'Punjabi', 'Sindhi', 'Pashto', 'Balochi', 'Saraiki', 'Arabic', 'French'];
 const PAKISTANI_CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
@@ -240,8 +166,10 @@ export default function TutorOnboarding() {
   const [degree, setDegree] = useState(null);
   const [certificates, setCertificates] = useState([]);
 
-  // Step 3: Teaching Categories
-  const [selectedCategories, setSelectedCategories] = useState({});
+  // Step 3: Teaching Categories (Range Slider indices & checked subjects)
+  const [startLevelIdx, setStartLevelIdx] = useState(0);
+  const [endLevelIdx, setEndLevelIdx] = useState(5);
+  const [selectedSubjectsByLevel, setSelectedSubjectsByLevel] = useState({});
 
   // Step 4: Languages
   const [selectedLanguages, setSelectedLanguages] = useState([]);
@@ -296,6 +224,28 @@ export default function TutorOnboarding() {
         }
         if (profile.onboarding_step) setStep(Math.max(1, profile.onboarding_step));
       }
+
+      // Load existing tutor categories
+      const { data: dbCats } = await supabase.from('tutor_categories').select('*').eq('tutor_id', u.id);
+      if (dbCats && dbCats.length > 0) {
+        const activeLevels = dbCats.map(c => c.level);
+        const indexes = activeLevels.map(lvl => RANGE_LEVELS.indexOf(lvl)).filter(idx => idx !== -1);
+        if (indexes.length > 0) {
+          const minIdx = Math.min(...indexes);
+          const maxIdx = Math.max(...indexes);
+          setStartLevelIdx(minIdx);
+          setEndLevelIdx(maxIdx);
+        }
+        
+        const subMap = {};
+        dbCats.forEach(row => {
+          if (row.subject) {
+            if (!subMap[row.level]) subMap[row.level] = [];
+            subMap[row.level].push(row.subject);
+          }
+        });
+        setSelectedSubjectsByLevel(subMap);
+      }
     };
     init();
   }, [router]);
@@ -341,16 +291,49 @@ export default function TutorOnboarding() {
       }
 
       if (step === 3) {
-        // Save selected categories to tutor_categories table
-        const selectedKeys = Object.entries(selectedCategories).filter(([, v]) => v).map(([k]) => k);
-        if (selectedKeys.length > 0) {
-          await supabase.from('tutor_categories').delete().eq('tutor_id', user.id);
-          const rows = selectedKeys.map(key => {
-            const group = TEACHING_CATEGORIES.find(g => g.categories.some(c => c.key === key));
-            const cat = group?.categories.find(c => c.key === key);
-            return { tutor_id: user.id, level: group?.level || key, category: cat?.label || key };
-          });
-          await supabase.from('tutor_categories').insert(rows);
+        // Clear all previous categories for the tutor
+        await supabase.from('tutor_categories').delete().eq('tutor_id', user.id);
+        
+        const rows = [];
+        // Loop through levels in range (start to end inclusive)
+        for (let i = startLevelIdx; i <= endLevelIdx; i++) {
+          const levelName = RANGE_LEVELS[i];
+          const hasSubjects = ['Matric', 'Inter', 'BS/MS'].includes(levelName);
+          
+          if (hasSubjects) {
+            const subs = selectedSubjectsByLevel[levelName] || [];
+            if (subs.length > 0) {
+              subs.forEach(subj => {
+                rows.push({
+                  tutor_id: user.id,
+                  level: levelName,
+                  category: 'Academic',
+                  subject: subj
+                });
+              });
+            } else {
+              // Level selected but no subjects checked
+              rows.push({
+                tutor_id: user.id,
+                level: levelName,
+                category: 'Academic',
+                subject: null
+              });
+            }
+          } else {
+            // For levels without subjects (KG, Primary, Secondary)
+            rows.push({
+              tutor_id: user.id,
+              level: levelName,
+              category: 'Academic',
+              subject: null
+            });
+          }
+        }
+        
+        if (rows.length > 0) {
+          const { error: insertErr } = await supabase.from('tutor_categories').insert(rows);
+          if (insertErr) throw insertErr;
         }
       }
 
@@ -441,8 +424,14 @@ export default function TutorOnboarding() {
     else { setStep(ns); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   };
 
-  const toggleCategory = (key) => {
-    setSelectedCategories(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleSubject = (level, subject) => {
+    setSelectedSubjectsByLevel(prev => {
+      const currentList = prev[level] || [];
+      const newList = currentList.includes(subject)
+        ? currentList.filter(s => s !== subject)
+        : [...currentList, subject];
+      return { ...prev, [level]: newList };
+    });
   };
 
   const toggleLanguage = (lang) => {
@@ -539,16 +528,118 @@ export default function TutorOnboarding() {
       // ------- STEP 3: Teaching Categories -------
       case 3:
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <StepHeader step={3} title="Teaching Categories" desc="Select all the levels and programs you can teach. This is used to match you with the right parents and students." />
-            <div style={{ backgroundColor: 'var(--surface-soft)', borderRadius: 'var(--rounded-md)', padding: '10px 14px', fontSize: '13px', color: 'var(--steel)' }}>
-              Click a category to expand it and check which programs you teach.
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <StepHeader step={3} title="Teaching Categories" desc="Define your target teaching range and check which subjects you teach at each level." />
+            
+            {/* Range Selector Controls */}
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', backgroundColor: 'var(--surface-soft)', padding: '16px', borderRadius: 'var(--rounded-md)', border: '1px solid var(--hairline)' }}>
+              <div style={{ flex: 1, minWidth: '140px' }}>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '6px', color: 'var(--ink)' }}>Start Level (Minimum)</label>
+                <select
+                  value={startLevelIdx}
+                  onChange={(e) => {
+                    const idx = parseInt(e.target.value);
+                    setStartLevelIdx(idx);
+                    if (idx > endLevelIdx) setEndLevelIdx(idx);
+                  }}
+                  style={{ width: '100%', height: '36px', padding: '0 8px', borderRadius: '6px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff', fontSize: '14px' }}
+                >
+                  {RANGE_LEVELS.map((lvl, index) => <option key={lvl} value={index}>{lvl}</option>)}
+                </select>
+              </div>
+
+              <div style={{ flex: 1, minWidth: '140px' }}>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '6px', color: 'var(--ink)' }}>End Level (Maximum)</label>
+                <select
+                  value={endLevelIdx}
+                  onChange={(e) => {
+                    const idx = parseInt(e.target.value);
+                    if (idx >= startLevelIdx) setEndLevelIdx(idx);
+                  }}
+                  style={{ width: '100%', height: '36px', padding: '0 8px', borderRadius: '6px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff', fontSize: '14px' }}
+                >
+                  {RANGE_LEVELS.map((lvl, index) => (
+                    <option key={lvl} value={index} disabled={index < startLevelIdx}>{lvl}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            {TEACHING_CATEGORIES.map(group => (
-              <CategorySection key={group.level} group={group} selected={selectedCategories} onToggle={toggleCategory} />
-            ))}
-            <div style={{ fontSize: '13px', color: 'var(--stone)', textAlign: 'center', marginTop: '4px' }}>
-              {Object.values(selectedCategories).filter(Boolean).length} categories selected
+
+            {/* Visual Slider Line */}
+            <div style={{ position: 'relative', padding: '24px 12px 12px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {/* Backing grey line */}
+              <div style={{ position: 'absolute', left: '16px', right: '16px', height: '4px', backgroundColor: 'var(--hairline-strong)', zIndex: 1, borderRadius: '2px' }} />
+              {/* Highlighted green segment */}
+              <div style={{
+                position: 'absolute',
+                left: `${(startLevelIdx / 5) * 100}%`,
+                width: `${((endLevelIdx - startLevelIdx) / 5) * 100}%`,
+                height: '4px',
+                backgroundColor: 'var(--brand-green-dark)',
+                zIndex: 2,
+                borderRadius: '2px',
+                transition: 'all 0.15s ease'
+              }} />
+              {/* Render dots */}
+              {RANGE_LEVELS.map((lvl, index) => {
+                const isActive = index >= startLevelIdx && index <= endLevelIdx;
+                return (
+                  <div key={lvl} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 3, position: 'relative' }}>
+                    <div style={{
+                      width: '16px', height: '16px', borderRadius: '50%',
+                      backgroundColor: isActive ? 'var(--brand-green-dark)' : 'var(--canvas)',
+                      border: isActive ? '2px solid var(--brand-green-dark)' : '2px solid var(--steel)',
+                      boxShadow: isActive ? '0 0 8px rgba(0, 237, 100, 0.4)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }} />
+                    <span style={{ fontSize: '11px', fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--brand-green-dark)' : 'var(--stone)', marginTop: '6px' }}>{lvl}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Columns of checked subjects for active levels */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+              {(() => {
+                const cols = [];
+                for (let i = startLevelIdx; i <= endLevelIdx; i++) {
+                  const levelName = RANGE_LEVELS[i];
+                  const hasSubjects = ['Matric', 'Inter', 'BS/MS'].includes(levelName);
+                  const subjects = LEVEL_SUBJECTS[levelName] || [];
+                  const selectedSubs = selectedSubjectsByLevel[levelName] || [];
+
+                  cols.push(
+                    <div key={levelName} style={{ border: '1px solid var(--hairline-strong)', borderRadius: 'var(--rounded-md)', padding: '16px', backgroundColor: 'var(--canvas)' }}>
+                      <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: 700, color: 'var(--ink)', borderBottom: '1px solid var(--hairline)', paddingBottom: '6px' }}>
+                        {levelName} Grade
+                      </h4>
+                      {hasSubjects ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
+                          {subjects.map(subj => {
+                            const isChecked = selectedSubs.includes(subj);
+                            return (
+                              <label key={subj} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => toggleSubject(levelName, subj)}
+                                  style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                                />
+                                {subj}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '13px', color: 'var(--stone)', fontStyle: 'italic' }}>
+                          General grade curriculum (no specific subject selection required).
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return cols;
+              })()}
             </div>
           </div>
         );
