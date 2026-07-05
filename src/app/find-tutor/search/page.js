@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { 
   Search, MapPin, Star, ShieldCheck, Lock, ChevronDown, 
-  Award, BookOpen, Zap, SlidersHorizontal, User
+  Award, BookOpen, Zap, SlidersHorizontal, User, ArrowUpDown
 } from 'lucide-react';
 import { createClient } from '../../../utils/supabase/client';
 
@@ -24,6 +24,7 @@ function SearchContent() {
   // Filters State
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
+  const [sortBy, setSortBy] = useState('default');
   const [filters, setFilters] = useState({
     city: initialCity,
     subjects: [], // Array for multiple subjects selection
@@ -267,7 +268,17 @@ function SearchContent() {
     return true;
   });
 
-  const displayedTutors = session ? filteredTutors : filteredTutors.slice(0, 3);
+  const sortedTutors = [...filteredTutors].sort((a, b) => {
+    if (sortBy === 'price_asc') {
+      return (a.hourly_rate || 0) - (b.hourly_rate || 0);
+    }
+    if (sortBy === 'price_desc') {
+      return (b.hourly_rate || 0) - (a.hourly_rate || 0);
+    }
+    return 0; // Default RPC sort order
+  });
+
+  const displayedTutors = session ? sortedTutors : sortedTutors.slice(0, 3);
   const showAuthOverlay = !session && filteredTutors.length > 3;
 
   return (
@@ -428,25 +439,59 @@ function SearchContent() {
 
           <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
           
-          {/* Price Range */}
+          {/* Price Range (Sliders from 1000 to 50000) */}
           <div>
-            <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Price Range (Rs/hr)</h3>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <Input 
-                type="number" 
-                placeholder="Min" 
-                value={filters.min_price} 
-                onChange={(e) => handleFilterChange('min_price', e.target.value)} 
-                style={{ height: '36px', fontSize: '14px' }} 
-              />
-              <span style={{ color: 'var(--stone)' }}>-</span>
-              <Input 
-                type="number" 
-                placeholder="Max" 
-                value={filters.max_price} 
-                onChange={(e) => handleFilterChange('max_price', e.target.value)} 
-                style={{ height: '36px', fontSize: '14px' }} 
-              />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Price Range</h3>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-green-dark)' }}>
+                Rs {(filters.min_price || 1000).toLocaleString()} - {(filters.max_price || 50000).toLocaleString()}
+              </span>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--stone)' }}>
+                  <span>Min: Rs {(filters.min_price || 1000).toLocaleString()}/hr</span>
+                  <span>1,000</span>
+                </div>
+                <input 
+                  type="range"
+                  min="1000"
+                  max="50000"
+                  step="500"
+                  value={filters.min_price || 1000}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    handleFilterChange('min_price', val);
+                    if (filters.max_price && parseInt(val) > parseInt(filters.max_price)) {
+                      handleFilterChange('max_price', val);
+                    }
+                  }}
+                  style={{ width: '100%', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--stone)' }}>
+                  <span>Max: Rs {(filters.max_price || 50000).toLocaleString()}/hr</span>
+                  <span>50,000</span>
+                </div>
+                <input 
+                  type="range"
+                  min="1000"
+                  max="50000"
+                  step="500"
+                  value={filters.max_price || 50000}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    handleFilterChange('max_price', val);
+                    if (filters.min_price && parseInt(val) < parseInt(filters.min_price)) {
+                      handleFilterChange('min_price', val);
+                    }
+                  }}
+                  style={{ width: '100%', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                />
+              </div>
             </div>
           </div>
 
@@ -536,10 +581,33 @@ function SearchContent() {
         {/* ─── MAIN CONTENT: RESULTS ─── */}
         <div style={{ flex: 1, position: 'relative' }}>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)', margin: 0 }}>
               {loading ? 'Searching...' : `${filteredTutors.length} Tutors Found`}
             </h2>
+            {/* Funnel sort selector */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ArrowUpDown size={16} color="var(--steel)" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--hairline-strong)',
+                  backgroundColor: '#fff',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: 'var(--slate)',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                <option value="default">Sort: Best Match</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+            </div>
           </div>
 
           {loading ? (
