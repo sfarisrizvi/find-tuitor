@@ -38,6 +38,12 @@ function SearchContent() {
     modes: []
   });
 
+  const LEVEL_SUBJECTS = {
+    'Matric': ['Arts', 'Biology', 'Computer'],
+    'Inter': ['Arts', 'Pre-Engineering', 'Pre-Medical', 'Commerce', 'ICs', 'O Levels'],
+    'BS/MS': ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing', 'Other']
+  };
+
   const CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
   const LEVELS = ['Kindergarten', 'Primary', 'Secondary', 'Matric', 'Inter', 'BS/MS'];
   const GENDERS = ['Male', 'Female'];
@@ -79,11 +85,6 @@ function SearchContent() {
   const fetchTutors = async (currentFilters) => {
     setLoading(true);
     const supabase = createClient();
-    
-    // If subjects array includes 'Other', fetch all tutors for that level and filter client-side for custom subject relevance
-    const querySubject = (currentFilters.subjects && currentFilters.subjects.length > 0)
-      ? currentFilters.subjects.filter(s => s !== 'Other')
-      : null;
 
     // Resolve min experience threshold from selected checkboxes (use the lowest selected minimum threshold)
     const expVals = (currentFilters.min_experience || []).map(e => parseInt(e)).filter(e => !isNaN(e));
@@ -91,7 +92,7 @@ function SearchContent() {
 
     const rpcParams = {
       p_city: currentFilters.city || null,
-      p_subjects: querySubject && querySubject.length > 0 ? querySubject : null,
+      p_subjects: null, // Omit SQL-level subject filtering; handled client-side for nested overlay queries
       p_levels: currentFilters.levels && currentFilters.levels.length > 0 ? currentFilters.levels : null,
       p_gender: currentFilters.gender || null,
       p_verified: currentFilters.verified || null,
@@ -200,7 +201,7 @@ function SearchContent() {
     handleFilterChange('modes', newModes);
   };
 
-  // Client-side text keyword and dynamic BS/MS subject relevance filter
+  // Client-side text keyword and dynamic nested categories filter
   const filteredTutors = tutors.filter(tutor => {
     let matchesQuery = true;
     if (debouncedQuery) {
@@ -212,34 +213,58 @@ function SearchContent() {
       );
     }
 
-    let matchesCustomSubject = true;
-    const levelIsBSMS = filters.levels.includes('BS/MS');
-    const subjectIsOther = filters.subjects.includes('Other');
-    if (levelIsBSMS && subjectIsOther && filters.custom_subject) {
-      const text = filters.custom_subject.toLowerCase();
-      const isMathRelated = text.includes('algebra') || text.includes('calculus') || text.includes('math') || text.includes('linear') || text.includes('stat');
-      const isPhysicsRelated = text.includes('physic') || text.includes('mechanic') || text.includes('thermo') || text.includes('quantum');
-      const isChemistryRelated = text.includes('chem') || text.includes('organic');
-      
-      const tutorSubjects = tutor.categories?.map(c => c.subject?.toLowerCase()) || [];
-      
-      if (isMathRelated && tutorSubjects.includes('mathematics')) {
-        matchesCustomSubject = true;
-      } else if (isPhysicsRelated && tutorSubjects.includes('physics')) {
-        matchesCustomSubject = true;
-      } else if (isChemistryRelated && tutorSubjects.includes('chemistry')) {
-        matchesCustomSubject = true;
-      } else {
-        // Fallback checks
-        matchesCustomSubject = (
-          tutor.bio?.toLowerCase().includes(text) ||
-          tutor.qualification?.toLowerCase().includes(text) ||
-          tutorSubjects.some(s => s && s.includes(text))
+    if (!matchesQuery) return false;
+
+    // Nested Levels/Subjects Filter Logic
+    if (filters.levels.length > 0) {
+      const matchesAnyCheckedLevel = filters.levels.some(lvl => {
+        const teachesLevel = tutor.categories?.some(c => c.level === lvl);
+        if (!teachesLevel) return false;
+
+        const levelSubjects = LEVEL_SUBJECTS[lvl] || [];
+        const checkedSubsForLvl = filters.subjects.filter(s => levelSubjects.includes(s));
+
+        // If no subjects are checked under this level, tutor matches by teaching the level
+        if (checkedSubsForLvl.length === 0) return true;
+
+        // If subjects are checked under this level, tutor must teach at least one of those subjects
+        const teachesAnyCheckedSubject = tutor.categories?.some(c => 
+          c.level === lvl && checkedSubsForLvl.includes(c.subject)
         );
-      }
+
+        // Special custom subject checks for BS/MS 'Other'
+        if (lvl === 'BS/MS' && checkedSubsForLvl.includes('Other') && filters.custom_subject) {
+          const text = filters.custom_subject.toLowerCase().trim();
+          const isMathRelated = text.includes('algebra') || text.includes('calculus') || text.includes('math') || text.includes('linear') || text.includes('stat');
+          const isPhysicsRelated = text.includes('physic') || text.includes('mechanic') || text.includes('thermo') || text.includes('quantum');
+          const isChemistryRelated = text.includes('chem') || text.includes('organic');
+          
+          const tutorSubjects = tutor.categories?.filter(c => c.level === 'BS/MS').map(c => c.subject?.toLowerCase()) || [];
+          
+          let matchesCustom = false;
+          if (isMathRelated && tutorSubjects.includes('mathematics')) {
+            matchesCustom = true;
+          } else if (isPhysicsRelated && tutorSubjects.includes('physics')) {
+            matchesCustom = true;
+          } else if (isChemistryRelated && tutorSubjects.includes('chemistry')) {
+            matchesCustom = true;
+          } else {
+            matchesCustom = (
+              tutor.bio?.toLowerCase().includes(text) ||
+              tutor.qualification?.toLowerCase().includes(text) ||
+              tutorSubjects.some(s => s && s.includes(text))
+            );
+          }
+          if (matchesCustom) return true;
+        }
+
+        return teachesAnyCheckedSubject;
+      });
+
+      if (!matchesAnyCheckedLevel) return false;
     }
 
-    return matchesQuery && matchesCustomSubject;
+    return true;
   });
 
   const displayedTutors = session ? filteredTutors : filteredTutors.slice(0, 3);
@@ -340,85 +365,65 @@ function SearchContent() {
           paddingRight: '8px'
         }} className={`sidebar-filters ${showFilters ? 'open' : ''}`}>
 
-          {/* Grade / Level Filter */}
+          {/* Grade / Level (with Nested Subject Checkboxes) */}
           <div>
             <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Grade / Level</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {LEVELS.map(lvl => {
-                const isChecked = filters.levels.includes(lvl);
+                const isLevelChecked = filters.levels.includes(lvl);
+                const hasSubjects = ['Matric', 'Inter', 'BS/MS'].includes(lvl);
+                const subjects = LEVEL_SUBJECTS[lvl] || [];
+
                 return (
-                  <label key={lvl} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={isChecked}
-                      onChange={() => toggleLevel(lvl)}
-                      style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
-                    />
-                    {lvl}
-                  </label>
+                  <div key={lvl} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {/* Level Selector */}
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={isLevelChecked}
+                        onChange={() => toggleLevel(lvl)}
+                        style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                      />
+                      {lvl}
+                    </label>
+
+                    {/* Indented Subject Checkboxes */}
+                    {isLevelChecked && hasSubjects && (
+                      <div style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '8px', borderLeft: '2px solid var(--hairline-strong)', marginLeft: '7px', marginTop: '2px' }}>
+                        {subjects.map(subj => {
+                          const isSubChecked = filters.subjects.includes(subj);
+                          return (
+                            <div key={subj} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--slate)' }}>
+                                <input 
+                                  type="checkbox" 
+                                  checked={isSubChecked}
+                                  onChange={() => toggleSubjectFilter(subj)}
+                                  style={{ width: '14px', height: '14px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                                />
+                                {subj}
+                              </label>
+
+                              {/* Custom BS/MS Subject Field inline nested */}
+                              {lvl === 'BS/MS' && subj === 'Other' && isSubChecked && (
+                                <div style={{ marginTop: '2px' }}>
+                                  <Input
+                                    placeholder="e.g. Linear Algebra"
+                                    value={filters.custom_subject}
+                                    onChange={(e) => handleFilterChange('custom_subject', e.target.value)}
+                                    style={{ height: '30px', fontSize: '12px', padding: '0 8px', border: '1px solid var(--hairline-strong)', borderRadius: '4px', backgroundColor: '#fff', width: '100%' }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
-          </div>
-
-          <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
-
-          {/* Subjects Filter */}
-          <div>
-            <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Subjects</h3>
-            {(() => {
-              const activeLevels = filters.levels;
-              let subjectOptions = [];
-              if (activeLevels.length === 0) {
-                subjectOptions = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer', 'Urdu', 'AI', 'Digital Marketing'];
-              } else {
-                const unique = new Set();
-                activeLevels.forEach(lvl => {
-                  getSubjectOptions(lvl).forEach(s => unique.add(s));
-                });
-                subjectOptions = Array.from(unique);
-              }
-
-              if (subjectOptions.length === 0) {
-                return (
-                  <div style={{ fontSize: '13px', color: 'var(--stone)', fontStyle: 'italic' }}>
-                    General curriculum (no subject selection required).
-                  </div>
-                );
-              }
-
-              return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {subjectOptions.map(subj => {
-                    const isChecked = filters.subjects.includes(subj);
-                    return (
-                      <div key={subj} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={isChecked}
-                            onChange={() => toggleSubjectFilter(subj)}
-                            style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
-                          />
-                          {subj}
-                        </label>
-                        
-                        {subj === 'Other' && isChecked && (
-                          <div style={{ paddingLeft: '24px', marginTop: '4px' }}>
-                            <Input
-                              placeholder="e.g. Linear Algebra"
-                              value={filters.custom_subject}
-                              onChange={(e) => handleFilterChange('custom_subject', e.target.value)}
-                              style={{ height: '32px', fontSize: '13px', padding: '0 8px', border: '1px solid var(--hairline-strong)', borderRadius: '4px', backgroundColor: '#fff', width: '100%' }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
           </div>
 
           <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
