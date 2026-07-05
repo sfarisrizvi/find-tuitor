@@ -439,41 +439,6 @@ function SearchContent() {
           </div>
 
           <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
-          
-          {/* Price Range removed from sidebar, moved to sort & price funnel dropdown popover */}
-
-          <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
-
-          {/* Experience */}
-          <div>
-            <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Min Experience</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {[
-                { value: '', label: 'Any Experience' },
-                { value: '1', label: '1+ Years' },
-                { value: '3', label: '3+ Years' },
-                { value: '5', label: '5+ Years' },
-                { value: '10', label: '10+ Years' },
-              ].map((exp) => {
-                const isChecked = exp.value === '' 
-                  ? filters.min_experience.length === 0 
-                  : filters.min_experience.includes(exp.value);
-                return (
-                  <label key={exp.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={isChecked}
-                      onChange={() => toggleExperience(exp.value)}
-                      style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
-                    />
-                    {exp.label}
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-
-          <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
 
           {/* Teaching Mode */}
           <div>
@@ -634,12 +599,49 @@ function SearchContent() {
 
                   <div style={{ height: '1px', backgroundColor: 'var(--hairline)' }} />
 
+                  {/* Experience */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Min Experience</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {[
+                        { value: '1', label: '1+ Yrs' },
+                        { value: '3', label: '3+ Yrs' },
+                        { value: '5', label: '5+ Yrs' },
+                        { value: '10', label: '10+ Yrs' },
+                      ].map((exp) => {
+                        const isChecked = filters.min_experience.includes(exp.value);
+                        return (
+                          <button
+                            key={exp.value}
+                            onClick={() => toggleExperience(exp.value)}
+                            style={{
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              border: isChecked ? '1.5px solid var(--brand-green-dark)' : '1px solid var(--hairline-strong)',
+                              backgroundColor: isChecked ? 'var(--brand-green-soft)' : '#fff',
+                              color: isChecked ? 'var(--brand-green-dark)' : 'var(--slate)',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {exp.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={{ height: '1px', backgroundColor: 'var(--hairline)' }} />
+
                   {/* Popover Actions */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <button 
                       onClick={() => {
                         handleFilterChange('min_price', '');
                         handleFilterChange('max_price', '');
+                        handleFilterChange('min_experience', []);
                         setSortBy('default');
                       }}
                       style={{ border: 'none', backgroundColor: 'transparent', color: 'var(--stone)', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}
