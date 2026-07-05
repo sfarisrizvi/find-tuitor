@@ -1,7 +1,7 @@
 const { Client } = require('pg');
 const crypto = require('crypto');
 
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres.qlhcavfyllfcwifxbtbu:2Xy8IkpeFkVOE6qf@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres';
+const DATABASE_URL = process.env.DATABASE_URL
 
 const CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
 const AREAS = {

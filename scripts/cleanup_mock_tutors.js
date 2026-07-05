@@ -1,6 +1,6 @@
 const { Client } = require('pg');
 
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres.qlhcavfyllfcwifxbtbu:2Xy8IkpeFkVOE6qf@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres';
+const DATABASE_URL = process.env.DATABASE_URL;
 
 async function cleanup() {
   const client = new Client({
