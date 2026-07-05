@@ -25,6 +25,7 @@ function SearchContent() {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [sortBy, setSortBy] = useState('default');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [filters, setFilters] = useState({
     city: initialCity,
     subjects: [], // Array for multiple subjects selection
@@ -439,61 +440,7 @@ function SearchContent() {
 
           <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
           
-          {/* Price Range (Sliders from 1000 to 50000) */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Price Range</h3>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-green-dark)' }}>
-                Rs {(filters.min_price || 1000).toLocaleString()} - {(filters.max_price || 50000).toLocaleString()}
-              </span>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--stone)' }}>
-                  <span>Min: Rs {(filters.min_price || 1000).toLocaleString()}/hr</span>
-                  <span>1,000</span>
-                </div>
-                <input 
-                  type="range"
-                  min="1000"
-                  max="50000"
-                  step="500"
-                  value={filters.min_price || 1000}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    handleFilterChange('min_price', val);
-                    if (filters.max_price && parseInt(val) > parseInt(filters.max_price)) {
-                      handleFilterChange('max_price', val);
-                    }
-                  }}
-                  style={{ width: '100%', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--stone)' }}>
-                  <span>Max: Rs {(filters.max_price || 50000).toLocaleString()}/hr</span>
-                  <span>50,000</span>
-                </div>
-                <input 
-                  type="range"
-                  min="1000"
-                  max="50000"
-                  step="500"
-                  value={filters.max_price || 50000}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    handleFilterChange('max_price', val);
-                    if (filters.min_price && parseInt(val) < parseInt(filters.min_price)) {
-                      handleFilterChange('min_price', val);
-                    }
-                  }}
-                  style={{ width: '100%', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
-                />
-              </div>
-            </div>
-          </div>
+          {/* Price Range removed from sidebar, moved to sort & price funnel dropdown popover */}
 
           <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)' }} />
 
@@ -585,28 +532,130 @@ function SearchContent() {
             <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)', margin: 0 }}>
               {loading ? 'Searching...' : `${filteredTutors.length} Tutors Found`}
             </h2>
-            {/* Funnel sort selector */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ArrowUpDown size={16} color="var(--steel)" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--hairline-strong)',
-                  backgroundColor: '#fff',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: 'var(--slate)',
-                  cursor: 'pointer',
-                  outline: 'none'
+            {/* Custom Popover Dropdown under Funnel/Sort trigger */}
+            <div style={{ position: 'relative' }}>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowSortDropdown(!showSortDropdown)}
+                style={{ 
+                  display: 'flex', alignItems: 'center', gap: '8px', height: '36px', 
+                  borderRadius: '8px', border: '1px solid var(--hairline-strong)', 
+                  backgroundColor: showSortDropdown ? 'var(--brand-green-soft)' : '#fff',
+                  color: showSortDropdown ? 'var(--brand-green-dark)' : 'var(--slate)',
+                  fontWeight: 500, fontSize: '13px', padding: '0 12px'
                 }}
               >
-                <option value="default">Sort: Best Match</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-              </select>
+                <SlidersHorizontal size={14} />
+                <span>Sort & Price</span>
+                <ChevronDown size={14} style={{ transform: showSortDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
+              </Button>
+
+              {showSortDropdown && (
+                <div style={{
+                  position: 'absolute', right: 0, top: '44px', width: '280px', 
+                  backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--hairline-strong)',
+                  boxShadow: 'var(--shadow-lg)', padding: '16px', zIndex: 50, display: 'flex', flexDirection: 'column', gap: '16px'
+                }}>
+                  {/* Sorting */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sort By</label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      style={{
+                        width: '100%', height: '36px', padding: '0 8px', borderRadius: '6px',
+                        border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
+                        fontSize: '13px', color: 'var(--slate)', cursor: 'pointer', outline: 'none'
+                      }}
+                    >
+                      <option value="default">Best Match</option>
+                      <option value="price_asc">Price: Low to High</option>
+                      <option value="price_desc">Price: High to Low</option>
+                    </select>
+                  </div>
+
+                  <div style={{ height: '1px', backgroundColor: 'var(--hairline)' }} />
+
+                  {/* Price Range */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Price Range</label>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--brand-green-dark)' }}>
+                        Rs {filters.min_price ? parseInt(filters.min_price).toLocaleString() : '1,000'} - {filters.max_price ? parseInt(filters.max_price).toLocaleString() : '50,000'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--stone)' }}>
+                          <span>Min: Rs {filters.min_price ? parseInt(filters.min_price).toLocaleString() : '1,000'}</span>
+                          <span>1,000</span>
+                        </div>
+                        <input 
+                          type="range"
+                          min="1000"
+                          max="50000"
+                          step="500"
+                          value={filters.min_price || 1000}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleFilterChange('min_price', val);
+                            if (filters.max_price && parseInt(val) > parseInt(filters.max_price)) {
+                              handleFilterChange('max_price', val);
+                            }
+                          }}
+                          style={{ width: '100%', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--stone)' }}>
+                          <span>Max: Rs {filters.max_price ? parseInt(filters.max_price).toLocaleString() : '50,000'}</span>
+                          <span>50,000</span>
+                        </div>
+                        <input 
+                          type="range"
+                          min="1000"
+                          max="50000"
+                          step="500"
+                          value={filters.max_price || 50000}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleFilterChange('max_price', val);
+                            if (filters.min_price && parseInt(val) < parseInt(filters.min_price)) {
+                              handleFilterChange('min_price', val);
+                            }
+                          }}
+                          style={{ width: '100%', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ height: '1px', backgroundColor: 'var(--hairline)' }} />
+
+                  {/* Popover Actions */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <button 
+                      onClick={() => {
+                        handleFilterChange('min_price', '');
+                        handleFilterChange('max_price', '');
+                        setSortBy('default');
+                      }}
+                      style={{ border: 'none', backgroundColor: 'transparent', color: 'var(--stone)', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Reset All
+                    </button>
+                    <Button 
+                      variant="primary" 
+                      onClick={() => setShowSortDropdown(false)}
+                      style={{ height: '28px', padding: '0 12px', fontSize: '12px', borderRadius: '4px' }}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
