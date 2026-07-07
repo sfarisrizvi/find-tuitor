@@ -65,11 +65,10 @@ export function Navbar() {
 
     const initUser = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const u = session?.user || null;
-        setUser(u);
-        if (u) {
-          await loadProfile(u);
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+        if (user) {
+          await loadProfile(user);
         }
       } catch (err) {
         console.error('Error initializing user in navbar:', err);
@@ -96,11 +95,14 @@ export function Navbar() {
   const handleSignOut = async () => {
     try {
       const supabase = createClient();
-      await supabase.auth.signOut();
+      // Do not await signOut as it can sometimes hang the browser if local storage locks
+      supabase.auth.signOut();
       await fetch('/api/auth/signout', { method: 'POST' });
     } catch (err) {
       console.error('Error during signout:', err);
     }
+    
+    // Force redirect and reload to clear state
     window.location.href = '/';
   };
 

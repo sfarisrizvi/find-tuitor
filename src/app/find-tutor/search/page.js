@@ -82,35 +82,43 @@ function SearchContent() {
   };
 
   const fetchTutors = async (currentFilters) => {
-    setLoading(true);
-    const supabase = createClient();
+    try {
+      setLoading(true);
+      const supabase = createClient();
 
-    // Resolve min experience threshold from selected checkboxes (use the lowest selected minimum threshold)
-    const expVals = (currentFilters.min_experience || []).map(e => parseInt(e)).filter(e => !isNaN(e));
-    const resolvedMinExp = expVals.length > 0 ? Math.min(...expVals) : null;
+      // Resolve min experience threshold from selected checkboxes
+      const expVals = (currentFilters.min_experience || []).map(e => parseInt(e)).filter(e => !isNaN(e));
+      const resolvedMinExp = expVals.length > 0 ? Math.min(...expVals) : null;
 
-    const rpcParams = {
-      p_city: currentFilters.city || null,
-      p_subjects: null, // Omit SQL-level subject filtering; handled client-side for nested overlay queries
-      p_levels: currentFilters.levels && currentFilters.levels.length > 0 ? currentFilters.levels : null,
-      p_gender: currentFilters.gender || null,
-      p_verified: currentFilters.verified || null,
-      p_immediate_hiring: currentFilters.immediate_hiring || null,
-      p_min_price: currentFilters.min_price ? parseFloat(currentFilters.min_price) : null,
-      p_max_price: currentFilters.max_price ? parseFloat(currentFilters.max_price) : null,
-      p_min_experience: resolvedMinExp,
-      p_modes: currentFilters.modes.length > 0 ? currentFilters.modes : null
-    };
+      const rpcParams = {
+        p_city: currentFilters.city || null,
+        p_subjects: null,
+        p_levels: currentFilters.levels && currentFilters.levels.length > 0 ? currentFilters.levels : null,
+        p_gender: currentFilters.gender || null,
+        p_verified: currentFilters.verified ? true : null,
+        p_immediate_hiring: currentFilters.immediate_hiring ? true : null,
+        p_min_price: currentFilters.min_price ? parseFloat(currentFilters.min_price) : null,
+        p_max_price: currentFilters.max_price ? parseFloat(currentFilters.max_price) : null,
+        p_min_experience: resolvedMinExp,
+        p_modes: currentFilters.modes.length > 0 ? currentFilters.modes : null
+      };
 
-    const { data, error } = await supabase.rpc('search_tutors', rpcParams);
-    
-    if (error) {
-      console.error("Error fetching tutors:", error);
+      console.log('[DEBUG] Calling search_tutors RPC with params:', rpcParams);
+      const { data, error } = await supabase.rpc('search_tutors', rpcParams);
+      
+      if (error) {
+        console.error("Error fetching tutors:", error);
+        setTutors([]);
+      } else {
+        console.log('[DEBUG] Search results loaded:', data?.length);
+        setTutors(data || []);
+      }
+    } catch (err) {
+      console.error("Exception in fetchTutors:", err);
       setTutors([]);
-    } else {
-      setTutors(data || []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -206,10 +214,10 @@ function SearchContent() {
     if (debouncedQuery) {
       const lowerQuery = debouncedQuery.toLowerCase();
       matchesQuery = (
-        tutor.full_name.toLowerCase().includes(lowerQuery) ||
+        (tutor.full_name && tutor.full_name.toLowerCase().includes(lowerQuery)) ||
         (tutor.bio && tutor.bio.toLowerCase().includes(lowerQuery)) ||
         (tutor.about && tutor.about.toLowerCase().includes(lowerQuery)) ||
-        (tutor.categories && tutor.categories.some(c => c.subject && c.subject.toLowerCase().includes(lowerQuery)))
+        (tutor.categories && Array.isArray(tutor.categories) && tutor.categories.some(c => c.subject && c.subject.toLowerCase().includes(lowerQuery)))
       );
     }
 

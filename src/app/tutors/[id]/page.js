@@ -205,35 +205,63 @@ export default function TutorProfile() {
   const [isEditingExperience, setIsEditingExperience] = useState(false);
 
   const loadData = async () => {
-    const supabase = createClient();
-    const { data: { user: u } } = await supabase.auth.getUser();
-    setUser(u);
+    try {
+      console.log('[DEBUG] loadData started, id:', id);
+      const supabase = createClient();
+      console.log('[DEBUG] Supabase client created');
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const u = authUser || null;
+      console.log('[DEBUG] User fetched:', u?.id);
+      setUser(u);
 
-    if (id.startsWith('mock-')) {
-      const found = MOCK_TUTORS.find(t => t.id === id) || MOCK_TUTORS[0];
-      setTutor(found);
-      setExperience(found.experience || []);
-      setCategories(found.categories || []);
-    } else {
-      const { data: profile } = await supabase.from('tutor_profiles').select('*').eq('id', id).single();
-      if (profile) {
-        if (!u) {
-          if (profile.about) {
-            profile.about = profile.about.substring(0, 150) + '...';
-          }
-          profile.phone = '+92 **********';
-          profile.email = '******@******.***';
-          profile.kyc_status = null;
-          profile.kyc_docs = null;
+      if (id.startsWith('mock-')) {
+        await Promise.resolve();
+        console.log('[DEBUG] Loading mock tutor');
+        const found = MOCK_TUTORS.find(t => t.id === id) || MOCK_TUTORS[0];
+        setTutor(found);
+        setExperience(found.experience || []);
+        setCategories(found.categories || []);
+      } else {
+        console.log('[DEBUG] Fetching tutor profile from database');
+        const { data: profile, error: pErr } = await supabase.from('tutor_profiles').select('*').eq('id', id).single();
+        if (pErr) {
+          console.error('[DEBUG] Error fetching tutor profile:', pErr);
         }
-        setTutor(profile);
+        console.log('[DEBUG] Tutor profile fetched:', profile?.id);
+        if (profile) {
+          if (!u) {
+            if (profile.about) {
+              profile.about = profile.about.substring(0, 150) + '...';
+            }
+            profile.phone = '+92 **********';
+            profile.email = '******@******.***';
+            profile.kyc_status = null;
+            profile.kyc_docs = null;
+          }
+          setTutor(profile);
+        }
+        console.log('[DEBUG] Fetching experience from database');
+        const { data: exp, error: eErr } = await supabase.from('tutor_experience').select('*').eq('tutor_id', id).order('sort_order');
+        if (eErr) {
+          console.error('[DEBUG] Error fetching tutor experience:', eErr);
+        }
+        console.log('[DEBUG] Experience fetched:', exp?.length);
+        setExperience(exp || []);
+
+        console.log('[DEBUG] Fetching categories from database');
+        const { data: cats, error: cErr } = await supabase.from('tutor_categories').select('*').eq('tutor_id', id);
+        if (cErr) {
+          console.error('[DEBUG] Error fetching tutor categories:', cErr);
+        }
+        console.log('[DEBUG] Categories fetched:', cats?.length);
+        setCategories(cats || []);
       }
-      const { data: exp } = await supabase.from('tutor_experience').select('*').eq('tutor_id', id).order('sort_order');
-      setExperience(exp || []);
-      const { data: cats } = await supabase.from('tutor_categories').select('*').eq('tutor_id', id);
-      setCategories(cats || []);
+    } catch (err) {
+      console.error('[DEBUG] Error loading data:', err);
+    } finally {
+      console.log('[DEBUG] loadData finished, setting loading to false');
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -1072,48 +1100,88 @@ export default function TutorProfile() {
 
                 } else {
                   /* === PUBLIC VIEW === */
-                  const activeDays = (tutor.availability_days || []);
-                  if (activeDays.length === 0) return null;
+                  const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+                  const activeDays = (tutor.availability_days || []).slice().sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+                  
+                  if (activeDays.length === 0) {
+                    return <div style={{ fontSize: '14px', color: 'var(--stone)', marginTop: '12px' }}>No availability specified.</div>;
+                  }
 
-                  // compute time ranges from slots
-                  const timeRanges = activeDays.map(d => {
-                    const cfg = slots[d];
+                  const getDaySlotsStr = (dayKey) => {
+                    const cfg = slots[dayKey];
+                    // New format
                     if (cfg && typeof cfg === 'object' && cfg.active) {
                       if (cfg.slots && Array.isArray(cfg.slots) && cfg.slots.length > 0) {
-                        return `${formatTime12h(cfg.slots[0].start)} – ${formatTime12h(cfg.slots[cfg.slots.length-1].end)}`;
+                        return cfg.slots.map(s => `${formatTime12h(s.start)} – ${formatTime12h(s.end)}`);
                       }
-                      if (cfg.start && cfg.end) return `${formatTime12h(cfg.start)} – ${formatTime12h(cfg.end)}`;
+                      if (cfg.start && cfg.end) {
+                        return [`${formatTime12h(cfg.start)} – ${formatTime12h(cfg.end)}`];
+                      }
                     }
-                    return null;
-                  }).filter(Boolean);
-
-                  const uniqueRanges = [...new Set(timeRanges)];
+                    // Fallback to old format if this day is in activeDays but no new-format cfg exists
+                    if (activeDays.includes(dayKey)) {
+                      const oldSlots = [];
+                      if (slots.morning) oldSlots.push('7:00 am – 12:00 pm');
+                      if (slots.afternoon) oldSlots.push('12:00 pm – 5:00 pm');
+                      if (slots.evening) oldSlots.push('5:00 pm – 9:00 pm');
+                      if (oldSlots.length > 0) return oldSlots;
+                      return ['Available'];
+                    }
+                    return [];
+                  };
 
                   return (
-                    <div style={{ marginTop: '12px' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--stone)', marginBottom: '8px' }}>AVAILABLE DAYS</div>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: uniqueRanges.length > 0 ? '12px' : 0 }}>
-                        {allDays.map(({ key }) => {
-                          const active = activeDays.includes(key);
+                    <div style={{ marginTop: '16px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+                        {activeDays.map(dayKey => {
+                          const daySlots = getDaySlotsStr(dayKey);
+                          const dayLabel = allDays.find(d => d.key === dayKey)?.label || dayKey;
+                          
                           return (
-                            <span key={key} style={{ width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600, backgroundColor: active ? 'var(--brand-green-dark)' : 'var(--surface-soft)', color: active ? '#fff' : 'var(--stone)' }}>
-                              {DAYS_LABEL[key]}
-                            </span>
+                            <div key={dayKey} style={{ 
+                              backgroundColor: 'var(--canvas)', 
+                              padding: '16px', 
+                              borderRadius: '12px', 
+                              border: '1px solid var(--hairline)',
+                              boxShadow: 'var(--shadow-subtle)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '12px'
+                            }}>
+                              <div style={{ 
+                                fontSize: '15px', 
+                                fontWeight: 600, 
+                                color: 'var(--ink)', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px' 
+                              }}>
+                                <Calendar size={15} style={{ color: 'var(--brand-green-dark)', flexShrink: 0 }} />
+                                {dayLabel}
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {daySlots.map((timeRange, idx) => (
+                                  <div key={idx} style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '6px',
+                                    fontSize: '13px', 
+                                    color: 'var(--charcoal)', 
+                                    backgroundColor: 'var(--surface)', 
+                                    padding: '6px 12px', 
+                                    borderRadius: '8px', 
+                                    fontWeight: 500,
+                                    border: '1px solid var(--hairline)',
+                                  }}>
+                                    <Clock size={12} style={{ color: 'var(--brand-green-dark)', flexShrink: 0 }} />
+                                    <span>{timeRange}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           );
                         })}
                       </div>
-                      {uniqueRanges.length > 0 && (
-                        <div>
-                          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--stone)', marginBottom: '8px' }}>AVAILABLE TIMES</div>
-                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                            {uniqueRanges.map((range, i) => (
-                              <span key={i} style={{ padding: '4px 12px', borderRadius: '999px', fontSize: '12px', backgroundColor: 'var(--brand-green-soft)', color: 'var(--brand-green-dark)', fontWeight: 600 }}>
-                                {range}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 }
@@ -1281,9 +1349,9 @@ export default function TutorProfile() {
             <div style={{ backgroundColor: 'var(--canvas)', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--hairline)', padding: '20px' }}>
               <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700 }}>Why FindTutors.pk?</h4>
               {[
-                { icon: '🔒', text: 'All payments via secure escrow' },
-                { icon: '📍', text: 'GPS-verified tuition check-ins' },
-                { icon: '✅', text: 'CNIC-verified tutors only' },
+                { icon: '💰', text: 'Transparent direct-pay model' },
+                { icon: '🎓', text: '15-minute free video demos' },
+                { icon: '✅', text: 'Credential-vetted educator profiles' },
               ].map(({ icon, text }) => (
                 <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '13px', color: 'var(--slate)' }}>
                   <span>{icon}</span> {text}
