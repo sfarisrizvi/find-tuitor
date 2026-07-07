@@ -15,6 +15,7 @@ const STEP_LABELS = [
 
 export default function TutorDashboard() {
   const [profile, setProfile] = useState(null);
+  const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,12 +27,23 @@ export default function TutorDashboard() {
           window.location.href = '/login';
           return;
         }
+        
+        // Fetch profile
         const { data, error } = await supabase.from('tutor_profiles').select('*').eq('id', user.id).maybeSingle();
         if (!data || error) {
           window.location.href = '/login';
           return;
         }
         setProfile(data);
+
+        // Fetch jobs
+        const { data: dbJobs } = await supabase
+          .from('jobs')
+          .select('*')
+          .eq('status', 'open')
+          .order('created_at', { ascending: false })
+          .limit(3);
+        setJobs(dbJobs || []);
       } catch (err) {
         console.error('Error loading dashboard profile:', err);
         window.location.href = '/login';
@@ -41,6 +53,20 @@ export default function TutorDashboard() {
     };
     loadProfile();
   }, []);
+
+  const getRelativeTime = (dateStr) => {
+    if (!dateStr) return '';
+    const created = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - created;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 60) return `${Math.max(1, diffMins)}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
 
   const onboardingStep = profile?.onboarding_step || 0;
   const isComplete = profile?.onboarding_complete;
@@ -83,7 +109,7 @@ export default function TutorDashboard() {
       )}
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-xl)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-xl)' }}>
         <Card variant="feature-dark">
           <p style={{ fontSize: '14px', color: 'var(--on-dark-muted)', margin: '0 0 8px 0' }}>Available Balance</p>
           <h2 style={{ margin: 0 }}>Rs 45,000</h2>
@@ -94,11 +120,6 @@ export default function TutorDashboard() {
           <h2 style={{ margin: 0, color: 'var(--brand-teal-deep)' }}>3</h2>
           <Link href="/tutor/contracts" style={{ display: 'inline-block', marginTop: '16px', fontSize: '14px', color: 'var(--brand-green-dark)' }}>View Details &rarr;</Link>
         </Card>
-        <Card>
-          <p style={{ fontSize: '14px', color: 'var(--steel)', margin: '0 0 8px 0' }}>Available Connects</p>
-          <h2 style={{ margin: 0, color: 'var(--brand-teal-deep)' }}>24</h2>
-          <p style={{ fontSize: '12px', color: 'var(--stone)', margin: '16px 0 0 0' }}>Resets in 14 days</p>
-        </Card>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
@@ -107,24 +128,41 @@ export default function TutorDashboard() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <h4 style={{ margin: '0 0 8px 0', color: 'var(--brand-green-dark)' }}>Looking for O-Level Physics Tutor</h4>
-              <p style={{ fontSize: '14px', color: 'var(--steel)', margin: '0 0 16px 0' }}>Posted 2 hours ago &bull; Physical (DHA, Lahore)</p>
-            </div>
-            <h4 style={{ margin: 0 }}>Rs 5,000/hr</h4>
-          </div>
-          <p style={{ fontSize: '14px', margin: '0 0 16px 0' }}>
-            Need an experienced tutor for my son who is appearing for exams in May. Must be able to visit our house 3 days a week.
-          </p>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <Badge variant="purple">O-Levels</Badge>
-            <Badge variant="orange">Physics</Badge>
-            <span style={{ fontSize: '14px', color: 'var(--steel)' }}>Costs 2 Connects</span>
-            <Button variant="primary" style={{ marginLeft: 'auto' }}>Submit Proposal</Button>
-          </div>
-        </Card>
+        {jobs.length === 0 ? (
+          <p style={{ fontSize: '14px', color: 'var(--stone)', margin: 0 }}>No recommended jobs available right now.</p>
+        ) : (
+          jobs.map(job => (
+            <Card key={job.id}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 8px 0', color: 'var(--brand-green-dark)' }}>{job.title}</h4>
+                  <p style={{ fontSize: '14px', color: 'var(--steel)', margin: '0 0 16px 0' }}>
+                    Posted {getRelativeTime(job.created_at)} &bull; {job.mode === 'online' ? 'Online' : job.mode === 'home' ? 'Home Visits' : 'Tutor\'s Place'}
+                  </p>
+                </div>
+                <h4 style={{ margin: 0 }}>
+                  Rs {parseInt(job.budget_amount).toLocaleString()}{job.budget_type === 'hourly' ? '/hr' : ' (Fixed)'}
+                </h4>
+              </div>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <span style={{ 
+                  fontSize: '13px', 
+                  color: 'var(--charcoal)', 
+                  backgroundColor: 'var(--surface)', 
+                  padding: '4px 12px', 
+                  borderRadius: '999px', 
+                  fontWeight: 500,
+                  border: '1px solid var(--hairline)',
+                }}>
+                  {job.subject}
+                </span>
+                <Link href="/tutor/jobs" style={{ marginLeft: 'auto' }}>
+                  <Button variant="primary">Submit Proposal</Button>
+                </Link>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
