@@ -142,6 +142,7 @@ export function Navbar() {
           <div className="nav-links">
             {isTutor ? (
               <>
+                <Link href="/tutor/dashboard" style={linkStyle}>Dashboard</Link>
                 <Link href="/tutor/jobs" style={linkStyle}>Find Jobs</Link>
                 <Link href="/tutor/contracts" style={linkStyle}>Active Tuitions</Link>
                 <Link href="/tutor/messages" style={linkStyle}>Messages</Link>
