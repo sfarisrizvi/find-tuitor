@@ -535,16 +535,17 @@ export default function TutorProfile() {
     entry_test: 'Entry Tests', consultancy: 'General Consultancy',
   };
 
-  const levelColors = {
-    'Kindergarten': '#3B82F6',
-    'Primary': '#10B981',
-    'Secondary': '#6366F1',
-    'Matric': '#8B5CF6',
-    'Inter': '#F59E0B',
-    'BS/MS': '#EF4444',
-    primary: '#3B82F6', secondary: '#8B5CF6', inter: '#F59E0B',
-    cambridge: '#10B981', bs_ms: '#EF4444', entry_test: '#EC4899', consultancy: '#6366F1',
-  };
+  const LEVEL_ORDER = [
+    'Kindergarten',
+    'Primary', 'primary',
+    'Secondary', 'secondary',
+    'Matric',
+    'Inter', 'inter',
+    'cambridge',
+    'entry_test',
+    'BS/MS', 'bs_ms',
+    'consultancy'
+  ];
 
 
 
@@ -807,20 +808,34 @@ export default function TutorProfile() {
                   <p style={{ margin: 0, fontSize: '15px', color: 'var(--stone)' }}>No categories added yet.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {Object.entries(catByLevel).map(([level, cats]) => (
-                    <div key={level}>
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--stone)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
-                        {levelLabels[level] || level}
-                      </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {cats.map(cat => (
-                          <span key={cat} style={{ padding: '4px 12px', borderRadius: '999px', fontSize: '13px', fontWeight: 500, backgroundColor: `${levelColors[level]}15`, color: levelColors[level], border: `1px solid ${levelColors[level]}40` }}>
-                            {cat}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                    {Object.entries(catByLevel)
+                      .sort((a, b) => {
+                        const idxA = LEVEL_ORDER.indexOf(a[0]);
+                        const idxB = LEVEL_ORDER.indexOf(b[0]);
+                        return (idxA !== -1 ? idxA : 99) - (idxB !== -1 ? idxB : 99);
+                      })
+                      .map(([level, cats]) => (
+                        <div key={level}>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--stone)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                            {levelLabels[level] || level}
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {cats.map(cat => (
+                              <span key={cat} style={{ 
+                                padding: '6px 14px', 
+                                borderRadius: '999px', 
+                                fontSize: '13px', 
+                                fontWeight: 500, 
+                                backgroundColor: 'var(--surface)', 
+                                color: 'var(--charcoal)', 
+                                border: '1px solid var(--hairline)',
+                              }}>
+                                {cat}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 )}
               </section>
@@ -868,15 +883,15 @@ export default function TutorProfile() {
                     }}>
                       {tutor.about || 'No description provided.'}
                     </div>
-                    {!isUnlocked && tutor.about && (
-                      <div style={{ position: 'absolute', bottom: '-10px', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, paddingTop: '10px' }}>
-                        <Link href="/login" style={{ textDecoration: 'none' }}>
-                          <Button variant="primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', height: '36px', padding: '0 16px', boxShadow: 'var(--shadow-subtle)' }}>
-                            <Lock size={12} /> Log in to read full bio
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
+                     {!isUnlocked && tutor.about && (
+                       <div style={{ position: 'absolute', bottom: '-10px', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, paddingTop: '10px' }}>
+                         <Link href={`/login?next=${encodeURIComponent(`/tutors/${id}`)}`} style={{ textDecoration: 'none' }}>
+                           <Button variant="primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', height: '36px', padding: '0 16px', boxShadow: 'var(--shadow-subtle)' }}>
+                             <Lock size={12} /> Log in to read full bio
+                           </Button>
+                         </Link>
+                       </div>
+                     )}
                   </div>
                 )}
               </section>
@@ -926,11 +941,19 @@ export default function TutorProfile() {
               <h2 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: 700 }}>Teaching Availability</h2>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
                 {(tutor.teaching_modes || ['online']).map(mode => {
-                  const modeInfo = { own_place: { label: 'Own Place 🏠', color: '#3B82F6' }, home_visit: { label: 'Home Visits 🚗', color: '#F59E0B' }, online: { label: 'Online 💻', color: '#10B981' } };
-                  const info = modeInfo[mode] || { label: mode, color: '#6366F1' };
+                  const modeInfo = { own_place: 'Own Place 🏠', home_visit: 'Home Visits 🚗', online: 'Online 💻' };
+                  const label = modeInfo[mode] || mode;
                   return (
-                    <span key={mode} style={{ padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, backgroundColor: `${info.color}15`, color: info.color, border: `1px solid ${info.color}30` }}>
-                      {info.label}
+                    <span key={mode} style={{ 
+                      padding: '6px 14px', 
+                      borderRadius: '999px', 
+                      fontSize: '13px', 
+                      fontWeight: 500, 
+                      backgroundColor: 'var(--surface)', 
+                      color: 'var(--charcoal)', 
+                      border: '1px solid var(--hairline)' 
+                    }}>
+                      {label}
                     </span>
                   );
                 })}
@@ -1336,11 +1359,11 @@ export default function TutorProfile() {
                     </div>
                   </div>
                   
-                  <Link href="/login" style={{ textDecoration: 'none' }}>
-                    <Button variant="primary" style={{ width: '100%', height: '44px', marginBottom: '8px' }}>
-                      Log in to see contact info
-                    </Button>
-                  </Link>
+                   <Link href={`/login?next=${encodeURIComponent(`/tutors/${id}`)}`} style={{ textDecoration: 'none' }}>
+                     <Button variant="primary" style={{ width: '100%', height: '44px', marginBottom: '8px' }}>
+                       Log in to see contact info
+                     </Button>
+                   </Link>
                 </>
               )}
             </div>

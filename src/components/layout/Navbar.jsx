@@ -103,6 +103,20 @@ export function Navbar() {
     window.location.href = '/api/auth/signout';
   };
 
+  const handleSignInClick = (e) => {
+    e.preventDefault();
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      const search = window.location.search;
+      const fullPath = search ? `${path}${search}` : path;
+      if (path === '/login' || path === '/signup' || path === '/register') {
+        window.location.href = '/login';
+      } else {
+        window.location.href = `/login?next=${encodeURIComponent(fullPath)}`;
+      }
+    }
+  };
+
   const isTutor = profile?.role === 'tutor' || user?.user_metadata?.role === 'tutor';
   const isClient = profile?.role === 'client' || user?.user_metadata?.role === 'client';
 
@@ -288,7 +302,7 @@ export function Navbar() {
             </div>
           ) : (
             <>
-              <Link href="/login" style={linkStyle}>Sign In</Link>
+              <Link href="/login" onClick={handleSignInClick} style={linkStyle}>Sign In</Link>
               <Link href="/signup">
                 <Button variant="primary">Join Free</Button>
               </Link>
@@ -340,7 +354,7 @@ export function Navbar() {
               </>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
-                <Link href="/login" onClick={() => setIsOpen(false)} style={{ textAlign: 'center', fontWeight: 600, color: 'var(--ink)' }}>Sign In</Link>
+                <Link href="/login" onClick={(e) => { setIsOpen(false); handleSignInClick(e); }} style={{ textAlign: 'center', fontWeight: 600, color: 'var(--ink)' }}>Sign In</Link>
                 <Link href="/signup" onClick={() => setIsOpen(false)}>
                   <Button variant="primary" style={{ width: '100%' }}>Join Free</Button>
                 </Link>

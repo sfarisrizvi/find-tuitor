@@ -1,13 +1,13 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { createClient } from '../../utils/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 
-export default function Login() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +15,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextParam = searchParams.get('next');
 
   useEffect(() => {
     const checkUser = async () => {
@@ -22,25 +24,12 @@ export default function Login() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const role = session.user.user_metadata?.role;
-        if (role === 'client') {
-          router.replace('/client/dashboard');
-        } else if (role === 'tutor') {
-          router.replace('/tutor/dashboard');
-        } else if (role === 'admin') {
-          router.replace('/admin/dashboard');
-        } else {
-          // Check tables
-          const { data: clientProf } = await supabase.from('client_profiles').select('id').eq('id', session.user.id).maybeSingle();
-          if (clientProf) {
-            router.replace('/client/dashboard');
-          } else {
-            router.replace('/tutor/dashboard');
-          }
-        }
+        const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/')));
+        router.replace(targetUrl);
       }
     };
     checkUser();
-  }, [router]);
+  }, [router, nextParam]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -65,15 +54,8 @@ export default function Login() {
     } else {
       const role = data.user.user_metadata?.role;
       setLoading(false);
-      if (role === 'client') {
-        router.push('/client/dashboard');
-      } else if (role === 'tutor') {
-        router.push('/tutor/dashboard');
-      } else if (role === 'admin') {
-        router.push('/admin/dashboard');
-      } else {
-        router.push('/');
-      }
+      const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/')));
+      router.push(targetUrl);
     }
   };
 
@@ -412,5 +394,17 @@ export default function Login() {
       </div>
 
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--steel)' }}>
+        Loading...
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
