@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '../../../utils/supabase/client';
 import { Button } from '../../../components/ui/Button';
@@ -340,7 +340,7 @@ const ProfileChecklist = ({ totalPercent, checklistItems }) => {
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
-export default function TutorOnboarding() {
+function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const stepParam = searchParams.get('step');
@@ -1926,5 +1926,17 @@ export default function TutorOnboarding() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TutorOnboarding() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--steel)' }}>
+        Loading onboarding...
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
   );
 }
