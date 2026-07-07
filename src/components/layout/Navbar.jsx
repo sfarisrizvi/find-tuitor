@@ -12,12 +12,10 @@ export function Navbar() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
-    const initUser = async () => {
-      const supabase = createClient();
-      const { data: { user: u } } = await supabase.auth.getUser();
-      setUser(u);
-      
-      if (u) {
+    const supabase = createClient();
+
+    const loadProfile = async (u) => {
+      try {
         const role = u.user_metadata?.role;
         const table = role === 'client' ? 'client_profiles' : 'tutor_profiles';
         const { data: prof } = await supabase
@@ -28,9 +26,39 @@ export function Navbar() {
         if (prof) {
           setProfile({ ...prof, role });
         }
+      } catch (err) {
+        console.error('Error loading navbar profile:', err);
       }
     };
+
+    const initUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const u = session?.user || null;
+        setUser(u);
+        if (u) {
+          await loadProfile(u);
+        }
+      } catch (err) {
+        console.error('Error initializing user in navbar:', err);
+      }
+    };
+
     initUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const u = session?.user || null;
+      setUser(u);
+      if (u) {
+        await loadProfile(u);
+      } else {
+        setProfile(null);
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const handleSignOut = async () => {
