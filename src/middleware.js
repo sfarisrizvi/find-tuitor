@@ -46,9 +46,27 @@ export async function middleware(request) {
                             url.pathname.startsWith('/admin')) && 
                            !isPublicRoute;
 
-  if (isProtectedRoute && !user) {
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  if (isProtectedRoute) {
+    if (!user) {
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+
+    const role = user.user_metadata?.role
+    if (role) {
+      if (url.pathname.startsWith('/tutor') && role !== 'tutor') {
+        url.pathname = role === 'client' ? '/client/dashboard' : '/login'
+        return NextResponse.redirect(url)
+      }
+      if (url.pathname.startsWith('/client') && role !== 'client') {
+        url.pathname = role === 'tutor' ? '/tutor/dashboard' : '/login'
+        return NextResponse.redirect(url)
+      }
+      if (url.pathname.startsWith('/admin') && role !== 'admin') {
+        url.pathname = '/login'
+        return NextResponse.redirect(url)
+      }
+    }
   }
 
   return supabaseResponse

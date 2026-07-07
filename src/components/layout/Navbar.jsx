@@ -95,19 +95,16 @@ export function Navbar() {
   const handleSignOut = async () => {
     try {
       const supabase = createClient();
-      // Do not await signOut as it can sometimes hang the browser if local storage locks
       supabase.auth.signOut();
-      await fetch('/api/auth/signout', { method: 'POST' });
     } catch (err) {
       console.error('Error during signout:', err);
     }
-    
-    // Force redirect and reload to clear state
-    window.location.href = '/';
+    // Redirect directly to signout endpoint to clear cookies server-side
+    window.location.href = '/api/auth/signout';
   };
 
-  const isTutor = profile?.role === 'tutor';
-  const isClient = profile?.role === 'client';
+  const isTutor = profile?.role === 'tutor' || user?.user_metadata?.role === 'tutor';
+  const isClient = profile?.role === 'client' || user?.user_metadata?.role === 'client';
 
   const getAvatarUrl = (path) => {
     if (!path) return null;
@@ -261,7 +258,7 @@ export function Navbar() {
                       onClick={() => setShowDropdown(false)}
                       style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--ink)', fontWeight: 500, textDecoration: 'none', cursor: 'pointer', borderBottom: '1px solid var(--hairline-soft)' }}
                     >
-                      View Profile
+                      Profile
                     </Link>
                   )}
                   {isClient && (

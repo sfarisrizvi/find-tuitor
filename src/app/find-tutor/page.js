@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
+import {
   Search, MapPin, Star, ShieldCheck, Lock, ChevronDown
 } from 'lucide-react';
 
@@ -36,7 +36,7 @@ export default function FindTutorLanding() {
 
   return (
     <div style={{ backgroundColor: 'var(--surface)', minHeight: '100vh', overflowX: 'hidden' }}>
-      
+
       {/* Hero Section */}
       <section style={{
         background: 'linear-gradient(135deg, #001E2B 0%, #002e42 100%)',
@@ -66,22 +66,22 @@ export default function FindTutorLanding() {
           }}>
             <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
               <Search size={20} style={{ position: 'absolute', left: '16px', top: '12px', color: 'var(--stone)' }} />
-              <Input 
-                placeholder="Search by name, subject, keywords..." 
+              <Input
+                placeholder="Search by name, subject, keywords..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 style={{ paddingLeft: '48px', border: '1px solid var(--hairline-strong)', color: 'var(--ink)' }}
                 onKeyDown={e => e.key === 'Enter' && handleSearch()}
               />
             </div>
-            
+
             <div style={{ width: '160px', minWidth: '140px' }}>
-              <select 
+              <select
                 className="input-field"
                 value={selectedCity}
                 onChange={e => setSelectedCity(e.target.value)}
                 style={{
-                  width: '100%', height: '44px', padding: '0 12px', borderRadius: 'var(--rounded-md)', 
+                  width: '100%', height: '44px', padding: '0 12px', borderRadius: 'var(--rounded-md)',
                   border: '1px solid var(--hairline-strong)', backgroundColor: 'var(--canvas)', fontSize: '15px', color: 'var(--ink)'
                 }}
               >
@@ -115,8 +115,8 @@ export default function FindTutorLanding() {
             gap: 'var(--spacing-lg)'
           }}>
             {mockTutors.map((tutor) => (
-              <Card 
-                key={tutor.id} 
+              <Card
+                key={tutor.id}
                 style={{
                   border: tutor.featured ? '2px solid var(--brand-green)' : '1px solid var(--hairline-strong)',
                   position: 'relative',
@@ -145,13 +145,13 @@ export default function FindTutorLanding() {
                     Featured
                   </span>
                 )}
-                
+
                 <div>
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '20px' }}>
                     <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden' }}>
-                      <img 
-                        src={`https://ui-avatars.com/api/?name=${tutor.full_name}&background=001E2B&color=00ED64&size=100`} 
-                        alt={tutor.full_name} 
+                      <img
+                        src={`https://ui-avatars.com/api/?name=${tutor.full_name}&background=001E2B&color=00ED64&size=100`}
+                        alt={tutor.full_name}
                         style={{ width: '100%', height: '100%' }}
                       />
                     </div>
@@ -172,9 +172,9 @@ export default function FindTutorLanding() {
                 </div>
 
                 <div>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     borderTop: '1px solid var(--hairline-soft)',
                     paddingTop: '16px',
@@ -195,7 +195,7 @@ export default function FindTutorLanding() {
               </Card>
             ))}
           </div>
-          
+
           <div style={{ textAlign: 'center', marginTop: '40px' }}>
             <Button variant="primary" onClick={handleSearch} style={{ padding: '16px 32px', fontSize: '16px' }}>
               Browse All Tutors
@@ -217,7 +217,7 @@ export default function FindTutorLanding() {
               <div style={{ width: '48px', height: '48px', borderRadius: '8px', backgroundColor: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
                 <ShieldCheck size={24} color="var(--brand-green-dark)" />
               </div>
-              <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px' }}>CNIC & Degree Vetted</h3>
+              <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px' }}>CNIC & Degree Verified</h3>
               <p style={{ color: 'var(--slate)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
                 Every single educator is verified through a NADRA-backed identity check and a manual academic transcript audit before placing their first bid.
               </p>
@@ -257,7 +257,7 @@ export default function FindTutorLanding() {
               <p style={{ color: 'var(--steel)', fontSize: '16px', marginBottom: '32px' }}>
                 Traditional academies take up to 40% of what you pay while unverified classified sites offer zero safety. We created a transparent, verified bridge.
               </p>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'flex', gap: '16px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--brand-green-soft)', color: 'var(--brand-green-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '14px', flexShrink: 0 }}>1</div>
@@ -316,7 +316,7 @@ export default function FindTutorLanding() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {faqs.map((faq, idx) => (
               <div key={idx} style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--hairline-strong)', overflow: 'hidden' }}>
-                <button 
+                <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                   style={{
                     width: '100%', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',

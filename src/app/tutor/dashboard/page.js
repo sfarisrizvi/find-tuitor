@@ -19,12 +19,25 @@ export default function TutorDashboard() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase.from('tutor_profiles').select('*').eq('id', user.id).single();
-      setProfile(data);
-      setLoading(false);
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = '/login';
+          return;
+        }
+        const { data, error } = await supabase.from('tutor_profiles').select('*').eq('id', user.id).maybeSingle();
+        if (!data || error) {
+          window.location.href = '/login';
+          return;
+        }
+        setProfile(data);
+      } catch (err) {
+        console.error('Error loading dashboard profile:', err);
+        window.location.href = '/login';
+      } finally {
+        setLoading(false);
+      }
     };
     loadProfile();
   }, []);
