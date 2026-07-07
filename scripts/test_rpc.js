@@ -1,9 +1,28 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  'https://qlhcavfyllfcwifxbtbu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsaGNhdmZ5bGxmY3dpZnhidGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNTI2NzYsImV4cCI6MjA5ODgyODY3Nn0.a3sF8bnzX5sPDTdpwhzJSX726yZGmrOCFBhFieCH0v0'
-);
+const fs = require('fs');
+const path = require('path');
+
+// Load .env.local
+const envPath = path.join(__dirname, '..', '.env.local');
+if (fs.existsSync(envPath)) {
+  fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+    const [key, ...val] = line.split('=');
+    if (key && !key.startsWith('#')) {
+      process.env[key.trim()] = val.join('=').trim();
+    }
+  });
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const rpcParams = {
   p_city: '',

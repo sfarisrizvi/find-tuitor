@@ -1,7 +1,25 @@
 const { Client } = require('pg');
 
+const fs = require('fs');
+const path = require('path');
+
+// Load .env.local
+const envPath = path.join(__dirname, '..', '.env.local');
+if (fs.existsSync(envPath)) {
+  fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+    const [key, ...val] = line.split('=');
+    if (key && !key.startsWith('#')) {
+      process.env[key.trim()] = val.join('=').trim();
+    }
+  });
+}
+
 async function main() {
-  const connectionString = process.env.DATABASE_URL || 'postgresql://postgres.qlhcavfyllfcwifxbtbu:2Xy8IkpeFkVOE6qf@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres';
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    console.error('DATABASE_URL is not set in environment or .env.local');
+    process.exit(1);
+  }
   const client = new Client({
     connectionString
   });
