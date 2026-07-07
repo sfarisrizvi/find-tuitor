@@ -118,17 +118,7 @@ export function Navbar() {
   };
 
   const renderLinks = () => {
-    if (!user) {
-      return (
-        <>
-          <Link href="/find-tutor" style={linkStyle}>Find Tutors</Link>
-          <Link href="/tutor/jobs" style={linkStyle}>Find Jobs</Link>
-          <Link href="/#how-it-works" style={linkStyle}>How It Works</Link>
-          <Link href="/contact" style={linkStyle}>Contact Us</Link>
-        </>
-      );
-    }
-    if (isTutor) {
+    if (user && isTutor) {
       return (
         <>
           <Link href="/tutor/dashboard" style={linkStyle}>Dashboard</Link>
@@ -138,7 +128,7 @@ export function Navbar() {
         </>
       );
     }
-    if (isClient) {
+    if (user && isClient) {
       return (
         <>
           <Link href="/client/dashboard" style={linkStyle}>Dashboard</Link>
@@ -148,8 +138,15 @@ export function Navbar() {
         </>
       );
     }
-    // Fallback if role is not resolved yet but user is logged in
-    return null;
+    // Default fallback (unsigned-out state or while loading) to prevent flickering/empty nav
+    return (
+      <>
+        <Link href="/find-tutor" style={linkStyle}>Find Tutors</Link>
+        <Link href="/tutor/jobs" style={linkStyle}>Find Jobs</Link>
+        <Link href="/#how-it-works" style={linkStyle}>How It Works</Link>
+        <Link href="/contact" style={linkStyle}>Contact Us</Link>
+      </>
+    );
   };
 
   return (
