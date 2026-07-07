@@ -68,6 +68,7 @@ export function Navbar() {
   };
 
   const isTutor = profile?.role === 'tutor';
+  const isClient = profile?.role === 'client';
 
   const getAvatarUrl = (path) => {
     if (!path) return null;
@@ -116,6 +117,41 @@ export function Navbar() {
     position: 'relative'
   };
 
+  const renderLinks = () => {
+    if (!user) {
+      return (
+        <>
+          <Link href="/find-tutor" style={linkStyle}>Find Tutors</Link>
+          <Link href="/tutor/jobs" style={linkStyle}>Find Jobs</Link>
+          <Link href="/#how-it-works" style={linkStyle}>How It Works</Link>
+          <Link href="/contact" style={linkStyle}>Contact Us</Link>
+        </>
+      );
+    }
+    if (isTutor) {
+      return (
+        <>
+          <Link href="/tutor/dashboard" style={linkStyle}>Dashboard</Link>
+          <Link href="/tutor/contracts" style={linkStyle}>Active Tuitions</Link>
+          <Link href="/tutor/jobs" style={linkStyle}>Find Tuitions</Link>
+          <Link href="/tutor/messages" style={linkStyle}>Messages</Link>
+        </>
+      );
+    }
+    if (isClient) {
+      return (
+        <>
+          <Link href="/client/dashboard" style={linkStyle}>Dashboard</Link>
+          <Link href="/client/jobs" style={linkStyle}>Active Teachers</Link>
+          <Link href="/find-tutor" style={linkStyle}>Find Teacher</Link>
+          <Link href="/client/messages" style={linkStyle}>Messages</Link>
+        </>
+      );
+    }
+    // Fallback if role is not resolved yet but user is logged in
+    return null;
+  };
+
   return (
     <nav style={navStyle}>
       <div className="container" style={containerStyle}>
@@ -140,21 +176,7 @@ export function Navbar() {
           </Link>
           
           <div className="nav-links">
-            {isTutor ? (
-              <>
-                <Link href="/tutor/dashboard" style={linkStyle}>Dashboard</Link>
-                <Link href="/tutor/jobs" style={linkStyle}>Find Jobs</Link>
-                <Link href="/tutor/contracts" style={linkStyle}>Active Tuitions</Link>
-                <Link href="/tutor/messages" style={linkStyle}>Messages</Link>
-              </>
-            ) : (
-              <>
-                <Link href="/find-tutor" style={linkStyle}>Find Tutors</Link>
-                <Link href="/tutor/jobs" style={linkStyle}>Find Jobs</Link>
-                <Link href="/#how-it-works" style={linkStyle}>How It Works</Link>
-                <Link href="/contact" style={linkStyle}>Contact Us</Link>
-              </>
-            )}
+            {renderLinks()}
           </div>
         </div>
 
@@ -206,8 +228,17 @@ export function Navbar() {
                       View Profile
                     </Link>
                   )}
+                  {isClient && (
+                    <Link 
+                      href="/client/dashboard" 
+                      onClick={() => setShowDropdown(false)}
+                      style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--ink)', fontWeight: 500, textDecoration: 'none', cursor: 'pointer', borderBottom: '1px solid var(--hairline-soft)' }}
+                    >
+                      Profile
+                    </Link>
+                  )}
                   <Link 
-                    href={isTutor ? "/tutor/onboarding" : "/settings"} 
+                    href={isTutor ? "/tutor/onboarding" : "/client/onboarding"} 
                     onClick={() => setShowDropdown(false)}
                     style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--ink)', fontWeight: 500, textDecoration: 'none', cursor: 'pointer' }}
                   >
