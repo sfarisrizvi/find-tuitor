@@ -16,13 +16,45 @@ export function Navbar() {
 
     const loadProfile = async (u) => {
       try {
-        const role = u.user_metadata?.role;
-        const table = role === 'client' ? 'client_profiles' : 'tutor_profiles';
-        const { data: prof } = await supabase
-          .from(table)
-          .select('id, full_name, avatar_url')
-          .eq('id', u.id)
-          .single();
+        let role = u.user_metadata?.role;
+        let prof = null;
+
+        if (role) {
+          const table = role === 'client' ? 'client_profiles' : 'tutor_profiles';
+          const { data } = await supabase
+            .from(table)
+            .select('id, full_name, avatar_url')
+            .eq('id', u.id)
+            .maybeSingle();
+          if (data) {
+            prof = data;
+          }
+        }
+
+        if (!prof) {
+          // Check client profiles
+          const { data: clientProf } = await supabase
+            .from('client_profiles')
+            .select('id, full_name, avatar_url')
+            .eq('id', u.id)
+            .maybeSingle();
+          if (clientProf) {
+            prof = clientProf;
+            role = 'client';
+          } else {
+            // Check tutor profiles
+            const { data: tutorProf } = await supabase
+              .from('tutor_profiles')
+              .select('id, full_name, avatar_url')
+              .eq('id', u.id)
+              .maybeSingle();
+            if (tutorProf) {
+              prof = tutorProf;
+              role = 'tutor';
+            }
+          }
+        }
+
         if (prof) {
           setProfile({ ...prof, role });
         }
@@ -62,8 +94,13 @@ export function Navbar() {
   }, []);
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      await fetch('/api/auth/signout', { method: 'POST' });
+    } catch (err) {
+      console.error('Error during signout:', err);
+    }
     window.location.href = '/';
   };
 

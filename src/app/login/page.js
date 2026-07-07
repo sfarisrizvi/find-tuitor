@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { createClient } from '../../utils/supabase/client';
@@ -15,6 +15,32 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const role = session.user.user_metadata?.role;
+        if (role === 'client') {
+          router.replace('/client/dashboard');
+        } else if (role === 'tutor') {
+          router.replace('/tutor/dashboard');
+        } else if (role === 'admin') {
+          router.replace('/admin/dashboard');
+        } else {
+          // Check tables
+          const { data: clientProf } = await supabase.from('client_profiles').select('id').eq('id', session.user.id).maybeSingle();
+          if (clientProf) {
+            router.replace('/client/dashboard');
+          } else {
+            router.replace('/tutor/dashboard');
+          }
+        }
+      }
+    };
+    checkUser();
+  }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
