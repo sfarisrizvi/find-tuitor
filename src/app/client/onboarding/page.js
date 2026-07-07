@@ -20,7 +20,7 @@ export default function ClientOnboarding() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase.from('profiles').select('client_type').eq('id', user.id).single();
+        const { data } = await supabase.from('client_profiles').select('client_type').eq('id', user.id).single();
         if (data) setClientType(data.client_type || 'parent');
       }
       setLoading(false);
@@ -43,7 +43,7 @@ export default function ClientOnboarding() {
 
     if (user) {
       // Update profile
-      await supabase.from('profiles').update({
+      await supabase.from('client_profiles').update({
         city,
         academic_route: clientType === 'student' ? studentRoute : null
       }).eq('id', user.id);

@@ -46,7 +46,7 @@ export default function Register() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from('profiles').update({ phone, city }).eq('id', user.id);
+      await supabase.from('tutor_profiles').upsert({ id: user.id, phone, city, email: user.email, full_name: fullName });
     }
     
     setLoading(false);

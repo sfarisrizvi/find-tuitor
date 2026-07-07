@@ -27,7 +27,7 @@ export default function PostJob() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase.from('profiles').select('client_type').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('client_profiles').select('client_type').eq('id', user.id).single();
         if (profile) setClientType(profile.client_type);
         
         if (profile?.client_type === 'parent') {

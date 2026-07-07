@@ -21,6 +21,12 @@ function SearchContent() {
   const [session, setSession] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
+  const getAvatarUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/teacher-media/${path}`;
+  };
+
   // Filters State
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
@@ -202,7 +208,8 @@ function SearchContent() {
       matchesQuery = (
         tutor.full_name.toLowerCase().includes(lowerQuery) ||
         (tutor.bio && tutor.bio.toLowerCase().includes(lowerQuery)) ||
-        (tutor.about && tutor.about.toLowerCase().includes(lowerQuery))
+        (tutor.about && tutor.about.toLowerCase().includes(lowerQuery)) ||
+        (tutor.categories && tutor.categories.some(c => c.subject && c.subject.toLowerCase().includes(lowerQuery)))
       );
     }
 
@@ -270,7 +277,7 @@ function SearchContent() {
     return 0; // Default RPC sort order
   });
 
-  const displayedTutors = session ? sortedTutors : sortedTutors.slice(0, 3);
+  const displayedTutors = session ? sortedTutors : sortedTutors.slice(0, 4);
   const showAuthOverlay = !session && filteredTutors.length > 3;
 
   return (
@@ -739,7 +746,7 @@ function SearchContent() {
                   <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
                     <div style={{
                       width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'var(--surface)', flexShrink: 0,
-                      backgroundImage: tutor.avatar_url ? `url(${tutor.avatar_url})` : 'none',
+                      backgroundImage: tutor.avatar_url ? `url("${getAvatarUrl(tutor.avatar_url)}")` : 'none',
                       backgroundSize: 'cover', backgroundPosition: 'center',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--hairline)'
                     }}>
@@ -835,7 +842,9 @@ function SearchContent() {
               <div style={{ textAlign: 'center', maxWidth: '400px' }}>
                 <Lock size={32} color="var(--stone)" style={{ margin: '0 auto 16px' }} />
                 <h3 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)', marginBottom: '12px' }}>
-                  {filteredTutors.length - 3} more tutors available
+                  {filteredTutors.length > 4 
+                    ? `${filteredTutors.length - 4} more tutors available` 
+                    : 'Unlock more profiles'}
                 </h3>
                 <p style={{ color: 'var(--steel)', fontSize: '15px', marginBottom: '24px', lineHeight: '1.5' }}>
                   Create a free account or log in to view all matching tutors, see their full profiles, and start messaging.

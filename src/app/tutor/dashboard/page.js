@@ -22,7 +22,7 @@ export default function TutorDashboard() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      const { data } = await supabase.from('tutor_profiles').select('*').eq('id', user.id).single();
       setProfile(data);
       setLoading(false);
     };

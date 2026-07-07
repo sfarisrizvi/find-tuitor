@@ -37,18 +37,13 @@ export default function Login() {
       setError(error.message);
       setLoading(false);
     } else {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .single();
-        
+      const role = data.user.user_metadata?.role;
       setLoading(false);
-      if (profile?.role === 'client') {
+      if (role === 'client') {
         router.push('/client/dashboard');
-      } else if (profile?.role === 'tutor') {
+      } else if (role === 'tutor') {
         router.push('/tutor/dashboard');
-      } else if (profile?.role === 'admin') {
+      } else if (role === 'admin') {
         router.push('/admin/dashboard');
       } else {
         router.push('/');
