@@ -41,7 +41,7 @@ export default function ComingSoon() {
 
         /* Top Small Heading */
         .top-heading {
-          font-size: 14px;
+          font-size: clamp(11px, 1.5vw, 14px);
           font-weight: 600;
           letter-spacing: 0.25em;
           text-transform: uppercase;
@@ -72,7 +72,7 @@ export default function ComingSoon() {
         }
 
         .giant-word {
-          font-size: clamp(4.5rem, 16vw, 12rem);
+          font-size: clamp(2.5rem, 14vw, 10rem);
           font-weight: 900;
           color: var(--brand-teal-deep);
           margin: 0;
@@ -83,7 +83,7 @@ export default function ComingSoon() {
         /* Side Vertical Background Texts */
         .side-text-left, .side-text-right {
           position: absolute;
-          font-size: clamp(3rem, 12vw, 9rem);
+          font-size: clamp(3rem, 10vw, 8rem);
           font-weight: 900;
           color: var(--hairline); /* Very subtle light gray contrast to white background */
           letter-spacing: 0.1em;
@@ -109,15 +109,15 @@ export default function ComingSoon() {
           position: absolute;
           width: 150vw;
           left: -25vw;
-          height: clamp(50px, 6vw, 70px);
+          height: clamp(45px, 5.5vw, 65px);
           background-color: var(--brand-green);
           color: var(--brand-teal-deep);
           display: flex;
           align-items: center;
           overflow: hidden;
           box-shadow: 0 10px 25px rgba(0, 30, 43, 0.15);
-          border-top: 3px solid var(--brand-teal-deep);
-          border-bottom: 3px solid var(--brand-teal-deep);
+          border-top: 2px solid var(--brand-teal-deep);
+          border-bottom: 2px solid var(--brand-teal-deep);
         }
 
         .ribbon-1 {
@@ -131,23 +131,23 @@ export default function ComingSoon() {
           z-index: 5;
         }
 
-        /* Marquee Animation */
+        /* Marquee Animation - Slower Speeds */
         .marquee-track {
           display: flex;
           white-space: nowrap;
           align-items: center;
-          font-size: clamp(14px, 1.8vw, 22px);
+          font-size: clamp(12px, 1.5vw, 20px);
           font-weight: 800;
           letter-spacing: 0.05em;
           text-transform: uppercase;
         }
 
         .scroll-left {
-          animation: marquee-left 25s linear infinite;
+          animation: marquee-left 45s linear infinite;
         }
 
         .scroll-right {
-          animation: marquee-right 25s linear infinite;
+          animation: marquee-right 45s linear infinite;
         }
 
         @keyframes marquee-left {
@@ -162,7 +162,7 @@ export default function ComingSoon() {
 
         /* Bottom Text */
         .bottom-heading {
-          font-size: 13px;
+          font-size: clamp(10px, 1.3vw, 13px);
           font-weight: 600;
           letter-spacing: 0.2em;
           text-transform: uppercase;
@@ -175,7 +175,7 @@ export default function ComingSoon() {
         /* Media queries for smaller screens to adjust layout */
         @media (max-width: 768px) {
           .side-text-left, .side-text-right {
-            opacity: 0.2; /* fade it out more so central text is clear */
+            opacity: 0.15;
           }
           .coming-soon-container {
             padding: 30px 15px;
@@ -185,6 +185,19 @@ export default function ComingSoon() {
           }
           .side-text-right {
             right: 2%;
+          }
+        }
+
+        @media (max-width: 480px) {
+          /* Hide vertical background text on small screens to prevent overlay clutter */
+          .side-text-left, .side-text-right {
+            display: none;
+          }
+          .coming-soon-container {
+            padding: 24px 12px;
+          }
+          .ribbon {
+            height: 44px;
           }
         }
       `}</style>

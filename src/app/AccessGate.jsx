@@ -8,7 +8,7 @@ import { Footer } from '../components/layout/Footer';
 
 function AccessGateContent({ children }) {
   const [hasAccess, setHasAccess] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -21,7 +21,7 @@ function AccessGateContent({ children }) {
         localStorage.setItem('access_allowed', 'true');
         document.cookie = "access_allowed=true; path=/; max-age=31536000; SameSite=Lax";
         setHasAccess(true);
-        setLoading(false);
+        setIsMounted(true);
         return;
       }
 
@@ -29,7 +29,7 @@ function AccessGateContent({ children }) {
       const localAllowed = localStorage.getItem('access_allowed') === 'true';
       if (localAllowed) {
         setHasAccess(true);
-        setLoading(false);
+        setIsMounted(true);
         return;
       }
 
@@ -37,34 +37,23 @@ function AccessGateContent({ children }) {
       const cookieAllowed = document.cookie.split(';').some((item) => item.trim().startsWith('access_allowed=true'));
       if (cookieAllowed) {
         setHasAccess(true);
-        setLoading(false);
+        setIsMounted(true);
         return;
       }
 
-      // Default to false
+      // Access not allowed
       setHasAccess(false);
-      setLoading(false);
+      setIsMounted(true);
     };
 
     checkAccess();
   }, [searchParams]);
 
-  if (loading) {
-    // Return a styled loader container that matches the beige color of the coming soon screen to prevent flashing
-    return (
-      <div style={{
-        backgroundColor: '#FBF3D5',
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{ color: '#17475A', fontFamily: "'Outfit', sans-serif", fontSize: '18px', fontWeight: 600 }}>
-          Loading...
-        </div>
-      </div>
-    );
+  // During SSR/static page compilation and initial client hydration,
+  // we render ComingSoon. This guarantees that no website contents
+  // are compiled into the HTML of index.html or leaked to the user.
+  if (!isMounted) {
+    return <ComingSoon />;
   }
 
   if (!hasAccess) {
@@ -84,20 +73,7 @@ function AccessGateContent({ children }) {
 
 export default function AccessGate({ children }) {
   return (
-    <Suspense fallback={
-      <div style={{
-        backgroundColor: '#FBF3D5',
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{ color: '#17475A', fontFamily: "'Outfit', sans-serif", fontSize: '18px', fontWeight: 600 }}>
-          Loading...
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<ComingSoon />}>
       <AccessGateContent>{children}</AccessGateContent>
     </Suspense>
   );
