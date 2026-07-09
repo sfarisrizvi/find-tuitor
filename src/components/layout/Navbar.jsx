@@ -212,14 +212,7 @@ export function Navbar() {
             alignItems: 'center',
             gap: '8px'
           }}>
-            <div style={{ 
-              width: '12px', 
-              height: '24px', 
-              backgroundColor: 'var(--brand-green-dark)', 
-              borderRadius: '2px',
-              transform: 'skewX(-15deg)'
-            }} />
-            FindTutors.pk
+            <img src="/logo.svg" alt="FindTutors.pk" style={{ height: '32px' }} />
           </Link>
           
           <div className="nav-links">
