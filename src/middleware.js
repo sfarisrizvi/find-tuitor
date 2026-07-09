@@ -27,10 +27,20 @@ export async function middleware(request) {
     }
   )
 
+  const url = request.nextUrl.clone()
+  
+  // 1. Coming Soon bypass check
+  const hasAccessCookie = request.cookies.get('access_allowed')?.value === 'true';
+  const hasAccessParam = url.searchParams.get('access') === 'allowed' || url.searchParams.has('accessallowed');
+  const hasAccess = hasAccessCookie || hasAccessParam;
+
+  if (!hasAccess && url.pathname !== '/coming-soon') {
+    return NextResponse.rewrite(new URL('/coming-soon', request.url));
+  }
+
   // Refresh session if expired
   const { data: { user } } = await supabase.auth.getUser()
 
-  const url = request.nextUrl.clone()
   const isPublicRoute = url.pathname === '/' || 
                         url.pathname === '/login' || 
                         url.pathname === '/register' || 
@@ -39,7 +49,8 @@ export async function middleware(request) {
                         url.pathname === '/find-tutor' || 
                         url.pathname.startsWith('/find-tutor/') || 
                         url.pathname === '/tutor/jobs' || 
-                        url.pathname.startsWith('/tutors/');
+                        url.pathname.startsWith('/tutors/') ||
+                        url.pathname === '/coming-soon';
 
   const isProtectedRoute = (url.pathname.startsWith('/client') || 
                             url.pathname.startsWith('/tutor') || 
@@ -67,6 +78,14 @@ export async function middleware(request) {
         return NextResponse.redirect(url)
       }
     }
+  }
+
+  if (hasAccessParam && !hasAccessCookie) {
+    supabaseResponse.cookies.set('access_allowed', 'true', {
+      path: '/',
+      maxAge: 31536000, // 1 year
+      sameSite: 'lax',
+    });
   }
 
   return supabaseResponse

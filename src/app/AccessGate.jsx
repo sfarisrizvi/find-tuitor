@@ -17,6 +17,8 @@ function AccessGateContent({ children }) {
       const hasParam = searchParams.get('access') === 'allowed' || 
                        searchParams.has('accessallowed');
       
+
+
       if (hasParam) {
         localStorage.setItem('access_allowed', 'true');
         document.cookie = "access_allowed=true; path=/; max-age=31536000; SameSite=Lax";
