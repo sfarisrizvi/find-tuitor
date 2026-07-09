@@ -430,7 +430,7 @@ function OnboardingContent() {
       if (profile) {
         // If onboarding already completed and no specific step requested, redirect to profile
         if (profile.onboarding_complete && !stepParam) {
-          router.push('/tutor/dashboard');
+          router.push(`/tutors/${u.id}`);
           return;
         }
         setBio(profile.bio || '');
@@ -735,7 +735,7 @@ function OnboardingContent() {
     const ns = step + 1;
     await saveStep(ns);
     if (ns > TOTAL_STEPS) {
-      router.push('/tutor/dashboard');
+      router.push(`/tutors/${user?.id}`);
     } else {
       setStep(ns);
       window.scrollTo({ top: 0, behavior: 'smooth' });
