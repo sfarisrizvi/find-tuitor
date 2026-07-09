@@ -3,7 +3,7 @@ import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 
 export const metadata = {
-  title: "Find Tutors | Pakistan's Top Tutors",
+  title: "TutorOnline | Pakistan's Top Tutors",
   description: "Connecting students with Pakistan's best verified educators.",
   icons: {
     icon: '/favicon.png',

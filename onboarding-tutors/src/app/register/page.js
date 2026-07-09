@@ -121,7 +121,7 @@ export default function Register() {
             Join as a Tutor
           </h1>
           <p style={{ color: 'var(--steel)', fontSize: '15px', lineHeight: '1.6', margin: 0 }}>
-            Create your profile, set your rates, and teach students across Pakistan on <strong>FindTutors.pk</strong>
+            Create your profile, set your rates, and teach students across Pakistan on <strong>TutorOnline.pk</strong>
           </p>
         </div>
 
@@ -459,7 +459,7 @@ export default function Register() {
 
           <div style={{ textAlign: 'center', maxWidth: '300px' }}>
             <h2 style={{ fontSize: '20px', fontWeight: 700, lineHeight: '1.4', margin: '0 0 8px 0' }}>
-              Make learning easier and organized with FindTutors.pk
+              Make learning easier and organized with TutorOnline.pk
             </h2>
           </div>
         </div>

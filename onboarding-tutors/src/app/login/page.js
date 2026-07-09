@@ -91,7 +91,7 @@ function LoginForm() {
             Welcome back!
           </h1>
           <p style={{ color: 'var(--steel)', fontSize: '15px', lineHeight: '1.6', margin: 0 }}>
-            Simplify your learning and search verified tutors in your area with <strong>FindTutors.pk</strong>. Get started for free.
+            Simplify your learning and search verified tutors in your area with <strong>TutorOnline.pk</strong>. Get started for free.
           </p>
         </div>
 
@@ -387,7 +387,7 @@ function LoginForm() {
 
           <div style={{ textAlign: 'center', maxWidth: '300px' }}>
             <h2 style={{ fontSize: '20px', fontWeight: 700, lineHeight: '1.4', margin: '0 0 8px 0' }}>
-              Make learning easier and organized with FindTutors.pk
+              Make learning easier and organized with TutorOnline.pk
             </h2>
           </div>
         </div>
