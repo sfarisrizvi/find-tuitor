@@ -59,9 +59,23 @@ export async function middleware(request) {
       url.pathname = '/login'
       return NextResponse.redirect(url)
     }
+    
+    if (user.user_metadata?.role === 'tutor' || url.pathname.startsWith('/tutor')) {
+      const { data: profile } = await supabase.from('tutor_profiles').select('onboarding_complete').eq('id', user.id).maybeSingle();
+      
+      if (profile) {
+        if (!profile.onboarding_complete && url.pathname !== '/tutor/onboarding') {
+          url.pathname = '/tutor/onboarding';
+          return NextResponse.redirect(url);
+        }
+        
+        if (profile.onboarding_complete && url.pathname === '/tutor/onboarding') {
+          url.pathname = '/tutor/dashboard';
+          return NextResponse.redirect(url);
+        }
+      }
+    }
   }
-
-
 
   return supabaseResponse
 }
