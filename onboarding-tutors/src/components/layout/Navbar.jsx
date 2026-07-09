@@ -78,12 +78,12 @@ export function Navbar() {
 
         <div>
           {user ? (
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
+            <Button variant="primary" size="sm" onClick={handleSignOut} style={{ backgroundColor: '#dc2626' }}>
               Sign Out
             </Button>
           ) : (
             <Link href="/login">
-              <Button variant="outline" size="sm">Login</Button>
+              <Button variant="primary" size="sm" style={{ backgroundColor: 'var(--brand-green-dark)' }}>Login</Button>
             </Link>
           )}
         </div>
