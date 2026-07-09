@@ -57,25 +57,36 @@ export default function Register() {
 
     setLoading(true);
 
-    const supabase = createClient();
-    const { error: signupError } = await supabase.auth.signUp({
-      email, password,
-      options: { data: { full_name: fullName, role: 'tutor' } }
-    });
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          phone,
+          city
+        })
+      });
 
-    if (signupError) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      // Successful registration and login
+      router.push('/tutor/onboarding');
+      
+    } catch (error) {
+      console.error('Signup error:', error);
+      setError(error.message);
+    } finally {
       setLoading(false);
-      setError(signupError.message);
-      return;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('tutor_profiles').upsert({ id: user.id, phone, city, email: user.email, full_name: fullName });
-    }
-    
-    setLoading(false);
-    router.push('/tutor/onboarding');
   };
 
   const triggerToast = (msg) => {
