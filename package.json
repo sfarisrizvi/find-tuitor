@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "cd onboarding-tutors && npm install && npm run build && rm -rf ../.next && mkdir -p ../.next/standalone/.next && cp -r .next/standalone/* ../.next/standalone/ && cp -r .next/static ../.next/standalone/.next/static && cp -r public ../.next/standalone/public",
+    "build": "cd onboarding-tutors && npm install && (cp ../../../config/.env .env || cp ../.env.local .env || echo 'no env') && npm run build && rm -rf ../.next && mkdir -p ../.next/standalone/.next && cp -r .next/standalone/* ../.next/standalone/ && cp -r .next/static ../.next/standalone/.next/static && cp -r public ../.next/standalone/public && cp .env ../.next/standalone/.env",
     "start": "next start",
     "lint": "eslint"
   },
