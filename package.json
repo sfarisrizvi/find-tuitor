@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "cd onboarding-tutors && npm install && npm run build && rm -rf ../.next && mkdir -p ../.next/standalone/.next && cp -r .next/standalone/* ../.next/standalone/ && cp -r .next/static ../.next/standalone/.next/static && cp -r public ../.next/standalone/public",
     "start": "next start",
     "lint": "eslint"
   },
