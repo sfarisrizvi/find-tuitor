@@ -3,24 +3,49 @@ import React, { useState } from 'react';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { createClient } from '../../utils/supabase/client';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Mail } from 'lucide-react';
+import { Mail, KeyRound } from 'lucide-react';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [step, setStep] = useState(1); // 1: Email, 2: Code
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const router = useRouter();
 
-  const handleReset = async (e) => {
+  const handleSendCode = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
     setLoading(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/update-password`,
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+
+    setLoading(false);
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setMessage('A 6-digit verification code has been sent to your email.');
+      setStep(2);
+    }
+  };
+
+  const handleVerifyCode = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+    setLoading(true);
+
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: otpCode,
+      type: 'recovery'
     });
 
     setLoading(false);
@@ -28,7 +53,10 @@ export default function ForgotPassword() {
     if (error) {
       setError(error.message);
     } else {
-      setMessage('Password reset link sent! Check your email.');
+      setMessage('Code verified! Redirecting to update password...');
+      setTimeout(() => {
+        router.push('/update-password');
+      }, 1500);
     }
   };
 
@@ -59,7 +87,9 @@ export default function ForgotPassword() {
             Reset Password
           </h1>
           <p style={{ color: 'var(--steel)', fontSize: '15px', lineHeight: '1.6', margin: 0 }}>
-            Enter your email address and we'll send you a link to reset your password.
+            {step === 1 
+              ? "Enter your email address and we'll send you a 6-digit verification code."
+              : `Enter the 6-digit verification code sent to ${email}.`}
           </p>
         </div>
 
@@ -91,49 +121,109 @@ export default function ForgotPassword() {
           </div>
         )}
 
-        <form onSubmit={handleReset} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Email field */}
-          <div style={{ position: 'relative' }}>
-            <Mail size={18} style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-            <Input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
+        {step === 1 ? (
+          <form onSubmit={handleSendCode} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Email field */}
+            <div style={{ position: 'relative' }}>
+              <Mail size={18} style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+              <Input
+                type="email"
+                placeholder="Email address"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                style={{
+                  paddingLeft: '48px',
+                  borderRadius: '999px',
+                  height: '50px',
+                  borderColor: 'var(--hairline-strong)',
+                  fontSize: '15px',
+                }}
+              />
+            </div>
+
+            {/* Send Code Button */}
+            <Button
+              type="submit"
+              disabled={loading}
               style={{
-                paddingLeft: '48px',
-                borderRadius: '999px',
+                backgroundColor: '#000',
+                color: '#fff',
                 height: '50px',
-                borderColor: 'var(--hairline-strong)',
+                borderRadius: '999px',
+                fontWeight: 600,
                 fontSize: '15px',
+                border: 'none',
+                marginTop: '12px',
+                cursor: 'pointer',
               }}
-            />
-          </div>
+            >
+              {loading ? 'Sending code...' : 'Send Verification Code'}
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyCode} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Code field */}
+            <div style={{ position: 'relative' }}>
+              <KeyRound size={18} style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+              <Input
+                type="text"
+                placeholder="6-Digit Code"
+                value={otpCode}
+                onChange={e => setOtpCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                required
+                style={{
+                  paddingLeft: '48px',
+                  borderRadius: '999px',
+                  height: '50px',
+                  borderColor: 'var(--hairline-strong)',
+                  fontSize: '15px',
+                  letterSpacing: '2px',
+                  fontWeight: 600
+                }}
+              />
+            </div>
 
-          {/* Reset Button */}
-          <Button
-            type="submit"
-            disabled={loading}
-            style={{
-              backgroundColor: '#000',
-              color: '#fff',
-              height: '50px',
-              borderRadius: '999px',
-              fontWeight: 600,
-              fontSize: '15px',
-              border: 'none',
-              marginTop: '12px',
-              cursor: 'pointer',
-            }}
-          >
-            {loading ? 'Sending link...' : 'Send Reset Link'}
-          </Button>
+            {/* Verify Code Button */}
+            <Button
+              type="submit"
+              disabled={loading || otpCode.length < 6}
+              style={{
+                backgroundColor: '#000',
+                color: '#fff',
+                height: '50px',
+                borderRadius: '999px',
+                fontWeight: 600,
+                fontSize: '15px',
+                border: 'none',
+                marginTop: '12px',
+                cursor: 'pointer',
+              }}
+            >
+              {loading ? 'Verifying...' : 'Verify Code'}
+            </Button>
+            
+            <button 
+              type="button" 
+              onClick={() => { setStep(1); setOtpCode(''); setMessage(''); setError(''); }}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: 'var(--brand-green-dark)', 
+                fontSize: '13px', 
+                fontWeight: 600, 
+                cursor: 'pointer',
+                marginTop: '8px'
+              }}
+            >
+              Use a different email
+            </button>
+          </form>
+        )}
 
-          <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px', color: 'var(--steel)' }}>
-            Remembered your password? <Link href="/login" style={{ color: 'var(--brand-green-dark)', fontWeight: 600 }}>Back to login</Link>
-          </div>
-        </form>
+        <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px', color: 'var(--steel)' }}>
+          Remembered your password? <Link href="/login" style={{ color: 'var(--brand-green-dark)', fontWeight: 600 }}>Back to login</Link>
+        </div>
       </div>
 
       {/* Right Side: Illustration Panel */}
@@ -173,7 +263,7 @@ export default function ForgotPassword() {
               Secure account recovery
             </h2>
             <p style={{ color: 'var(--steel)', fontSize: '14px', margin: 0 }}>
-              We ensure your data is always safe. Follow the link in your email to securely reset your password.
+              We ensure your data is always safe. Enter the code sent to your email to securely reset your password.
             </p>
           </div>
         </div>
