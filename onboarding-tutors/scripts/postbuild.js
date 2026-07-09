@@ -66,11 +66,18 @@ if (targetDir) {
     copyDirSync(staticSrc, staticDest);
   }
   
-  // Also copy .next/static to _next/static (for Litespeed/Apache interception)
+  // Also copy .next/static to _next/static (for Litespeed/Apache interception at root)
   const underscoreNextDest = path.join(targetDir, '_next', 'static');
   if (fs.existsSync(staticSrc)) {
     console.log(`Copying .next/static folder to ${underscoreNextDest} for static server compatibility...`);
     copyDirSync(staticSrc, underscoreNextDest);
+  }
+
+  // Also copy .next/static to public/_next/static (for Hostinger Litespeed where Document Root is public/)
+  const publicUnderscoreNextDest = path.join(publicDest, '_next', 'static');
+  if (fs.existsSync(staticSrc)) {
+    console.log(`Copying .next/static folder to ${publicUnderscoreNextDest} for Hostinger Document Root compatibility...`);
+    copyDirSync(staticSrc, publicUnderscoreNextDest);
   }
 
   // Also copy .env if it exists
