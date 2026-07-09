@@ -64,6 +64,16 @@ function LoginForm() {
     setTimeout(() => setToastMsg(''), 3000);
   };
 
+  const handleGoogleAuth = async () => {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/callback?next=${nextParam || '/tutor/dashboard'}`
+      }
+    });
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -211,7 +221,7 @@ function LoginForm() {
             {/* Google */}
             <button
               type="button"
-              onClick={() => triggerToast('Google authentication coming soon!')}
+              onClick={handleGoogleAuth}
               style={{
                 width: '48px',
                 height: '48px',

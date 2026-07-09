@@ -79,6 +79,16 @@ export default function Signup() {
     setTimeout(() => setToastMsg(''), 3000);
   };
 
+  const handleGoogleAuth = async () => {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/callback?role=${roleSelection}&next=/client/onboarding`
+      }
+    });
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -321,7 +331,7 @@ export default function Signup() {
           <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
             <button
               type="button"
-              onClick={() => triggerToast('Google signup coming soon!')}
+              onClick={handleGoogleAuth}
               style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none' }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
