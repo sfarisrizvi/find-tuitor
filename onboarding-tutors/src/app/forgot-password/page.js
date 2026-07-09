@@ -34,7 +34,7 @@ export default function ForgotPassword() {
     if (error) {
       setError(error.message);
     } else {
-      setMessage('A 6-digit verification code has been sent to your email.');
+      setMessage('A verification code has been sent to your email.');
       setStep(2);
     }
   };
@@ -92,8 +92,8 @@ export default function ForgotPassword() {
           </h1>
           <p style={{ color: 'var(--steel)', fontSize: '15px', lineHeight: '1.6', margin: 0 }}>
             {step === 1 
-              ? "Enter your email address and we'll send you a 6-digit verification code."
-              : `Enter the 6-digit verification code sent to ${email}.`}
+              ? "Enter your email address and we'll send you a verification code."
+              : `Enter the verification code sent to ${email}.`}
           </p>
         </div>
 
@@ -172,9 +172,9 @@ export default function ForgotPassword() {
               <KeyRound size={18} style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
               <Input
                 type="text"
-                placeholder="6-Digit Code"
+                placeholder="Verification Code"
                 value={otpCode}
-                onChange={e => setOtpCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                onChange={e => setOtpCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
                 required
                 style={{
                   paddingLeft: '48px',
