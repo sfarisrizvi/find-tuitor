@@ -23,7 +23,11 @@ export default function ForgotPassword() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    // Use signInWithOtp as a workaround since resetPasswordForEmail doesn't support 6-digit OTPs
+    const { error } = await supabase.auth.signInWithOtp({ 
+      email,
+      options: { shouldCreateUser: false }
+    });
 
     setLoading(false);
 
@@ -45,7 +49,7 @@ export default function ForgotPassword() {
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token: otpCode,
-      type: 'recovery'
+      type: 'email'
     });
 
     setLoading(false);
