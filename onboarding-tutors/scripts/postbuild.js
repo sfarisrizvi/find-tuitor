@@ -28,14 +28,18 @@ function copyDirSync(src, dest) {
 // Search for the server.js file inside the standalone directory
 function findServerJsDir(dir) {
   if (!fs.existsSync(dir)) return null;
+  
+  // First check if server.js is in the current directory (shallow check)
+  if (fs.existsSync(path.join(dir, 'server.js'))) {
+    return dir;
+  }
+  
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (let entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
+    if (entry.isDirectory() && entry.name !== 'node_modules') {
+      const fullPath = path.join(dir, entry.name);
       const result = findServerJsDir(fullPath);
       if (result) return result;
-    } else if (entry.name === 'server.js') {
-      return dir;
     }
   }
   return null;
@@ -54,7 +58,7 @@ if (targetDir) {
     copyDirSync(publicSrc, publicDest);
   }
 
-  // Copy .next/static folder
+  // Copy .next/static folder to .next/static (for Next.js standalone server)
   const staticSrc = path.join(nextProjectRoot, '.next', 'static');
   const staticDest = path.join(targetDir, '.next', 'static');
   if (fs.existsSync(staticSrc)) {
@@ -62,6 +66,13 @@ if (targetDir) {
     copyDirSync(staticSrc, staticDest);
   }
   
+  // Also copy .next/static to _next/static (for Litespeed/Apache interception)
+  const underscoreNextDest = path.join(targetDir, '_next', 'static');
+  if (fs.existsSync(staticSrc)) {
+    console.log(`Copying .next/static folder to ${underscoreNextDest} for static server compatibility...`);
+    copyDirSync(staticSrc, underscoreNextDest);
+  }
+
   // Also copy .env if it exists
   const envSrc = path.join(nextProjectRoot, '.env');
   const envDest = path.join(targetDir, '.env');
