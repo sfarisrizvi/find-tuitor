@@ -6,6 +6,7 @@ import { createClient } from '../../utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { User, Mail, Lock, Phone, MapPin, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { TutorCarousel } from '../../components/layout/TutorCarousel';
 
 const PAKISTANI_CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
 
@@ -377,97 +378,8 @@ export default function Register() {
         )}
       </div>
 
-      {/* Right Side: Illustration Panel */}
-      <div style={{
-        padding: '32px 32px 32px 0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }} className="nav-links">
-        <div style={{
-          backgroundColor: '#f2f9f5',
-          borderRadius: '24px',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '48px 32px',
-          boxSizing: 'border-box',
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-
-          {/* Custom SVG Illustration */}
-          <div style={{ position: 'relative', width: '100%', maxWidth: '320px', margin: 'auto' }}>
-            <svg viewBox="0 0 300 300" width="100%" height="100%">
-              <circle cx="150" cy="150" r="110" fill="#e1f3e9" />
-              <path d="M 50 150 Q 80 80 150 70 T 250 150" fill="none" stroke="#22c55e" strokeWidth="2" strokeDasharray="5,5" />
-
-              <g id="character">
-                <path d="M 120 220 Q 90 230 110 240 Q 140 240 150 220" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" />
-                <path d="M 180 220 Q 210 230 190 240 Q 160 240 150 220" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" />
-                <path d="M 110 160 C 110 210 190 210 190 160 Z" fill="#22c55e" stroke="#000" strokeWidth="3" />
-                <path d="M 150 165 C 135 165 130 180 150 195 C 170 180 165 165 150 165 Z" fill="#fff" />
-                <path d="M 110 160 Q 80 160 90 185 Q 100 200 115 190" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" />
-                <path d="M 190 160 Q 220 160 210 185 Q 200 200 185 190" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" />
-                <rect x="144" y="125" width="12" height="15" fill="#fbcfe8" stroke="#000" strokeWidth="3" />
-                <circle cx="150" cy="115" r="22" fill="#fbcfe8" stroke="#000" strokeWidth="3" />
-                <path d="M 144 115 Q 147 118 150 115" fill="none" stroke="#000" strokeWidth="2" />
-                <circle cx="143" cy="109" r="2" fill="#000" />
-                <circle cx="157" cy="109" r="2" fill="#000" />
-                <path d="M 128 115 C 128 95 172 95 172 115 C 172 120 165 125 150 120 C 135 125 128 120 128 115 Z" fill="#1e293b" />
-              </g>
-
-              {/* Floating Widget Card */}
-              <foreignObject x="10" y="160" width="120" height="75">
-                <div style={{
-                  backgroundColor: '#fff',
-                  borderRadius: '12px',
-                  padding: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-                  border: '1px solid rgba(0,0,0,0.04)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
-                }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ink)' }}>A-Levels Physics</div>
-                  <div style={{ fontSize: '8px', color: 'var(--stone)' }}>12 Classes</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                    <div style={{ width: '48px', height: '4px', backgroundColor: 'var(--hairline-strong)', borderRadius: '999px', overflow: 'hidden' }}>
-                      <div style={{ width: '84%', height: '100%', backgroundColor: '#22c55e' }} />
-                    </div>
-                    <span style={{ fontSize: '8px', fontWeight: 600 }}>84%</span>
-                  </div>
-                </div>
-              </foreignObject>
-
-              {/* Floating avatars */}
-              <circle cx="250" cy="160" r="16" fill="#fbcfe8" stroke="#000" strokeWidth="1.5" />
-              <path d="M 242 166 Q 250 158 258 166" fill="none" stroke="#000" strokeWidth="1.5" />
-              <circle cx="250" cy="155" r="4" fill="#000" />
-
-              <circle cx="50" cy="90" r="16" fill="#fed7aa" stroke="#000" strokeWidth="1.5" />
-              <path d="M 42 96 Q 50 88 58 96" fill="none" stroke="#000" strokeWidth="1.5" />
-              <circle cx="50" cy="85" r="4" fill="#000" />
-            </svg>
-          </div>
-
-          {/* Slider Dots */}
-          <div style={{ display: 'flex', gap: '6px', margin: '24px 0 16px' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--stone)' }} />
-            <div style={{ width: '16px', height: '6px', borderRadius: '999px', backgroundColor: '#000' }} />
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--stone)' }} />
-          </div>
-
-          <div style={{ textAlign: 'center', maxWidth: '300px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, lineHeight: '1.4', margin: '0 0 8px 0' }}>
-              Make learning easier and organized with TutorOnline.pk
-            </h2>
-          </div>
-        </div>
-      </div>
+      {/* Right Side: Reusable Tutor Carousel */}
+      <TutorCarousel />
 
     </div>
   );
