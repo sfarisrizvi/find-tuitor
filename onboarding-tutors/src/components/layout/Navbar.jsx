@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { Button } from '../ui/Button';
 import { User } from 'lucide-react';
 import { createClient } from '../../utils/supabase/client';
+import { usePathname } from 'next/navigation';
 
 export function Navbar() {
   const [user, setUser] = useState(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const supabase = createClient();
@@ -81,9 +83,13 @@ export function Navbar() {
             <Button variant="primary" size="sm" onClick={handleSignOut} style={{ backgroundColor: '#dc2626', color: '#fff' }}>
               Sign Out
             </Button>
-          ) : (
+          ) : pathname === '/register' ? (
             <Link href="/login">
               <Button variant="primary" size="sm">Login</Button>
+            </Link>
+          ) : (
+            <Link href="/register">
+              <Button variant="primary" size="sm">Register</Button>
             </Link>
           )}
         </div>

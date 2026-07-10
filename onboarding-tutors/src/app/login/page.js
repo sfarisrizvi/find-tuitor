@@ -17,7 +17,7 @@ const TUTOR_SLIDES = [
   },
   {
     image: '/tutors-images/1783.jpg',
-    name: 'Ayesha Mahmood',
+    name: 'Prof. Faisal Mahmood',
     subject: 'O/A-Levels Chemistry Specialist',
     heading: 'Unlocking Student Potential',
     quote: 'I design customized learning journeys that build conceptual clarity and scientific inquiry in young minds.'
@@ -31,7 +31,7 @@ const TUTOR_SLIDES = [
   },
   {
     image: '/tutors-images/56752.jpg',
-    name: 'Zainab Fatima',
+    name: 'Haris Zain',
     subject: 'English Literature & SAT Prep',
     heading: 'Empowering Eloquent Voices',
     quote: 'Critical reading and writing are key life skills. I help students express themselves confidently and score high.'
@@ -135,19 +135,11 @@ function LoginForm() {
 
   return (
     <div style={{
-      height: '90vh',
-      minHeight: '640px',
-      maxHeight: '900px',
-      backgroundColor: '#fff',
+      minHeight: '100vh',
+      backgroundColor: 'var(--canvas)',
       display: 'grid',
       gridTemplateColumns: '1.2fr 1fr',
       fontFamily: 'inherit',
-      width: '100%',
-      maxWidth: '1200px',
-      borderRadius: '24px',
-      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.05)',
-      overflow: 'hidden',
-      border: '1px solid var(--hairline-strong)',
     }} className="grid-2col">
       
       {/* Left Side: Form */}
@@ -511,17 +503,7 @@ export default function Login() {
         Loading...
       </div>
     }>
-      <div style={{
-        minHeight: '100vh',
-        backgroundColor: '#f8fafc',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 24px',
-        boxSizing: 'border-box',
-      }}>
-        <LoginForm />
-      </div>
+      <LoginForm />
     </Suspense>
   );
 }
