@@ -15,12 +15,16 @@ function LoginForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
-  const [lastUsed, setLastUsed] = useState(() => {
+  const [lastUsed, setLastUsed] = useState(null);
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('last_login_method');
+      const stored = localStorage.getItem('last_login_method');
+      if (stored) {
+        setTimeout(() => setLastUsed(stored), 0);
+      }
     }
-    return null;
-  });
+  }, []);
 
   const router = useRouter();
   const searchParams = useSearchParams();
