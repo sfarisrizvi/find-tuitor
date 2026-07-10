@@ -75,17 +75,54 @@ function LoginForm() {
     setTimeout(() => setToastMsg(''), 3000);
   };
 
-  const handleGoogleAuth = async () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('last_login_method', 'google');
-    }
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=${nextParam || '/tutor/dashboard'}`
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+        clearInterval(interval);
+        
+        window.google.accounts.id.initialize({
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+          ux_mode: 'popup',
+          callback: async (response) => {
+            setLoading(true);
+            setError('');
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('last_login_method', 'google');
+            }
+            const supabase = createClient();
+            const { data, error: signInError } = await supabase.auth.signInWithIdToken({
+              provider: 'google',
+              token: response.credential,
+            });
+
+            if (signInError) {
+              setError(signInError.message);
+              setLoading(false);
+            } else {
+              const role = data.user?.user_metadata?.role;
+              setLoading(false);
+              const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/')));
+              router.push(targetUrl);
+            }
+          }
+        });
+
+        const container = document.getElementById("google-signin-btn-container");
+        if (container) {
+          window.google.accounts.id.renderButton(container, {
+            theme: "outline",
+            size: "large",
+            width: container.offsetWidth || 320,
+          });
+        }
       }
-    });
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [router, nextParam]);
+
+  const handleGoogleAuth = () => {
+    // Handled by invisible Google SDK overlay button click
   };
 
   return (
@@ -139,11 +176,10 @@ function LoginForm() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* Social Sign Ins (Only full-width Google button) - Google Above */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', width: '100%', height: '50px' }}>
             {/* Google Button */}
             <button
               type="button"
-              onClick={handleGoogleAuth}
               style={{
                 width: '100%',
                 height: '50px',
@@ -169,6 +205,21 @@ function LoginForm() {
               </svg>
               Login with Google
             </button>
+            {/* Invisible Google OIDC Container overlay */}
+            <div 
+              id="google-signin-btn-container" 
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                overflow: 'hidden',
+                cursor: 'pointer',
+                zIndex: 5,
+              }}
+            />
             {lastUsed === 'google' && (
               <span style={{
                 position: 'absolute',

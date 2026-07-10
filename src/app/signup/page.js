@@ -75,14 +75,58 @@ export default function Signup() {
     setTimeout(() => setToastMsg(''), 3000);
   };
 
-  const handleGoogleAuth = async () => {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?role=${roleSelection}&next=/client/onboarding`
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+        clearInterval(interval);
+        
+        window.google.accounts.id.initialize({
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+          ux_mode: 'popup',
+          callback: async (response) => {
+            setLoading(true);
+            setError('');
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('last_login_method', 'google');
+            }
+            const supabase = createClient();
+            const { data, error: signInError } = await supabase.auth.signInWithIdToken({
+              provider: 'google',
+              token: response.credential,
+              options: {
+                data: {
+                  role: 'client',
+                  client_type: roleSelection,
+                }
+              }
+            });
+
+            if (signInError) {
+              setError(signInError.message);
+              setLoading(false);
+            } else {
+              setLoading(false);
+              router.push('/client/onboarding');
+            }
+          }
+        });
+
+        const container = document.getElementById("google-signup-btn-container");
+        if (container) {
+          window.google.accounts.id.renderButton(container, {
+            theme: "outline",
+            size: "large",
+            width: container.offsetWidth || 320,
+          });
+        }
       }
-    });
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [router, roleSelection]);
+
+  const handleGoogleAuth = () => {
+    // Handled by invisible Google SDK overlay button click
   };
 
   return (
@@ -324,10 +368,9 @@ export default function Signup() {
           </div>
 
           {/* Social Logins */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative', height: '48px', width: '100%' }}>
             <button
               type="button"
-              onClick={handleGoogleAuth}
               style={{
                 width: '100%',
                 height: '48px',
@@ -342,6 +385,7 @@ export default function Signup() {
                 fontWeight: 600,
                 fontSize: '14px',
                 cursor: 'pointer',
+                position: 'relative',
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -352,6 +396,21 @@ export default function Signup() {
               </svg>
               Register with Google
             </button>
+            {/* Invisible Google OIDC Container overlay */}
+            <div 
+              id="google-signup-btn-container" 
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                overflow: 'hidden',
+                cursor: 'pointer',
+                zIndex: 5,
+              }}
+            />
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: 'var(--steel)' }}>

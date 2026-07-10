@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
+import Script from "next/script";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -22,6 +23,7 @@ export default function RootLayout({ children }) {
           {children}
         </main>
         <Footer />
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
       </body>
     </html>
   );
