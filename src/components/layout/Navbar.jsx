@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { Button } from '../ui/Button';
 import { Menu, X, User } from 'lucide-react';
 import { createClient } from '../../utils/supabase/client';
+import { usePathname } from 'next/navigation';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const supabase = createClient();
@@ -212,14 +214,7 @@ export function Navbar() {
             alignItems: 'center',
             gap: '8px'
           }}>
-            <div style={{ 
-              width: '12px', 
-              height: '24px', 
-              backgroundColor: 'var(--brand-green-dark)', 
-              borderRadius: '2px',
-              transform: 'skewX(-15deg)'
-            }} />
-            FindTutors.pk
+            <img src="/logo.svg" alt="TutorOnline.pk" style={{ height: '32px' }} />
           </Link>
           
           <div className="nav-links">
@@ -300,6 +295,14 @@ export function Navbar() {
                 </div>
               )}
             </div>
+          ) : (pathname === '/register' || pathname === '/signup') ? (
+            <Link href="/login" onClick={handleSignInClick}>
+              <Button variant="primary">Sign In</Button>
+            </Link>
+          ) : pathname === '/login' ? (
+            <Link href="/signup">
+              <Button variant="primary">Join Free</Button>
+            </Link>
           ) : (
             <>
               <Link href="/login" onClick={handleSignInClick} style={linkStyle}>Sign In</Link>

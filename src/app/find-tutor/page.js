@@ -23,7 +23,7 @@ export default function FindTutorLanding() {
 
   const faqs = [
     { q: "How do I choose the best verified tutor for my child?", a: "You can post a free job describing your subjects, boards, and budget. Our vetted educators will submit custom bids. You can check their qualifications, credentials, rating, and schedule a free 15-minute demo lesson to assess chemistry." },
-    { q: "How does the JazzCash/NayaPay secure escrow work?", a: "When you hire a tutor, you fund the milestone. These funds are held securely by FindTutors. Once lessons are logged and you confirm completion, funds are released directly to the tutor." },
+    { q: "How does the JazzCash/NayaPay secure escrow work?", a: "When you hire a tutor, you fund the milestone. These funds are held securely by TutorOnline. Once lessons are logged and you confirm completion, funds are released directly to the tutor." },
     { q: "What if the tutor doesn't check in or misses classes?", a: "Tutors must check in using our mobile app, which verifies their location using GPS geofencing. If they miss classes or log incorrect hours, you can raise a dispute, and our team will refund your escrow wallet." }
   ];
 
@@ -263,7 +263,7 @@ export default function FindTutorLanding() {
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--brand-green-soft)', color: 'var(--brand-green-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '14px', flexShrink: 0 }}>1</div>
                   <div>
                     <h4 style={{ fontSize: '17px', fontWeight: 600, marginBottom: '4px' }}>Skip the Hidden Academy Cuts</h4>
-                    <p style={{ color: 'var(--slate)', fontSize: '14px', margin: 0 }}>FindTutors operates on a transparent model, passing maximum value straight to families and educators.</p>
+                    <p style={{ color: 'var(--slate)', fontSize: '14px', margin: 0 }}>TutorOnline operates on a transparent model, passing maximum value straight to families and educators.</p>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '16px' }}>

@@ -161,8 +161,8 @@ export default function FindJobs() {
 
   const tutorFaqs = [
     {
-      q: "How much commission does FindTutors charge?",
-      a: "FindTutors operates on a 0% commission model. You keep 100% of your hourly or monthly milestone billing rate. Tutors purchase cheap Connect bundles to bid on tuition posts."
+      q: "How much commission does TutorOnline charge?",
+      a: "TutorOnline operates on a 0% commission model. You keep 100% of your hourly or monthly milestone billing rate. Tutors purchase cheap Connect bundles to bid on tuition posts."
     },
     {
       q: "When and how do I receive my tutoring payments?",

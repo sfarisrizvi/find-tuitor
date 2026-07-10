@@ -42,7 +42,7 @@ export function Footer() {
             alignItems: 'center',
             gap: '8px'
           }}>
-            <img src="/logo.svg" alt="FindTutors.pk" style={{ height: '24px' }} />
+            <img src="/logo.svg" alt="TutorOnline.pk" style={{ height: '24px' }} />
           </div>
           <p style={{ fontSize: '14px', color: 'var(--on-dark-muted)' }}>
             Connecting students with Pakistan&apos;s best verified educators under a secure escrow framework.
@@ -79,7 +79,7 @@ export function Footer() {
         textAlign: 'center',
         fontSize: '14px'
       }}>
-        &copy; 2026 FindTutors Platform Pakistan. Secure Milestone Marketplace Architecture. All rights reserved.
+        &copy; 2026 TutorOnline Platform Pakistan. Secure Milestone Marketplace Architecture. All rights reserved.
       </div>
     </footer>
   );

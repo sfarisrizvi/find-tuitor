@@ -144,7 +144,7 @@ export default function Home() {
   const deepDives = [
     {
       title: "Skip the Hidden Academy Cuts",
-      desc: "Traditional tuition academies charge massive up-front registration fees and take a silent chunk of the tutor's monthly salary. FindTutors operates on a transparent model, passing maximum value straight to families and educators."
+      desc: "Traditional tuition academies charge massive up-front registration fees and take a silent chunk of the tutor's monthly salary. TutorOnline operates on a transparent model, passing maximum value straight to families and educators."
     },
     {
       title: "The 15-Minute Free Demo",
@@ -505,7 +505,7 @@ export default function Home() {
                 <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#FF5F56' }} />
                 <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#FFBD2E' }} />
                 <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#27C93F' }} />
-                <span style={{ fontSize: '12px', color: 'var(--stone)', marginLeft: '12px', fontWeight: 500 }}>FindTutors Workspace Engine v1.0</span>
+                <span style={{ fontSize: '12px', color: 'var(--stone)', marginLeft: '12px', fontWeight: 500 }}>TutorOnline Workspace Engine v1.0</span>
               </div>
               
               {/* App Workspace Mockup */}

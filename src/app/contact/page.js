@@ -58,7 +58,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <span style={{ fontSize: '12px', color: 'var(--stone)', display: 'block' }}>EMAIL US</span>
-                    <strong style={{ fontSize: '15px', color: 'var(--charcoal)' }}>support@findtutors.pk</strong>
+                    <strong style={{ fontSize: '15px', color: 'var(--charcoal)' }}>support@tutoronline.pk</strong>
                   </div>
                 </div>
 

@@ -1370,7 +1370,7 @@ export default function TutorProfile() {
 
             {/* Trust Signals */}
             <div style={{ backgroundColor: 'var(--canvas)', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--hairline)', padding: '20px' }}>
-              <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700 }}>Why FindTutors.pk?</h4>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700 }}>Why TutorOnline.pk?</h4>
               {[
                 { icon: '💰', text: 'Transparent direct-pay model' },
                 { icon: '🎓', text: '15-minute free video demos' },
