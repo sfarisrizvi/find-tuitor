@@ -9,7 +9,7 @@ export const metadata = {
   title: "TutorOnline | Pakistan's Top Tutors",
   description: "Connecting students with Pakistan's best verified educators.",
   icons: {
-    icon: '/favicon.png',
+    icon: '/favicon.png?v=2',
   },
 };
 
