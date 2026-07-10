@@ -7,9 +7,42 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { User, Mail, Lock, Users, BookOpen, Eye, EyeOff } from 'lucide-react';
 
-const ROLES = [
-  { value: 'parent', label: 'Parent', desc: 'Booking a tutor for my children', icon: Users },
-  { value: 'student', label: 'Student', desc: 'Looking for a tutor for myself', icon: BookOpen },
+const TUTOR_SLIDES = [
+  {
+    image: '/tutors-images/304.jpg',
+    name: 'Dr. Kamran Bashir',
+    subject: 'Physics & Calculus Expert',
+    heading: 'Inspiring Academic Excellence',
+    quote: 'My goal is to simplify complex sciences and help students achieve top grades in their board examinations.'
+  },
+  {
+    image: '/tutors-images/1783.jpg',
+    name: 'Ayesha Mahmood',
+    subject: 'O/A-Levels Chemistry Specialist',
+    heading: 'Unlocking Student Potential',
+    quote: 'I design customized learning journeys that build conceptual clarity and scientific inquiry in young minds.'
+  },
+  {
+    image: '/tutors-images/3335.jpg',
+    name: 'Muhammad Ali',
+    subject: 'Computer Science & Programming',
+    heading: 'Building Next-Gen Innovators',
+    quote: "Teaching logic and coding isn't just about syntax; it's about giving students the tools to build the future."
+  },
+  {
+    image: '/tutors-images/56752.jpg',
+    name: 'Zainab Fatima',
+    subject: 'English Literature & SAT Prep',
+    heading: 'Empowering Eloquent Voices',
+    quote: 'Critical reading and writing are key life skills. I help students express themselves confidently and score high.'
+  },
+  {
+    image: '/tutors-images/2147805628.jpg',
+    name: 'Prof. Salman Shah',
+    subject: 'Biology & Pre-Medical Coach',
+    heading: 'Nurturing Future Doctors',
+    quote: 'With focused conceptual frameworks and interactive learning, we turn biological complexities into intuitive knowledge.'
+  }
 ];
 
 export default function Signup() {
@@ -22,7 +55,15 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+  const [currentSlide, setCurrentSlide] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % TUTOR_SLIDES.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -92,11 +133,28 @@ export default function Signup() {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: 'var(--canvas)',
-      display: 'grid',
-      gridTemplateColumns: '1.2fr 1fr',
-      fontFamily: 'inherit',
-    }} className="grid-2col">
+      backgroundColor: '#f8fafc',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '40px 24px',
+      boxSizing: 'border-box',
+    }}>
+      <div style={{
+        height: '90vh',
+        minHeight: '640px',
+        maxHeight: '900px',
+        backgroundColor: '#fff',
+        display: 'grid',
+        gridTemplateColumns: '1.2fr 1fr',
+        fontFamily: 'inherit',
+        width: '100%',
+        maxWidth: '1200px',
+        borderRadius: '24px',
+        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.05)',
+        overflow: 'hidden',
+        border: '1px solid var(--hairline-strong)',
+      }} className="grid-2col">
       
       {/* Left Side: Form */}
       <div style={{
@@ -384,98 +442,128 @@ export default function Signup() {
         )}
       </div>
 
-      {/* Right Side: Illustration Panel */}
+      {/* Right Side: Illustration Panel with Carousel */}
       <div style={{
-        padding: '32px 32px 32px 0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        padding: '24px 24px 24px 0',
+        height: '100%',
+        boxSizing: 'border-box',
+        position: 'relative',
+        display: 'block',
       }} className="nav-links">
         <div style={{
-          backgroundColor: '#f2f9f5',
           borderRadius: '24px',
           width: '100%',
           height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '48px 32px',
-          boxSizing: 'border-box',
           position: 'relative',
           overflow: 'hidden',
+          backgroundColor: '#000',
         }}>
-          
-          {/* Custom SVG Illustration */}
-          <div style={{ position: 'relative', width: '100%', maxWidth: '320px', margin: 'auto' }}>
-            <svg viewBox="0 0 300 300" width="100%" height="100%">
-              <circle cx="150" cy="150" r="110" fill="#e1f3e9" />
-              <path d="M 50 150 Q 80 80 150 70 T 250 150" fill="none" stroke="#22c55e" strokeWidth="2" strokeDasharray="5,5" />
-              
-              <g id="character">
-                <path d="M 120 220 Q 90 230 110 240 Q 140 240 150 220" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" />
-                <path d="M 180 220 Q 210 230 190 240 Q 160 240 150 220" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" />
-                <path d="M 110 160 C 110 210 190 210 190 160 Z" fill="#22c55e" stroke="#000" strokeWidth="3" />
-                <path d="M 150 165 C 135 165 130 180 150 195 C 170 180 165 165 150 165 Z" fill="#fff" />
-                <path d="M 110 160 Q 80 160 90 185 Q 100 200 115 190" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" />
-                <path d="M 190 160 Q 220 160 210 185 Q 200 200 185 190" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" />
-                <rect x="144" y="125" width="12" height="15" fill="#fbcfe8" stroke="#000" strokeWidth="3" />
-                <circle cx="150" cy="115" r="22" fill="#fbcfe8" stroke="#000" strokeWidth="3" />
-                <path d="M 144 115 Q 147 118 150 115" fill="none" stroke="#000" strokeWidth="2" />
-                <circle cx="143" cy="109" r="2" fill="#000" />
-                <circle cx="157" cy="109" r="2" fill="#000" />
-                <path d="M 128 115 C 128 95 172 95 172 115 C 172 120 165 125 150 120 C 135 125 128 120 128 115 Z" fill="#1e293b" />
-              </g>
+          {/* Images */}
+          {TUTOR_SLIDES.map((slide, idx) => (
+            <img
+              key={slide.image}
+              src={slide.image}
+              alt={slide.name}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                opacity: idx === currentSlide ? 0.75 : 0,
+                transition: 'opacity 1s ease-in-out',
+                zIndex: 1,
+              }}
+            />
+          ))}
 
-              {/* Floating Widget Card */}
-              <foreignObject x="10" y="160" width="120" height="75">
-                <div style={{
-                  backgroundColor: '#fff',
-                  borderRadius: '12px',
-                  padding: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-                  border: '1px solid rgba(0,0,0,0.04)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
+          {/* Dark Overlay */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%)',
+            zIndex: 2,
+            pointerEvents: 'none',
+          }} />
+
+          {/* Testimonial Glassmorphic Box */}
+          <div style={{
+            position: 'absolute',
+            bottom: '32px',
+            left: '24px',
+            right: '24px',
+            zIndex: 3,
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '20px',
+            padding: '28px',
+            color: '#fff',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+          }}>
+            {/* Carousel Content */}
+            {TUTOR_SLIDES.map((slide, idx) => (
+              <div
+                key={slide.name}
+                style={{
+                  display: idx === currentSlide ? 'block' : 'none',
+                  opacity: idx === currentSlide ? 1 : 0,
+                  transition: 'opacity 0.5s ease-in-out',
+                }}
+              >
+                <h3 style={{
+                  fontSize: '22px',
+                  fontWeight: 700,
+                  margin: '0 0 8px 0',
+                  lineHeight: '1.3',
                 }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ink)' }}>A-Levels Physics</div>
-                  <div style={{ fontSize: '8px', color: 'var(--stone)' }}>12 Classes</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                    <div style={{ width: '48px', height: '4px', backgroundColor: 'var(--hairline-strong)', borderRadius: '999px', overflow: 'hidden' }}>
-                      <div style={{ width: '84%', height: '100%', backgroundColor: '#22c55e' }} />
-                    </div>
-                    <span style={{ fontSize: '8px', fontWeight: 600 }}>84%</span>
-                  </div>
+                  {slide.heading}
+                </h3>
+                <p style={{
+                  fontSize: '13.5px',
+                  lineHeight: '1.6',
+                  color: 'rgba(255,255,255,0.9)',
+                  margin: '0 0 16px 0',
+                  fontStyle: 'italic',
+                }}>
+                  &ldquo;{slide.quote}&rdquo;
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '14.5px', fontWeight: 700 }}>{slide.name}</span>
+                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>{slide.subject}</span>
                 </div>
-              </foreignObject>
-
-              {/* Floating avatars */}
-              <circle cx="250" cy="160" r="16" fill="#fbcfe8" stroke="#000" strokeWidth="1.5" />
-              <path d="M 242 166 Q 250 158 258 166" fill="none" stroke="#000" strokeWidth="1.5" />
-              <circle cx="250" cy="155" r="4" fill="#000" />
-              
-              <circle cx="50" cy="90" r="16" fill="#fed7aa" stroke="#000" strokeWidth="1.5" />
-              <path d="M 42 96 Q 50 88 58 96" fill="none" stroke="#000" strokeWidth="1.5" />
-              <circle cx="50" cy="85" r="4" fill="#000" />
-            </svg>
-          </div>
-
-          {/* Slider Dots */}
-          <div style={{ display: 'flex', gap: '6px', margin: '24px 0 16px' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--stone)' }} />
-            <div style={{ width: '16px', height: '6px', borderRadius: '999px', backgroundColor: '#000' }} />
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--stone)' }} />
-          </div>
-
-          <div style={{ textAlign: 'center', maxWidth: '300px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, lineHeight: '1.4', margin: '0 0 8px 0' }}>
-              Make learning easier and organized with TutorOnline.pk
-            </h2>
+              </div>
+            ))}
+            
+            {/* Slider Dots */}
+            <div style={{ display: 'flex', gap: '6px', marginTop: '16px' }}>
+              {TUTOR_SLIDES.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  style={{
+                    width: idx === currentSlide ? '16px' : '6px',
+                    height: '6px',
+                    borderRadius: '999px',
+                    backgroundColor: idx === currentSlide ? '#fff' : 'rgba(255,255,255,0.4)',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                  }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
+    </div>
     </div>
   );
 }
