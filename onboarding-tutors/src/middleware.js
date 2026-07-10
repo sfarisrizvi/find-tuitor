@@ -8,10 +8,11 @@ export async function middleware(request) {
 
   const url = request.nextUrl.clone()
 
-  // Prevent crash if environment variables are missing on deployment
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error('Supabase environment variables are missing in middleware!');
-    // If it's a protected route, redirect to login (or render public pages without auth checks)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey || !supabaseUrl.startsWith('http')) {
+    console.error('Supabase environment variables are missing or invalid in middleware!');
     const isProtectedRoute = url.pathname.startsWith('/tutor');
     if (isProtectedRoute) {
       url.pathname = '/login';
