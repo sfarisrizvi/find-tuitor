@@ -414,7 +414,7 @@ export default function Register() {
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: 'var(--steel)' }}>
-            Parent or Student? <Link href="/signup" style={{ color: 'var(--brand-green-dark)', fontWeight: 600 }}>Create Account here</Link>
+            Parent or Student? <Link href={typeof window !== 'undefined' && window.location.hostname.includes('signup') ? "https://tutoronline.pk/signup" : "/signup"} style={{ color: 'var(--brand-green-dark)', fontWeight: 600 }}>Create Account here</Link>
           </div>
         </form>
 
