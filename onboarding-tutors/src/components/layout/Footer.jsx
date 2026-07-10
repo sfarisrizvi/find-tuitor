@@ -42,7 +42,7 @@ export function Footer() {
             alignItems: 'center',
             gap: '8px'
           }}>
-            <img src="/logo.svg" alt="TutorOnline.pk" style={{ height: '24px' }} />
+            <img src="/logo_dark.svg" alt="TutorOnline.pk" style={{ height: '36px' }} />
           </div>
           <p style={{ fontSize: '14px', color: 'var(--on-dark-muted)' }}>
             Connecting students with Pakistan&apos;s best verified educators under a secure escrow framework.
@@ -68,7 +68,7 @@ export function Footer() {
           <h4 style={headerStyle}>Company</h4>
           <Link href="#" style={linkStyle}>About Our Team</Link>
           <Link href="#" style={linkStyle}>Trust, Geofencing & Safety Protocols</Link>
-          <Link href="#" style={linkStyle}>Contact Customer Support</Link>
+          <a href="mailto:info@tutoronline.pk" style={linkStyle}>Support: info@tutoronline.pk</a>
         </div>
       </div>
       
