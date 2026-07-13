@@ -200,8 +200,8 @@ export default function ComingSoon() {
             height: 44px;
           }
           .coming-soon-container .giant-word {
-            font-size: clamp(4.5rem, 18vw, 6.5rem) !important;
-            line-height: 1.0 !important;
+            font-size: clamp(6.5rem, 26vw, 8.5rem) !important;
+            line-height: 0.85 !important;
             display: block !important;
             width: 100% !important;
             text-align: center !important;
