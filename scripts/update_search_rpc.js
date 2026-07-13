@@ -52,7 +52,10 @@ RETURNS TABLE (
   languages text[],
   bio text,
   about text,
-  categories jsonb -- aggregated subjects and levels
+  categories jsonb, -- aggregated subjects and levels
+  "current_role" text,
+  current_company text,
+  qualification text
 ) 
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -92,7 +95,10 @@ BEGIN
     p.languages,
     p.bio,
     p.about,
-    coalesce(tc.categories_json, '[]'::jsonb) as categories
+    coalesce(tc.categories_json, '[]'::jsonb) as categories,
+    p."current_role",
+    p.current_company,
+    p.qualification
   FROM public.tutor_profiles p
   LEFT JOIN tutor_cats tc ON tc.tutor_id = p.id
   WHERE
@@ -125,12 +131,31 @@ $$;
 `;
 
 async function run() {
-  const client = new Client({ connectionString: DATABASE_URL });
+  const client = new Client({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
   try {
     await client.connect();
     console.log('Connected to PostgreSQL database');
+
+    // Run table updates
+    const columnsToAdd = [
+      { name: 'current_role', quoted: '"current_role"' },
+      { name: 'current_company', quoted: 'current_company' },
+      { name: 'qualification', quoted: 'qualification' }
+    ];
+    for (const column of columnsToAdd) {
+      try {
+        console.log(`Adding column ${column.name}...`);
+        await client.query(`ALTER TABLE public.tutor_profiles ADD COLUMN IF NOT EXISTS ${column.quoted} text;`);
+        console.log(`Column ${column.name} added or already exists.`);
+      } catch (err) {
+        console.warn(`Warning/Error adding column ${column.name}:`, err.message);
+      }
+    }
+
+    // Update function
+    console.log('Updating public.search_tutors RPC...');
     await client.query(SQL);
-    console.log('Successfully updated public.search_tutors RPC to point to tutor_profiles table!');
+    console.log('Successfully altered tutor_profiles table and updated public.search_tutors RPC!');
   } catch (err) {
     console.error('Error executing query:', err);
   } finally {
@@ -139,3 +164,6 @@ async function run() {
 }
 
 run();
+
+
+

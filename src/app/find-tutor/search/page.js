@@ -11,6 +11,31 @@ import {
 } from 'lucide-react';
 import { createClient } from '../../../utils/supabase/client';
 
+const getHeadingText = (tutor) => {
+  const role = tutor.current_role;
+  const company = tutor.current_company;
+  const qual = tutor.qualification;
+  
+  let part1 = '';
+  if (role && company) {
+    part1 = `${role} at ${company}`;
+  } else if (role) {
+    part1 = role;
+  } else if (company) {
+    part1 = company;
+  }
+  
+  let part2 = '';
+  if (qual) {
+    part2 = `${qual} Qualified`;
+  }
+  
+  if (part1 && part2) {
+    return `${part1} & ${part2}`;
+  }
+  return part1 || part2 || null;
+};
+
 function SearchContent() {
   const searchParams = useSearchParams();
   const initialCity = searchParams.get('city') || '';
@@ -1120,6 +1145,12 @@ function SearchContent() {
                       )}
                     </div>
                   </div>
+
+                  {getHeadingText(tutor) && (
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-green-dark)', marginBottom: '8px', lineHeight: '1.4' }}>
+                      {getHeadingText(tutor)}
+                    </div>
+                  )}
 
                   <div style={{ fontSize: '14px', color: 'var(--ink)', marginBottom: '16px', lineHeight: '1.5', flex: 1 }}>
                     {tutor.bio || 'Experienced tutor dedicated to student success.'}
