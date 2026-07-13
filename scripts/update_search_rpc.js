@@ -96,11 +96,19 @@ BEGIN
     p.bio,
     p.about,
     coalesce(tc.categories_json, '[]'::jsonb) as categories,
-    p."current_role",
-    p.current_company,
+    coalesce(exp.role, p."current_role") as "current_role",
+    coalesce(exp.institution, p.current_company) as current_company,
     p.qualification
   FROM public.tutor_profiles p
   LEFT JOIN tutor_cats tc ON tc.tutor_id = p.id
+  LEFT JOIN (
+    SELECT DISTINCT ON (tutor_id) 
+      tutor_id,
+      role,
+      institution
+    FROM public.tutor_experience
+    ORDER BY tutor_id, (year_to IS NULL) DESC, year_from DESC, sort_order ASC
+  ) exp ON exp.tutor_id = p.id
   WHERE
     -- Exact text matches (case-insensitive)
     (p_city is null or lower(p.city) = lower(p_city))
