@@ -29,18 +29,20 @@ export async function middleware(request) {
 
   const url = request.nextUrl.clone()
   
-  // 1. Coming Soon bypass check
   let hasAccessCookie = false;
   const cookieVal = request.cookies.get('access_allowed')?.value;
   if (cookieVal) {
-    try {
-      const parsed = JSON.parse(decodeURIComponent(cookieVal));
-      if (parsed && parsed.allow === true) {
-        hasAccessCookie = true;
-      }
-    } catch (e) {
-      if (cookieVal === 'true' || cookieVal === '{"allow":true}') {
-        hasAccessCookie = true;
+    const val = decodeURIComponent(cookieVal).trim();
+    if (val === 'true' || val === '{"allow":true}') {
+      hasAccessCookie = true;
+    } else {
+      try {
+        const parsed = JSON.parse(val);
+        if (parsed === true || (parsed && parsed.allow === true)) {
+          hasAccessCookie = true;
+        }
+      } catch (e) {
+        // ignore
       }
     }
   }

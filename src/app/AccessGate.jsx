@@ -39,19 +39,20 @@ function AccessGateContent({ children }) {
       const rawCookie = document.cookie.split(';').find((item) => item.trim().startsWith('access_allowed='));
       if (rawCookie) {
         const val = decodeURIComponent(rawCookie.split('=')[1].trim());
+        if (val === 'true' || val === '{"allow":true}') {
+          setHasAccess(true);
+          setIsMounted(true);
+          return;
+        }
         try {
           const parsed = JSON.parse(val);
-          if (parsed && parsed.allow === true) {
+          if (parsed === true || (parsed && parsed.allow === true)) {
             setHasAccess(true);
             setIsMounted(true);
             return;
           }
         } catch (e) {
-          if (val === 'true' || val === '{"allow":true}') {
-            setHasAccess(true);
-            setIsMounted(true);
-            return;
-          }
+          // ignore
         }
       }
 
