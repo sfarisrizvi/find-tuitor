@@ -152,6 +152,19 @@ export default function Signup() {
       gridTemplateColumns: '1.2fr 1fr',
       fontFamily: 'inherit',
     }} className="grid-2col">
+      <title>Sign Up | Find Tutor Online</title>
+      <meta name="description" content="Create an account on Find Tutor to find verified tutors or start teaching online. Join as a parent, student, or educator." />
+      <link rel="canonical" href="https://find-tuitor.com/signup" />
+      <meta property="og:title" content="Sign Up | Find Tutor Online" />
+      <meta property="og:description" content="Create an account on Find Tutor to find verified tutors or start teaching online. Join as a parent, student, or educator." />
+      <meta property="og:url" content="https://find-tuitor.com/signup" />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://find-tuitor.com/favicon.png" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Sign Up | Find Tutor Online" />
+      <meta name="twitter:description" content="Create an account on Find Tutor to find verified tutors or start teaching online. Join as a parent, student, or educator." />
+      <meta name="twitter:image" content="https://find-tuitor.com/favicon.png" />
+
       
       {/* Left Side: Form */}
       <div style={{

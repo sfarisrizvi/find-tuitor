@@ -390,6 +390,18 @@ export default function Login() {
         Loading...
       </div>
     }>
+      <title>Login | Find Tutor Online</title>
+      <meta name="description" content="Log in to your Find Tutor account to manage tutoring sessions, message tutors, or hire educators." />
+      <link rel="canonical" href="https://find-tuitor.com/login" />
+      <meta property="og:title" content="Login | Find Tutor Online" />
+      <meta property="og:description" content="Log in to your Find Tutor account to manage tutoring sessions, message tutors, or hire educators." />
+      <meta property="og:url" content="https://find-tuitor.com/login" />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://find-tuitor.com/favicon.png" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Login | Find Tutor Online" />
+      <meta name="twitter:description" content="Log in to your Find Tutor account to manage tutoring sessions, message tutors, or hire educators." />
+      <meta name="twitter:image" content="https://find-tuitor.com/favicon.png" />
       <LoginForm />
     </Suspense>
   );

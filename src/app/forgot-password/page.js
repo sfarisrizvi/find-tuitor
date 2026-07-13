@@ -72,6 +72,19 @@ export default function ForgotPassword() {
       gridTemplateColumns: '1.2fr 1fr',
       fontFamily: 'inherit',
     }} className="grid-2col">
+      <title>Forgot Password | Find Tutor Online</title>
+      <meta name="description" content="Reset your Find Tutor account password securely. Receive verification codes to regain access to your account." />
+      <link rel="canonical" href="https://find-tuitor.com/forgot-password" />
+      <meta property="og:title" content="Forgot Password | Find Tutor Online" />
+      <meta property="og:description" content="Reset your Find Tutor account password securely. Receive verification codes to regain access to your account." />
+      <meta property="og:url" content="https://find-tuitor.com/forgot-password" />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://find-tuitor.com/favicon.png" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Forgot Password | Find Tutor Online" />
+      <meta name="twitter:description" content="Reset your Find Tutor account password securely. Receive verification codes to regain access to your account." />
+      <meta name="twitter:image" content="https://find-tuitor.com/favicon.png" />
+
       
       {/* Left Side: Form */}
       <div style={{

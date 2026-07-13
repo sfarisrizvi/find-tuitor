@@ -152,6 +152,19 @@ export default function Register() {
       gridTemplateColumns: '1.2fr 1fr',
       fontFamily: 'inherit',
     }} className="grid-2col">
+      <title>Tutor Registration | Join as an Educator | Find Tutor Online</title>
+      <meta name="description" content="Register as a tutor on Find Tutor Online. Vetted educators earn, set their own rates, teach online, and manage milestones securely." />
+      <link rel="canonical" href="https://find-tuitor.com/register" />
+      <meta property="og:title" content="Tutor Registration | Join as an Educator | Find Tutor Online" />
+      <meta property="og:description" content="Register as a tutor on Find Tutor Online. Vetted educators earn, set their own rates, teach online, and manage milestones securely." />
+      <meta property="og:url" content="https://find-tuitor.com/register" />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://find-tuitor.com/favicon.png" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Tutor Registration | Join as an Educator | Find Tutor Online" />
+      <meta name="twitter:description" content="Register as a tutor on Find Tutor Online. Vetted educators earn, set their own rates, teach online, and manage milestones securely." />
+      <meta name="twitter:image" content="https://find-tuitor.com/favicon.png" />
+
 
       {/* Left Side: Form */}
       <div style={{

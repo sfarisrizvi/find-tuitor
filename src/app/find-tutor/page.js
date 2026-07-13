@@ -34,8 +34,37 @@ export default function FindTutorLanding() {
     router.push(`/find-tutor/search?${params.toString()}`);
   };
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "EducationInstruction",
+    "name": "Online & Home Tutoring Services",
+    "description": "Connecting students with Pakistan's best verified educators for O/A Level, MDCAT, Matric, FSc, and Mathematics.",
+    "provider": {
+      "@type": "Organization",
+      "name": "Find Tuitor",
+      "url": "https://find-tuitor.com"
+    }
+  };
+
   return (
     <div style={{ backgroundColor: 'var(--surface)', minHeight: '100vh', overflowX: 'hidden' }}>
+      <title>Find Tutors Online | Pakistan&apos;s Top Verified Tutors</title>
+      <meta name="description" content="Search from our top vetted academic elite tutors for Matric, FSc, O/A Levels, and Entry Tests. Secure milestone escrow protection." />
+      <link rel="canonical" href="https://find-tuitor.com/find-tutor" />
+      <meta property="og:title" content="Find Tutors Online | Pakistan's Top Verified Tutors" />
+      <meta property="og:description" content="Search from our top vetted academic elite tutors for Matric, FSc, O/A Levels, and Entry Tests. Secure milestone escrow protection." />
+      <meta property="og:url" content="https://find-tuitor.com/find-tutor" />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://find-tuitor.com/favicon.png" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Find Tutors Online | Pakistan's Top Verified Tutors" />
+      <meta name="twitter:description" content="Search from our top vetted academic elite tutors for Matric, FSc, O/A Levels, and Entry Tests. Secure milestone escrow protection." />
+      <meta name="twitter:image" content="https://find-tuitor.com/favicon.png" />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
 
       {/* Hero Section */}
       <section style={{

@@ -220,8 +220,37 @@ export default function Home() {
     }
   ];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Find Tuitor",
+    "url": "https://find-tuitor.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://find-tuitor.com/find-tutor/search?query={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <div style={{ overflowX: 'hidden' }}>
+      <title>Find Tutor Online | Pakistan&apos;s Top Tutors</title>
+      <meta name="description" content="Connecting students with Pakistan's best verified educators. Find tutors online for O/A Level, Matric, FSc, and entry test preparation." />
+      <link rel="canonical" href="https://find-tuitor.com" />
+      <meta property="og:title" content="Find Tutor Online | Pakistan's Top Tutors" />
+      <meta property="og:description" content="Connecting students with Pakistan's best verified educators. Find tutors online for O/A Level, Matric, FSc, and entry test preparation." />
+      <meta property="og:url" content="https://find-tuitor.com" />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://find-tuitor.com/favicon.png" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Find Tutor Online | Pakistan's Top Tutors" />
+      <meta name="twitter:description" content="Connecting students with Pakistan's best verified educators. Find tutors online for O/A Level, Matric, FSc, and entry test preparation." />
+      <meta name="twitter:image" content="https://find-tuitor.com/favicon.png" />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       
       {/* 2. Hero Section (Split Layout, Full Width) */}
       <section style={{

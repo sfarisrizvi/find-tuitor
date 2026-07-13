@@ -37,7 +37,20 @@ export default function Contact() {
 
   return (
     <div style={{ backgroundColor: 'var(--surface)', minHeight: 'calc(100vh - 64px)', padding: 'var(--spacing-xxl) 0' }}>
+      <title>Contact Us | Find Tutor Online</title>
+      <meta name="description" content="Get in touch with Find Tutor Online. Ask questions about billing, security escrow, academic vetting, or support." />
+      <link rel="canonical" href="https://find-tuitor.com/contact" />
+      <meta property="og:title" content="Contact Us | Find Tutor Online" />
+      <meta property="og:description" content="Get in touch with Find Tutor Online. Ask questions about billing, security escrow, academic vetting, or support." />
+      <meta property="og:url" content="https://find-tuitor.com/contact" />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://find-tuitor.com/favicon.png" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Contact Us | Find Tutor Online" />
+      <meta name="twitter:description" content="Get in touch with Find Tutor Online. Ask questions about billing, security escrow, academic vetting, or support." />
+      <meta name="twitter:image" content="https://find-tuitor.com/favicon.png" />
       <div className="container" style={{ maxWidth: '1000px' }}>
+
         <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-xxl)' }}>
           <h1 style={{ fontSize: '40px', fontWeight: 700 }}>Get In Touch</h1>
           <p style={{ color: 'var(--steel)', fontSize: '16px', maxWidth: '500px', margin: '0 auto' }}>
