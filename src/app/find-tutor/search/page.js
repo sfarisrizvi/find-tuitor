@@ -1119,54 +1119,56 @@ function SearchContent() {
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-                    <div style={{
-                      width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'var(--surface)', flexShrink: 0,
-                      backgroundImage: tutor.avatar_url ? `url("${getAvatarUrl(tutor.avatar_url)}")` : 'none',
-                      backgroundSize: 'cover', backgroundPosition: 'center',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--hairline)'
-                    }}>
-                      {!tutor.avatar_url && <User size={28} color="var(--stone)" />}
-                    </div>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 4px 0', color: 'var(--ink)' }}>
-                          {tutor.full_name}
-                        </h3>
-                        {tutor.verified && <ShieldCheck size={16} color="var(--brand-teal)" />}
+                  <Link href={`/tutors/${tutor.id}`} style={{ display: 'flex', flexDirection: 'column', flex: 1, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                      <div style={{
+                        width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'var(--surface)', flexShrink: 0,
+                        backgroundImage: tutor.avatar_url ? `url("${getAvatarUrl(tutor.avatar_url)}")` : 'none',
+                        backgroundSize: 'cover', backgroundPosition: 'center',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--hairline)'
+                      }}>
+                        {!tutor.avatar_url && <User size={28} color="var(--stone)" />}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--steel)', marginBottom: '4px' }}>
-                        <MapPin size={14} /> {tutor.city} {tutor.area && `- ${tutor.area}`}
-                      </div>
-                      {tutor.rating > 0 && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#f59e0b', fontWeight: 600 }}>
-                          <Star size={14} fill="#f59e0b" /> {tutor.rating} <span style={{ color: 'var(--stone)', fontWeight: 400 }}>({tutor.reviews_count} reviews)</span>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 4px 0', color: 'var(--ink)' }}>
+                            {tutor.full_name}
+                          </h3>
+                          {tutor.verified && <ShieldCheck size={16} color="var(--brand-teal)" />}
                         </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--steel)', marginBottom: '4px' }}>
+                          <MapPin size={14} /> {tutor.city} {tutor.area && `- ${tutor.area}`}
+                        </div>
+                        {tutor.rating > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#f59e0b', fontWeight: 600 }}>
+                            <Star size={14} fill="#f59e0b" /> {tutor.rating} <span style={{ color: 'var(--stone)', fontWeight: 400 }}>({tutor.reviews_count} reviews)</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {getHeadingText(tutor) && (
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px', lineHeight: '1.4' }}>
+                        {getHeadingText(tutor)}
+                      </div>
+                    )}
+
+                    <div style={{ fontSize: '13px', color: 'var(--steel)', marginBottom: '16px', lineHeight: '1.5', flex: 1 }}>
+                      {tutor.bio || 'Experienced tutor dedicated to student success.'}
+                    </div>
+
+                    {/* Skills / Categories */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
+                      {tutor.categories?.slice(0, 3).map((cat, i) => (
+                        <span key={i} style={{ backgroundColor: 'var(--surface)', color: 'var(--steel)', padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 500, border: '1px solid var(--hairline)' }}>
+                          {cat.subject || cat.level}
+                        </span>
+                      ))}
+                      {tutor.categories?.length > 3 && (
+                        <span style={{ fontSize: '12px', color: 'var(--stone)', alignSelf: 'center' }}>+{tutor.categories.length - 3} more</span>
                       )}
                     </div>
-                  </div>
-
-                  {getHeadingText(tutor) && (
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px', lineHeight: '1.4' }}>
-                      {getHeadingText(tutor)}
-                    </div>
-                  )}
-
-                  <div style={{ fontSize: '13px', color: 'var(--steel)', marginBottom: '16px', lineHeight: '1.5', flex: 1 }}>
-                    {tutor.bio || 'Experienced tutor dedicated to student success.'}
-                  </div>
-
-                  {/* Skills / Categories */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
-                    {tutor.categories?.slice(0, 3).map((cat, i) => (
-                      <span key={i} style={{ backgroundColor: 'var(--surface)', color: 'var(--steel)', padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 500, border: '1px solid var(--hairline)' }}>
-                        {cat.subject || cat.level}
-                      </span>
-                    ))}
-                    {tutor.categories?.length > 3 && (
-                      <span style={{ fontSize: '12px', color: 'var(--stone)', alignSelf: 'center' }}>+{tutor.categories.length - 3} more</span>
-                    )}
-                  </div>
+                  </Link>
 
                   <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid var(--hairline-strong)' }}>
                     <div>
