@@ -9,8 +9,8 @@ export async function generateMetadata({ params }) {
 
   if (id.startsWith('mock-')) {
     return {
-      title: 'Mock Tutor | FindTutors.pk',
-      description: 'Mock tutor profile for FindTutors.pk',
+      title: 'Mock Tutor | TutorOnline.pk',
+      description: 'Mock tutor profile for TutorOnline.pk',
     };
   }
 
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }) {
 
   if (!profile) {
     return {
-      title: 'Tutor Not Found | FindTutors.pk',
+      title: 'Tutor Not Found | TutorOnline.pk',
     };
   }
 
@@ -67,10 +67,10 @@ export async function generateMetadata({ params }) {
   
   // Format for OG description
   const expStr = expText ? ` | Exp: ${expText}` : '';
-  const title = `${name} - Tutor in ${city} | FindTutors.pk`;
+  const title = `${name} - Tutor in ${city} | TutorOnline.pk`;
   const description = `Rating: ${rating}${expStr} | City: ${city}. ${profile.bio || ''}`.trim();
   
-  let avatarUrl = 'https://findtutors.pk/default-og.png';
+  let avatarUrl = 'https://tutoronline.pk/default-og.png';
   if (profile.avatar_url) {
     if (profile.avatar_url.startsWith('http')) {
       avatarUrl = profile.avatar_url;
@@ -85,8 +85,8 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title,
       description,
-      url: `https://findtutors.pk/tutors/${id}`,
-      siteName: 'FindTutors.pk',
+      url: `https://tutoronline.pk/tutors/${id}`,
+      siteName: 'TutorOnline.pk',
       images: [
         {
           url: avatarUrl,

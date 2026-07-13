@@ -204,22 +204,12 @@ export function Navbar() {
       <div className="container" style={containerStyle}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Link href="/" style={{ 
-            fontSize: '20px', 
-            fontWeight: 700, 
-            color: 'var(--ink)', 
             marginRight: 'var(--spacing-xl)',
             display: 'flex',
             alignItems: 'center',
             gap: '8px'
           }}>
-            <div style={{ 
-              width: '12px', 
-              height: '24px', 
-              backgroundColor: 'var(--brand-green-dark)', 
-              borderRadius: '2px',
-              transform: 'skewX(-15deg)'
-            }} />
-            FindTutors.pk
+            <img src="/logo.svg" alt="TutorOnline.pk" style={{ height: '24px' }} />
           </Link>
           
           <div className="nav-links">
