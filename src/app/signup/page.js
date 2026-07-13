@@ -8,6 +8,21 @@ import Link from 'next/link';
 import { User, Mail, Lock, Users, BookOpen, Eye, EyeOff } from 'lucide-react';
 import { TutorCarousel } from '../../components/layout/TutorCarousel';
 
+const ROLES = [
+  {
+    value: 'parent',
+    label: 'Parent',
+    desc: 'I am looking for a tutor for my child',
+    icon: Users
+  },
+  {
+    value: 'student',
+    label: 'Student / Learner',
+    desc: 'I am looking for a tutor for myself',
+    icon: BookOpen
+  }
+];
+
 export default function Signup() {
   const [roleSelection, setRoleSelection] = useState('parent');
   const [fullName, setFullName] = useState('');
