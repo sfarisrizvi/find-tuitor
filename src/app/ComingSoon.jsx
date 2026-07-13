@@ -71,7 +71,7 @@ export default function ComingSoon() {
           z-index: 2;
         }
 
-        .giant-word {
+        .coming-soon-container .giant-word {
           font-size: clamp(2.5rem, 14vw, 10rem);
           font-weight: 900;
           color: var(--brand-teal-deep);
@@ -199,7 +199,18 @@ export default function ComingSoon() {
           .ribbon {
             height: 44px;
           }
+          .coming-soon-container .giant-word {
+            font-size: clamp(4.5rem, 18vw, 6.5rem) !important;
+            line-height: 1.0 !important;
+            display: block !important;
+            width: 100% !important;
+            text-align: center !important;
+          }
+          .giant-text-container {
+            gap: 8px;
+          }
         }
+
       `}</style>
 
       {/* Top Small Heading */}

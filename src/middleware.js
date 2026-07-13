@@ -30,7 +30,21 @@ export async function middleware(request) {
   const url = request.nextUrl.clone()
   
   // 1. Coming Soon bypass check
-  const hasAccessCookie = request.cookies.get('access_allowed')?.value === 'true';
+  let hasAccessCookie = false;
+  const cookieVal = request.cookies.get('access_allowed')?.value;
+  if (cookieVal) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(cookieVal));
+      if (parsed && parsed.allow === true) {
+        hasAccessCookie = true;
+      }
+    } catch (e) {
+      if (cookieVal === 'true' || cookieVal === '{"allow":true}') {
+        hasAccessCookie = true;
+      }
+    }
+  }
+
   const hasAccessParam = url.searchParams.get('access') === 'allowed' || url.searchParams.has('accessallowed');
   const hasAccess = hasAccessCookie || hasAccessParam;
 
@@ -81,9 +95,9 @@ export async function middleware(request) {
   }
 
   if (hasAccessParam && !hasAccessCookie) {
-    supabaseResponse.cookies.set('access_allowed', 'true', {
+    supabaseResponse.cookies.set('access_allowed', JSON.stringify({ allow: true }), {
       path: '/',
-      maxAge: 31536000, // 1 year
+      maxAge: 315360000, // 10 years (forever)
       sameSite: 'lax',
     });
   }

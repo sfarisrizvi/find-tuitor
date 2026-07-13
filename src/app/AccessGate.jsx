@@ -18,10 +18,10 @@ function AccessGateContent({ children }) {
                        searchParams.has('accessallowed');
       
 
-
       if (hasParam) {
         localStorage.setItem('access_allowed', 'true');
-        document.cookie = "access_allowed=true; path=/; max-age=31536000; SameSite=Lax";
+        const cookieJSON = JSON.stringify({ allow: true });
+        document.cookie = `access_allowed=${encodeURIComponent(cookieJSON)}; path=/; max-age=315360000; SameSite=Lax`;
         setHasAccess(true);
         setIsMounted(true);
         return;
@@ -36,11 +36,23 @@ function AccessGateContent({ children }) {
       }
 
       // 3. Check cookies
-      const cookieAllowed = document.cookie.split(';').some((item) => item.trim().startsWith('access_allowed=true'));
-      if (cookieAllowed) {
-        setHasAccess(true);
-        setIsMounted(true);
-        return;
+      const rawCookie = document.cookie.split(';').find((item) => item.trim().startsWith('access_allowed='));
+      if (rawCookie) {
+        const val = decodeURIComponent(rawCookie.split('=')[1].trim());
+        try {
+          const parsed = JSON.parse(val);
+          if (parsed && parsed.allow === true) {
+            setHasAccess(true);
+            setIsMounted(true);
+            return;
+          }
+        } catch (e) {
+          if (val === 'true' || val === '{"allow":true}') {
+            setHasAccess(true);
+            setIsMounted(true);
+            return;
+          }
+        }
       }
 
       // Access not allowed
@@ -50,6 +62,7 @@ function AccessGateContent({ children }) {
 
     checkAccess();
   }, [searchParams]);
+
 
   // During SSR/static page compilation and initial client hydration,
   // we render ComingSoon. This guarantees that no website contents
