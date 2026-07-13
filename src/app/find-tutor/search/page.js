@@ -19,7 +19,6 @@ function SearchContent() {
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
 
   const getAvatarUrl = (path) => {
     if (!path) return null;
@@ -288,19 +287,72 @@ function SearchContent() {
   const displayedTutors = session ? sortedTutors : sortedTutors.slice(0, 4);
   const showAuthOverlay = !session && filteredTutors.length > 3;
 
+  // Count active filters for the badge
+  const activeFilterCount = [
+    filters.city,
+    filters.gender,
+    filters.levels.length > 0,
+    filters.subjects.length > 0,
+    filters.modes.length > 0,
+    filters.verified,
+    filters.immediate_hiring,
+    filters.min_price,
+    filters.max_price,
+    filters.min_experience.length > 0
+  ].filter(Boolean).length;
+
+  // Mobile filter modal state
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--surface)' }}>
-      {/* ─── HYBRID TOP BAR: SELECTORS ─── */}
-      <div style={{ 
-        backgroundColor: 'var(--canvas)', 
+      {/* Embedded responsive styles */}
+      <style>{`
+        /* ─── DESKTOP TOP BAR ─── */
+        .search-topbar-desktop { display: flex; }
+        .search-topbar-mobile { display: none; }
+        .sidebar-filters-desktop { display: flex; }
+        .mobile-filter-overlay { display: none; }
+
+        .tutor-results-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+          gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+          .search-topbar-desktop { display: none !important; }
+          .search-topbar-mobile { display: flex !important; }
+          .sidebar-filters-desktop { display: none !important; }
+          .mobile-filter-overlay { display: flex !important; }
+
+          .tutor-results-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+
+          .search-main-layout {
+            flex-direction: column !important;
+            padding: 16px !important;
+            gap: 0 !important;
+          }
+
+          .search-results-area {
+            width: 100% !important;
+          }
+        }
+      `}</style>
+
+      {/* ─── DESKTOP TOP BAR ─── */}
+      <div className="search-topbar-desktop" style={{
+        backgroundColor: 'var(--canvas)',
         borderBottom: '1px solid var(--hairline-strong)',
         position: 'sticky',
         top: '64px',
         zIndex: 40,
         padding: '16px 24px'
       }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
           {/* City Dropdown */}
           <div style={{ position: 'relative', minWidth: '160px' }}>
             <MapPin size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
@@ -340,29 +392,328 @@ function SearchContent() {
           {/* Search query input */}
           <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-            <Input 
-              placeholder="Search by keyword..." 
-              value={searchQuery} 
-              onChange={(e) => setSearchQuery(e.target.value)} 
-              style={{ height: '40px', paddingLeft: '36px', fontSize: '14px', border: '1px solid var(--hairline-strong)', borderRadius: '999px', backgroundColor: '#fff' }} 
+            <Input
+              placeholder="Search by keyword..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ height: '40px', paddingLeft: '36px', fontSize: '14px', border: '1px solid var(--hairline-strong)', borderRadius: '999px', backgroundColor: '#fff' }}
             />
           </div>
-
-          <Button 
-            className="mobile-filter-btn" 
-            variant="outline" 
-            onClick={() => setShowFilters(!showFilters)}
-            style={{ display: 'none' }}
-          >
-            <SlidersHorizontal size={16} style={{ marginRight: '8px' }} /> Filters
-          </Button>
         </div>
       </div>
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', padding: '24px', gap: '32px' }}>
-        
-        {/* ─── LEFT SIDEBAR: ADVANCED FILTERS ─── */}
-        <div style={{
+      {/* ─── MOBILE TOP BAR: Search + Filter Icon ─── */}
+      <div className="search-topbar-mobile" style={{
+        backgroundColor: 'var(--canvas)',
+        borderBottom: '1px solid var(--hairline-strong)',
+        position: 'sticky',
+        top: '64px',
+        zIndex: 40,
+        padding: '12px 16px',
+        alignItems: 'center',
+        gap: '12px'
+      }}>
+        {/* Search Input */}
+        <div style={{ flex: 1, position: 'relative' }}>
+          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+          <Input
+            placeholder="Search tutors..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              height: '44px', paddingLeft: '36px', fontSize: '14px',
+              border: '1px solid var(--hairline-strong)', borderRadius: '999px',
+              backgroundColor: '#fff', width: '100%'
+            }}
+          />
+        </div>
+
+        {/* Rounded Filter Funnel Icon */}
+        <button
+          onClick={() => setShowMobileFilters(true)}
+          style={{
+            width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0,
+            backgroundColor: activeFilterCount > 0 ? 'var(--brand-green-dark)' : 'var(--canvas)',
+            border: activeFilterCount > 0 ? 'none' : '1px solid var(--hairline-strong)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', position: 'relative',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <SlidersHorizontal size={18} color={activeFilterCount > 0 ? '#fff' : 'var(--slate)'} />
+          {activeFilterCount > 0 && (
+            <span style={{
+              position: 'absolute', top: '-4px', right: '-4px',
+              backgroundColor: 'var(--brand-green)', color: 'var(--brand-teal-deep)',
+              width: '20px', height: '20px', borderRadius: '50%',
+              fontSize: '11px', fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* ─── MOBILE FILTER MODAL (Slide-up) ─── */}
+      {showMobileFilters && (
+        <div className="mobile-filter-overlay" style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          zIndex: 9999, flexDirection: 'column',
+          backgroundColor: 'rgba(0,0,0,0.4)',
+          animation: 'fadeIn 0.2s ease'
+        }}>
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+          `}</style>
+
+          {/* Backdrop tap to close */}
+          <div style={{ flex: 1 }} onClick={() => setShowMobileFilters(false)} />
+
+          {/* Modal Content */}
+          <div style={{
+            backgroundColor: 'var(--canvas)', borderRadius: '24px 24px 0 0',
+            maxHeight: '85vh', overflowY: 'auto',
+            padding: '24px 20px 32px 20px',
+            animation: 'slideUp 0.3s ease',
+            boxShadow: '0 -8px 30px rgba(0,0,0,0.12)'
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--ink)' }}>Filters</h3>
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                style={{
+                  width: '36px', height: '36px', borderRadius: '50%',
+                  backgroundColor: 'var(--surface)', border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', fontSize: '18px', color: 'var(--slate)'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* City */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>City</label>
+              <div style={{ position: 'relative' }}>
+                <MapPin size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+                <select
+                  value={filters.city}
+                  onChange={(e) => handleFilterChange('city', e.target.value)}
+                  style={{
+                    width: '100%', height: '44px', paddingLeft: '36px', paddingRight: '12px',
+                    borderRadius: '12px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
+                    fontSize: '14px', cursor: 'pointer', outline: 'none', appearance: 'none'
+                  }}
+                >
+                  <option value="">Any City</option>
+                  {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
+              </div>
+            </div>
+
+            {/* Gender */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Gender</label>
+              <div style={{ position: 'relative' }}>
+                <User size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+                <select
+                  value={filters.gender}
+                  onChange={(e) => handleFilterChange('gender', e.target.value)}
+                  style={{
+                    width: '100%', height: '44px', paddingLeft: '36px', paddingRight: '12px',
+                    borderRadius: '12px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
+                    fontSize: '14px', cursor: 'pointer', outline: 'none', appearance: 'none'
+                  }}
+                >
+                  <option value="">Any Gender</option>
+                  {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+                <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
+              </div>
+            </div>
+
+            <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)', margin: '8px 0 20px 0' }} />
+
+            {/* Grade / Level */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Grade / Level</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {LEVELS.map(lvl => {
+                  const isLevelChecked = filters.levels.includes(lvl);
+                  const hasSubjects = ['Matric', 'Inter', 'BS/MS'].includes(lvl);
+                  const subjects = LEVEL_SUBJECTS[lvl] || [];
+                  return (
+                    <div key={lvl} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>
+                        <input
+                          type="checkbox"
+                          checked={isLevelChecked}
+                          onChange={() => toggleLevel(lvl)}
+                          style={{ width: '18px', height: '18px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                        />
+                        {lvl}
+                      </label>
+                      {isLevelChecked && hasSubjects && (
+                        <div style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '8px', borderLeft: '2px solid var(--hairline-strong)', marginLeft: '8px' }}>
+                          {subjects.map(subj => (
+                            <label key={subj} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--slate)' }}>
+                              <input
+                                type="checkbox"
+                                checked={filters.subjects.includes(subj)}
+                                onChange={() => toggleSubjectFilter(subj)}
+                                style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                              />
+                              {subj}
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)', margin: '8px 0 20px 0' }} />
+
+            {/* Teaching Mode */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Teaching Mode</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {MODES.map(mode => (
+                  <label key={mode.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
+                    <input
+                      type="checkbox"
+                      checked={filters.modes.includes(mode.id)}
+                      onChange={() => toggleMode(mode.id)}
+                      style={{ width: '18px', height: '18px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                    />
+                    {mode.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)', margin: '8px 0 20px 0' }} />
+
+            {/* Requirements */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Requirements</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
+                  <input
+                    type="checkbox"
+                    checked={filters.verified}
+                    onChange={(e) => handleFilterChange('verified', e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                  />
+                  <ShieldCheck size={16} color="var(--brand-teal)" />
+                  Verified Only
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
+                  <input
+                    type="checkbox"
+                    checked={filters.immediate_hiring}
+                    onChange={(e) => handleFilterChange('immediate_hiring', e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
+                  />
+                  <Zap size={16} color="#f59e0b" />
+                  Immediate Hiring
+                </label>
+              </div>
+            </div>
+
+            <div style={{ height: '1px', backgroundColor: 'var(--hairline-strong)', margin: '8px 0 20px 0' }} />
+
+            {/* Sort */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sort By</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                style={{
+                  width: '100%', height: '44px', padding: '0 12px', borderRadius: '12px',
+                  border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
+                  fontSize: '14px', color: 'var(--slate)', cursor: 'pointer', outline: 'none'
+                }}
+              >
+                <option value="default">Best Match</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+            </div>
+
+            {/* Experience */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Min Experience</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {[
+                  { value: '1', label: '1+ Yrs' },
+                  { value: '3', label: '3+ Yrs' },
+                  { value: '5', label: '5+ Yrs' },
+                  { value: '10', label: '10+ Yrs' },
+                ].map((exp) => {
+                  const isChecked = filters.min_experience.includes(exp.value);
+                  return (
+                    <button
+                      key={exp.value}
+                      onClick={() => toggleExperience(exp.value)}
+                      style={{
+                        padding: '8px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 500,
+                        border: isChecked ? '1.5px solid var(--brand-green-dark)' : '1px solid var(--hairline-strong)',
+                        backgroundColor: isChecked ? 'var(--brand-green-soft)' : '#fff',
+                        color: isChecked ? 'var(--brand-green-dark)' : 'var(--slate)',
+                        cursor: 'pointer', transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {exp.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setFilters({ city: '', subjects: [], custom_subject: '', levels: [], min_price: '', max_price: '', gender: '', min_experience: [], verified: false, immediate_hiring: false, modes: [] });
+                  setSortBy('default');
+                  fetchTutors({ city: '', subjects: [], custom_subject: '', levels: [], min_price: '', max_price: '', gender: '', min_experience: [], verified: false, immediate_hiring: false, modes: [] });
+                }}
+                style={{
+                  flex: 1, height: '48px', borderRadius: '12px',
+                  border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
+                  fontSize: '15px', fontWeight: 600, color: 'var(--slate)', cursor: 'pointer'
+                }}
+              >
+                Reset All
+              </button>
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                style={{
+                  flex: 1, height: '48px', borderRadius: '12px',
+                  border: 'none', backgroundColor: 'var(--brand-green-dark)',
+                  fontSize: '15px', fontWeight: 600, color: '#fff', cursor: 'pointer'
+                }}
+              >
+                Show Results
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MAIN LAYOUT ─── */}
+      <div className="search-main-layout" style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', padding: '24px', gap: '32px' }}>
+
+        {/* ─── LEFT SIDEBAR: ADVANCED FILTERS (desktop only) ─── */}
+        <div className="sidebar-filters-desktop" style={{
           width: '280px',
           flexShrink: 0,
           display: 'flex',
@@ -374,7 +725,7 @@ function SearchContent() {
           maxHeight: 'calc(100vh - 180px)',
           overflowY: 'auto',
           paddingRight: '8px'
-        }} className={`sidebar-filters ${showFilters ? 'open' : ''}`}>
+        }}>
 
           {/* Grade / Level (with Nested Subject Checkboxes) */}
           <div>
@@ -389,8 +740,8 @@ function SearchContent() {
                   <div key={lvl} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {/* Level Selector */}
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         checked={isLevelChecked}
                         onChange={() => toggleLevel(lvl)}
                         style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
@@ -406,8 +757,8 @@ function SearchContent() {
                           return (
                             <div key={subj} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--slate)' }}>
-                                <input 
-                                  type="checkbox" 
+                                <input
+                                  type="checkbox"
                                   checked={isSubChecked}
                                   onChange={() => toggleSubjectFilter(subj)}
                                   style={{ width: '14px', height: '14px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
@@ -445,8 +796,8 @@ function SearchContent() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {MODES.map(mode => (
                 <label key={mode.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={filters.modes.includes(mode.id)}
                     onChange={() => toggleMode(mode.id)}
                     style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
@@ -464,8 +815,8 @@ function SearchContent() {
             <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Requirements</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={filters.verified}
                   onChange={(e) => handleFilterChange('verified', e.target.checked)}
                   style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
@@ -473,10 +824,10 @@ function SearchContent() {
                 <ShieldCheck size={16} color="var(--brand-teal)" />
                 Verified Only
               </label>
-              
+
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--ink)' }}>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={filters.immediate_hiring}
                   onChange={(e) => handleFilterChange('immediate_hiring', e.target.checked)}
                   style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)', cursor: 'pointer' }}
@@ -490,20 +841,20 @@ function SearchContent() {
         </div>
 
         {/* ─── MAIN CONTENT: RESULTS ─── */}
-        <div style={{ flex: 1, position: 'relative' }}>
-          
+        <div className="search-results-area" style={{ flex: 1, position: 'relative' }}>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)', margin: 0 }}>
               {loading ? 'Searching...' : `${filteredTutors.length} Tutors Found`}
             </h2>
             {/* Custom Popover Dropdown under Funnel/Sort trigger */}
             <div style={{ position: 'relative' }}>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowSortDropdown(!showSortDropdown)}
-                style={{ 
-                  display: 'flex', alignItems: 'center', gap: '8px', height: '36px', 
-                  borderRadius: '999px', border: '1px solid var(--hairline-strong)', 
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px', height: '36px',
+                  borderRadius: '999px', border: '1px solid var(--hairline-strong)',
                   backgroundColor: showSortDropdown ? 'var(--brand-green-soft)' : '#fff',
                   color: showSortDropdown ? 'var(--brand-green-dark)' : 'var(--slate)',
                   fontWeight: 500, fontSize: '13px', padding: '0 16px'
@@ -516,7 +867,7 @@ function SearchContent() {
 
               {showSortDropdown && (
                 <div style={{
-                  position: 'absolute', right: 0, top: '44px', width: '280px', 
+                  position: 'absolute', right: 0, top: '44px', width: '280px',
                   backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--hairline-strong)',
                   boxShadow: 'var(--shadow-lg)', padding: '16px', zIndex: 50, display: 'flex', flexDirection: 'column', gap: '16px'
                 }}>
@@ -589,7 +940,7 @@ function SearchContent() {
                             position: 'absolute', left: 0, right: 0, top: '11px', height: '6px',
                             backgroundColor: 'var(--hairline-strong)', borderRadius: '999px', zIndex: 1
                           }} />
-                          
+
                           {/* Visual track active range progress */}
                           <div style={{
                             position: 'absolute', top: '11px', height: '6px',
@@ -598,7 +949,7 @@ function SearchContent() {
                           }} />
 
                           {/* Min Slider Thumb */}
-                          <input 
+                          <input
                             type="range"
                             min="1000"
                             max="50000"
@@ -619,7 +970,7 @@ function SearchContent() {
                           />
 
                           {/* Max Slider Thumb */}
-                          <input 
+                          <input
                             type="range"
                             min="1000"
                             max="50000"
@@ -687,7 +1038,7 @@ function SearchContent() {
 
                   {/* Popover Actions */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <button 
+                    <button
                       onClick={() => {
                         handleFilterChange('min_price', '');
                         handleFilterChange('max_price', '');
@@ -698,8 +1049,8 @@ function SearchContent() {
                     >
                       Reset All
                     </button>
-                    <Button 
-                      variant="primary" 
+                    <Button
+                      variant="primary"
                       onClick={() => setShowSortDropdown(false)}
                       style={{ height: '28px', padding: '0 12px', fontSize: '12px', borderRadius: '4px' }}
                     >
@@ -724,27 +1075,19 @@ function SearchContent() {
                   animation: shimmer 1.5s infinite linear;
                 }
               `}</style>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))',
-                gap: '24px',
-                paddingBottom: '40px'
-              }}>
+              <div className="tutor-results-grid" style={{ paddingBottom: '40px' }}>
                 {Array.from({ length: 6 }).map((_, idx) => (
                   <TutorCardSkeleton key={idx} />
                 ))}
               </div>
             </>
           ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))',
-              gap: '24px',
+            <div className="tutor-results-grid" style={{
               paddingBottom: showAuthOverlay ? '140px' : '40px'
             }}>
               {displayedTutors.map((tutor) => (
                 <Card key={tutor.id} style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
-                  
+
                   {tutor.immediate_hiring && (
                     <div style={{ position: 'absolute', top: '16px', right: '16px', backgroundColor: '#FEF3C7', color: '#D97706', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <Zap size={12} fill="#D97706" /> IMMEDIATE
@@ -805,11 +1148,11 @@ function SearchContent() {
                           View Profile
                         </Button>
                       </Link>
-                      <Button 
-                        variant="primary" 
-                        style={{ 
-                          height: '36px', padding: '0 16px', fontSize: '13px', borderRadius: '999px', 
-                          backgroundColor: 'var(--brand-green-dark)', color: '#fff', border: 'none', 
+                      <Button
+                        variant="primary"
+                        style={{
+                          height: '36px', padding: '0 16px', fontSize: '13px', borderRadius: '999px',
+                          backgroundColor: 'var(--brand-green-dark)', color: '#fff', border: 'none',
                           fontWeight: 600, cursor: 'pointer'
                         }}
                       >
@@ -850,8 +1193,8 @@ function SearchContent() {
               <div style={{ textAlign: 'center', maxWidth: '400px' }}>
                 <Lock size={32} color="var(--stone)" style={{ margin: '0 auto 16px' }} />
                 <h3 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)', marginBottom: '12px' }}>
-                  {filteredTutors.length > 4 
-                    ? `${filteredTutors.length - 4} more tutors available` 
+                  {filteredTutors.length > 4
+                    ? `${filteredTutors.length - 4} more tutors available`
                     : 'Unlock more profiles'}
                 </h3>
                 <p style={{ color: 'var(--steel)', fontSize: '15px', marginBottom: '24px', lineHeight: '1.5' }}>

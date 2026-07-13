@@ -3,14 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import Link from 'next/link';
-import { 
-  ShieldCheck, 
-  Lock, 
-  MapPin, 
-  Star, 
-  Clock, 
-  ArrowRight, 
-  MessageSquare, 
+import {
+  ShieldCheck,
+  Lock,
+  MapPin,
+  Star,
+  Clock,
+  ArrowRight,
+  MessageSquare,
   Award,
   BookOpen,
   ChevronDown,
@@ -21,7 +21,7 @@ import {
 export default function Home() {
   // Auto-sliding live deck state
   const [activeDeckIndex, setActiveDeckIndex] = useState(0);
-  
+
   // Accordion state for FAQs
   const [openFaq, setOpenFaq] = useState(null);
 
@@ -251,7 +251,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      
+
       {/* 2. Hero Section (Split Layout, Full Width) */}
       <section style={{
         position: 'relative',
@@ -277,10 +277,10 @@ export default function Home() {
           }}>
             {/* Left Content Column */}
             <div>
-              <span style={{ 
-                color: 'var(--brand-green)', 
-                fontWeight: 600, 
-                letterSpacing: '1px', 
+              <span style={{
+                color: 'var(--brand-green)',
+                fontWeight: 600,
+                letterSpacing: '1px',
                 textTransform: 'uppercase',
                 fontSize: '13px',
                 display: 'block',
@@ -288,22 +288,22 @@ export default function Home() {
               }}>
                 The Infrastructure for Private Education
               </span>
-              
-              <h1 style={{ 
-                fontSize: '56px', 
-                lineHeight: '1.15', 
-                color: 'var(--on-dark)', 
-                marginBottom: '24px', 
-                fontWeight: 700 
+
+              <h1 style={{
+                fontSize: '56px',
+                lineHeight: '1.15',
+                color: 'var(--on-dark)',
+                marginBottom: '24px',
+                fontWeight: 700
               }}>
                 Hire Pakistan&apos;s <span style={{ color: 'var(--brand-green)' }}>Top Vetted Tutors</span>.
               </h1>
-              
-              <p style={{ 
-                fontSize: '18px', 
-                lineHeight: '1.6', 
-                color: 'var(--on-dark-muted)', 
-                marginBottom: '32px' 
+
+              <p style={{
+                fontSize: '18px',
+                lineHeight: '1.6',
+                color: 'var(--on-dark-muted)',
+                marginBottom: '32px'
               }}>
                 Every Child Deserves the Right Teacher. TutorOnline helps families discover verified educators, compare teaching styles, book trial lessons, and pay only when agreed milestones are completed—so you can choose with complete confidence, whether learning happens at home, online, or at the teacher&apos;s place.
               </p>
@@ -311,7 +311,7 @@ export default function Home() {
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '40px' }}>
                 <Link href="/find-tutor">
                   <Button variant="primary" style={{ padding: '16px 32px', fontSize: '16px', backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)' }}>
-                    Find a Tutor (Post Free Job)
+                    Find a Tutor
                   </Button>
                 </Link>
                 <Link href="/register">
@@ -349,9 +349,9 @@ export default function Home() {
                 }}>
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
                     <div style={{ position: 'relative', width: '60px', height: '60px' }}>
-                      <img 
-                        src={mockTutors[activeDeckIndex].avatar} 
-                        alt={mockTutors[activeDeckIndex].name} 
+                      <img
+                        src={mockTutors[activeDeckIndex].avatar}
+                        alt={mockTutors[activeDeckIndex].name}
                         style={{ width: '100%', height: '100%', borderRadius: '50%' }}
                       />
                       <div style={{
@@ -433,8 +433,8 @@ export default function Home() {
                 {/* Deck indicators */}
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '8px' }}>
                   {mockTutors.map((_, idx) => (
-                    <div 
-                      key={idx} 
+                    <div
+                      key={idx}
                       onClick={() => setActiveDeckIndex(idx)}
                       style={{
                         width: '8px',
@@ -464,7 +464,7 @@ export default function Home() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-lg)' }}>
             {usps.map((usp, idx) => (
               <Card key={idx} style={{ padding: '32px', border: '1px solid var(--hairline-strong)' }}>
-                <div style={{ 
+                <div style={{
                   width: '56px', height: '56px', borderRadius: '12px', backgroundColor: 'var(--brand-green-soft)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px'
                 }}>
@@ -488,8 +488,8 @@ export default function Home() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--spacing-lg)' }}>
             {featuredTutors.map((t, idx) => (
-              <Card key={idx} style={{ 
-                padding: 'var(--spacing-lg)', 
+              <Card key={idx} style={{
+                padding: 'var(--spacing-lg)',
                 border: '1px solid var(--hairline)',
                 display: 'flex',
                 flexDirection: 'column',
@@ -508,11 +508,11 @@ export default function Home() {
                   <h5 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px', color: 'var(--ink)' }}>{t.subject}</h5>
                   <p style={{ fontSize: '14px', color: 'var(--steel)', marginBottom: '20px' }}>{t.tagline}</p>
                 </div>
-                
-                <div style={{ 
-                  borderTop: '1px solid var(--hairline)', 
+
+                <div style={{
+                  borderTop: '1px solid var(--hairline)',
                   paddingTop: '16px',
-                  display: 'flex', 
+                  display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
@@ -537,7 +537,7 @@ export default function Home() {
           <div className="grid-split" style={{ gap: 'var(--spacing-xxl)', alignItems: 'center' }}>
             <div>
               <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
-                <button 
+                <button
                   onClick={() => setActiveTab('families')}
                   style={{
                     padding: '12px 24px',
@@ -553,7 +553,7 @@ export default function Home() {
                 >
                   For Families
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveTab('educators')}
                   style={{
                     padding: '12px 24px',
@@ -574,11 +574,11 @@ export default function Home() {
               <h2 style={{ fontSize: '38px', fontWeight: 700, marginBottom: '24px', lineHeight: '1.2' }}>
                 How It Works
               </h2>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 {(activeTab === 'families' ? familySteps : educatorSteps).map((d, idx) => (
                   <div key={idx} style={{ display: 'flex', gap: '16px' }}>
-                    <div style={{ 
+                    <div style={{
                       width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--brand-green-soft)',
                       color: 'var(--brand-green-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontWeight: 600, flexShrink: 0, fontSize: '14px'
@@ -593,7 +593,7 @@ export default function Home() {
             </div>
 
             {/* Right Side: Interactive Mockup Container */}
-            <div style={{ 
+            <div style={{
               backgroundColor: 'var(--canvas)',
               borderRadius: 'var(--rounded-xxl)',
               border: '1px solid var(--hairline-strong)',
@@ -607,7 +607,7 @@ export default function Home() {
                 <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#27C93F' }} />
                 <span style={{ fontSize: '12px', color: 'var(--stone)', marginLeft: '12px', fontWeight: 500 }}>TutorOnline Workspace Engine v1.0</span>
               </div>
-              
+
               {/* App Workspace Mockup */}
               <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--rounded-lg)', padding: '16px', border: '1px solid var(--hairline)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--hairline)', paddingBottom: '12px', marginBottom: '16px' }}>
@@ -617,7 +617,7 @@ export default function Home() {
                   </div>
                   <span style={{ fontSize: '12px', backgroundColor: 'var(--brand-green-soft)', color: 'var(--brand-green-dark)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>In Escrow</span>
                 </div>
-                
+
                 {/* Chat window mock */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minHeight: '180px', justifyContent: 'flex-end', marginBottom: '16px' }}>
                   <div style={{ alignSelf: 'flex-start', backgroundColor: '#e9ecef', padding: '10px 14px', borderRadius: '16px 16px 16px 4px', maxWidth: '80%', fontSize: '13px' }}>
@@ -648,9 +648,9 @@ export default function Home() {
           <p style={{ color: 'var(--steel)', fontSize: '16px', maxWidth: '600px', margin: '0 auto 40px auto' }}>
             Experience peace of mind with manual academic verification and secure milestone payments.
           </p>
-          <div style={{ 
-            backgroundColor: 'var(--surface)', 
-            border: '1px solid var(--hairline-strong)', 
+          <div style={{
+            backgroundColor: 'var(--surface)',
+            border: '1px solid var(--hairline-strong)',
             borderRadius: 'var(--rounded-xl)',
             padding: '40px',
             boxShadow: 'var(--shadow-subtle)',
@@ -687,16 +687,16 @@ export default function Home() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {faqs.map((faq, idx) => (
-              <div 
-                key={idx} 
-                style={{ 
-                  backgroundColor: 'var(--canvas)', 
-                  borderRadius: 'var(--rounded-lg)', 
+              <div
+                key={idx}
+                style={{
+                  backgroundColor: 'var(--canvas)',
+                  borderRadius: 'var(--rounded-lg)',
                   border: '1px solid var(--hairline-strong)',
                   overflow: 'hidden'
                 }}
               >
-                <button 
+                <button
                   onClick={() => toggleFaq(idx)}
                   style={{
                     width: '100%',
@@ -711,19 +711,19 @@ export default function Home() {
                   }}
                 >
                   {faq.q}
-                  <ChevronDown 
-                    size={20} 
-                    style={{ 
+                  <ChevronDown
+                    size={20}
+                    style={{
                       transform: openFaq === idx ? 'rotate(180deg)' : 'rotate(0deg)',
                       transition: 'transform 0.2s'
-                    }} 
+                    }}
                   />
                 </button>
                 {openFaq === idx && (
-                  <div style={{ 
-                    padding: '0 24px 24px 24px', 
-                    fontSize: '15px', 
-                    color: 'var(--slate)', 
+                  <div style={{
+                    padding: '0 24px 24px 24px',
+                    fontSize: '15px',
+                    color: 'var(--slate)',
                     lineHeight: '1.6',
                     borderTop: '1px solid var(--hairline-soft)'
                   }}>
