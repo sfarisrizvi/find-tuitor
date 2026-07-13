@@ -41,7 +41,7 @@ export default function Contact() {
         <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-xxl)' }}>
           <h1 style={{ fontSize: '40px', fontWeight: 700 }}>Get In Touch</h1>
           <p style={{ color: 'var(--steel)', fontSize: '16px', maxWidth: '500px', margin: '0 auto' }}>
-            Have questions about payments, geofenced tuition check-ins, or academic verification? Drop us a line.
+            Have questions about payments, trial lessons, or academic verification? Drop us a line.
           </p>
         </div>
 
@@ -58,7 +58,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <span style={{ fontSize: '12px', color: 'var(--stone)', display: 'block' }}>EMAIL US</span>
-                    <strong style={{ fontSize: '15px', color: 'var(--charcoal)' }}>support@findtutors.pk</strong>
+                    <strong style={{ fontSize: '15px', color: 'var(--charcoal)' }}>support@tutoronline.pk</strong>
                   </div>
                 </div>
 

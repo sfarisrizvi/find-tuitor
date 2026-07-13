@@ -6,7 +6,7 @@ import { Input } from '../../components/ui/Input';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Search, MapPin, Star, ShieldCheck, Lock, ChevronDown
+  Search, MapPin, Star, ShieldCheck, Lock, ChevronDown, BookOpen
 } from 'lucide-react';
 
 export default function FindTutorLanding() {
@@ -23,8 +23,8 @@ export default function FindTutorLanding() {
 
   const faqs = [
     { q: "How do I choose the best verified tutor for my child?", a: "You can post a free job describing your subjects, boards, and budget. Our vetted educators will submit custom bids. You can check their qualifications, credentials, rating, and schedule a free 15-minute demo lesson to assess chemistry." },
-    { q: "How does the JazzCash/NayaPay secure escrow work?", a: "When you hire a tutor, you fund the milestone. These funds are held securely by FindTutors. Once lessons are logged and you confirm completion, funds are released directly to the tutor." },
-    { q: "What if the tutor doesn't check in or misses classes?", a: "Tutors must check in using our mobile app, which verifies their location using GPS geofencing. If they miss classes or log incorrect hours, you can raise a dispute, and our team will refund your escrow wallet." }
+    { q: "How does the JazzCash/NayaPay secure escrow work?", a: "When you hire a tutor, you fund the milestone. These funds are held securely by TutorOnline. Once lessons are logged and you confirm completion, funds are released directly to the tutor." },
+    { q: "What if the tutor does not deliver the agreed lessons?", a: "Our milestone system ensures complete protection. If a tutor does not complete an agreed milestone or stops communicating, you can raise a dispute. Our support team will review the contract details and return the escrowed funds to your wallet." }
   ];
 
   const handleSearch = () => {
@@ -217,9 +217,9 @@ export default function FindTutorLanding() {
               <div style={{ width: '48px', height: '48px', borderRadius: '8px', backgroundColor: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
                 <ShieldCheck size={24} color="var(--brand-green-dark)" />
               </div>
-              <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px' }}>CNIC & Degree Verified</h3>
+              <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px' }}>Identity & Academic Verification</h3>
               <p style={{ color: 'var(--slate)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
-                Every single educator is verified through a NADRA-backed identity check and a manual academic transcript audit before placing their first bid.
+                Every educator submits their CNIC and academic credentials before joining TutorOnline. Each profile is reviewed before it goes live, helping families choose with confidence.
               </p>
             </Card>
 
@@ -229,17 +229,17 @@ export default function FindTutorLanding() {
               </div>
               <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px' }}>Secure Escrow Protection</h3>
               <p style={{ color: 'var(--slate)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
-                Your money stays safe inside our system. Tutors are only paid after they log their sessions and you confirm completion. No advance fee risks.
+                Your money stays safe inside our system. Tutors are only paid after they complete agreed milestones and you confirm completion. No advance fee risks.
               </p>
             </Card>
 
             <Card style={{ padding: '24px', border: '1px solid var(--hairline-strong)' }}>
               <div style={{ width: '48px', height: '48px', borderRadius: '8px', backgroundColor: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                <MapPin size={24} color="var(--brand-green-dark)" />
+                <BookOpen size={24} color="var(--brand-green-dark)" />
               </div>
-              <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px' }}>Tamper-Proof Tracking</h3>
+              <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px' }}>Risk-Free Trial Lesson</h3>
               <p style={{ color: 'var(--slate)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
-                Know exactly what you are paying for. Our platform utilizes GPS geofencing to verify home tuition attendance, while online sessions automatically log minutes.
+                Shortlist your preferred educator, chat directly, and schedule a trial lesson to ensure the perfect fit before making a long-term commitment.
               </p>
             </Card>
           </div>
@@ -263,7 +263,7 @@ export default function FindTutorLanding() {
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--brand-green-soft)', color: 'var(--brand-green-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '14px', flexShrink: 0 }}>1</div>
                   <div>
                     <h4 style={{ fontSize: '17px', fontWeight: 600, marginBottom: '4px' }}>Skip the Hidden Academy Cuts</h4>
-                    <p style={{ color: 'var(--slate)', fontSize: '14px', margin: 0 }}>FindTutors operates on a transparent model, passing maximum value straight to families and educators.</p>
+                    <p style={{ color: 'var(--slate)', fontSize: '14px', margin: 0 }}>TutorOnline operates on a transparent model, passing maximum value straight to families and educators.</p>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '16px' }}>

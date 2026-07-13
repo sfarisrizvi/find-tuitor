@@ -72,7 +72,7 @@ export default function Home() {
       name: 'Kamran M.',
       role: 'Parent',
       area: 'DHA Phase 6, Lahore',
-      text: 'Extremely professional geofenced tracking. I get check-in alerts when the tutor arrives at my home.'
+      text: 'Extremely professional milestone payment system. I only pay after checking and confirming the lesson completion.'
     },
     {
       name: 'Dr. Yasmin R.',
@@ -81,6 +81,9 @@ export default function Home() {
       text: 'My daughter cleared her MDCAT prep. The 15-minute free demo session made it so easy to choose the tutor.'
     }
   ];
+
+  // Tab state for How It Works flow
+  const [activeTab, setActiveTab] = useState('families'); // 'families' | 'educators'
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -96,18 +99,64 @@ export default function Home() {
   const usps = [
     {
       icon: <ShieldCheck size={28} color="var(--brand-green-dark)" />,
-      title: "CNIC & Degree Vetted",
-      desc: "Every single educator is verified through a NADRA-backed identity check and a manual academic transcript audit before placing their first bid. No fake credentials allowed."
+      title: "Identity & Academic Verification",
+      desc: "Every educator submits their CNIC and academic credentials before joining TutorOnline. Each profile is reviewed before it goes live, helping families choose with confidence."
     },
     {
       icon: <Lock size={28} color="var(--brand-green-dark)" />,
       title: "Secure Escrow Protection",
-      desc: "Your money stays safe inside our system. Tutors are only paid after they log their sessions and you confirm completion. No more ghosting after receiving advance fees."
+      desc: "Your money stays safe inside our system. Tutors are only paid after they complete agreed milestones and you confirm completion. No more ghosting after receiving advance fees."
     },
     {
-      icon: <MapPin size={28} color="var(--brand-green-dark)" />,
-      title: "Tamper-Proof Tracking",
-      desc: "Know exactly what you are paying for. Our platform utilizes GPS geofencing to verify home tuition attendance, while online sessions automatically log every minute on screen."
+      icon: <BookOpen size={28} color="var(--brand-green-dark)" />,
+      title: "Risk-Free Trial Lesson",
+      desc: "Shortlist your preferred educator, chat directly, and schedule a trial lesson to ensure the perfect fit before making a long-term commitment."
+    }
+  ];
+
+  const familySteps = [
+    {
+      title: "Tell Us What You Need",
+      desc: "Post your tuition requirements, including the subject, grade, location, schedule, and budget."
+    },
+    {
+      title: "Receive Matched Educators",
+      desc: "Qualified educators submit proposals tailored to your requirements. Compare profiles, experience, reviews, and pricing."
+    },
+    {
+      title: "Choose the Right Teacher",
+      desc: "Shortlist your preferred educator, chat directly, and schedule a trial lesson before making a commitment."
+    },
+    {
+      title: "Learn with Confidence",
+      desc: "Start your tutoring contract. Payments remain protected and are released only after the agreed milestones are completed."
+    },
+    {
+      title: "Share Your Experience",
+      desc: "Rate your educator and leave a review to help other families make informed decisions."
+    }
+  ];
+
+  const educatorSteps = [
+    {
+      title: "Create Your Professional Profile",
+      desc: "Complete your profile by adding your CNIC, qualifications, teaching experience, subjects, availability, and pricing."
+    },
+    {
+      title: "Discover Tuition Opportunities",
+      desc: "Browse tuition requests that match your expertise and submit personalized proposals to interested families."
+    },
+    {
+      title: "Connect with Families",
+      desc: "Chat with parents, answer their questions, and conduct a trial lesson to ensure it's the right fit."
+    },
+    {
+      title: "Teach & Grow Your Reputation",
+      desc: "Deliver engaging lessons, achieve agreed milestones, and build your profile with positive reviews and successful contracts."
+    },
+    {
+      title: "Get Paid Securely",
+      desc: "Receive your payment once the agreed milestones are completed, giving both you and families complete peace of mind."
     }
   ];
 
@@ -144,7 +193,7 @@ export default function Home() {
   const deepDives = [
     {
       title: "Skip the Hidden Academy Cuts",
-      desc: "Traditional tuition academies charge massive up-front registration fees and take a silent chunk of the tutor's monthly salary. FindTutors operates on a transparent model, passing maximum value straight to families and educators."
+      desc: "Traditional tuition academies charge massive up-front registration fees and take a silent chunk of the tutor's monthly salary. TutorOnline operates on a transparent model, passing maximum value straight to families and educators."
     },
     {
       title: "The 15-Minute Free Demo",
@@ -159,11 +208,11 @@ export default function Home() {
   const faqs = [
     {
       q: "How does the platform hold and release payments safely?",
-      a: "When you officially hire an educator, you fund the upcoming milestone (weekly or monthly) using local wallets like JazzCash, Nayapay, or direct 1Link bank transfer. The platform securely holds these funds. Once the tutor delivers the classes and logs their hours, you click 'Release Funds' to pay them."
+      a: "When you officially hire an educator, you fund the upcoming milestone (weekly or monthly) using local wallets like JazzCash, Nayapay, or direct 1Link bank transfer. The platform securely holds these funds. Once the tutor delivers the classes and completes the milestone, you click 'Release Funds' to pay them."
     },
     {
-      q: "What happens if a tutor misses scheduled home classes?",
-      a: "Our system tracks presence via GPS geofencing on the tutor's mobile phone. If an educator skips sessions or fails to log verified check-ins, you can instantly flag a dispute. Our local support team audits the access records and returns your funds directly back to your platform wallet."
+      q: "What happens if a tutor does not deliver the agreed lessons?",
+      a: "Our milestone system ensures complete protection. If an educator skips sessions, does not complete the agreed milestone, or stops communicating, you can raise a dispute. Our support team will review the contract details and return the escrowed funds to your wallet."
     },
     {
       q: "Is posting a tutoring job post completely free?",
@@ -208,7 +257,7 @@ export default function Home() {
                 display: 'block',
                 marginBottom: '16px'
               }}>
-                Stop risking your child&apos;s grades on unverified academy references.
+                The Infrastructure for Private Education
               </span>
               
               <h1 style={{ 
@@ -218,7 +267,7 @@ export default function Home() {
                 marginBottom: '24px', 
                 fontWeight: 700 
               }}>
-                Hire Pakistan’s <span style={{ color: 'var(--brand-green)' }}>Top Vetted Tutors</span>. Home or Online.
+                Hire Pakistan&apos;s <span style={{ color: 'var(--brand-green)' }}>Top Vetted Tutors</span>.
               </h1>
               
               <p style={{ 
@@ -227,7 +276,7 @@ export default function Home() {
                 color: 'var(--on-dark-muted)', 
                 marginBottom: '32px' 
               }}>
-                No more paying upfront for missed classes. Post your specific requirements for Matric, FSc, O/A Levels, or Entry Tests. Review custom bids from verified educators, schedule a free 15-minute demo, and only pay when the results are delivered.
+                Every Child Deserves the Right Teacher. TutorOnline helps families discover verified educators, compare teaching styles, book trial lessons, and pay only when agreed milestones are completed—so you can choose with complete confidence, whether learning happens at home, online, or at the teacher&apos;s place.
               </p>
 
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '40px' }}>
@@ -241,16 +290,6 @@ export default function Home() {
                     Become a Tutor
                   </Button>
                 </Link>
-              </div>
-
-              {/* Star Rating snippet reminiscent of Upwork / reference image */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ display: 'flex', gap: '2px' }}>
-                  {[1,2,3,4,5].map(i => <Star key={i} size={18} fill="var(--accent-orange)" color="var(--accent-orange)" />)}
-                </div>
-                <div style={{ fontSize: '15px' }}>
-                  <strong>Rated 4.9/5 on avg.</strong> from 5,000+ local families
-                </div>
               </div>
             </div>
 
@@ -390,7 +429,7 @@ export default function Home() {
         <div className="container">
           <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 64px auto' }}>
             <h2 style={{ fontSize: '38px', fontWeight: 700, marginBottom: '16px' }}>Built for Trust. Engineered for Results.</h2>
-            <p style={{ color: 'var(--steel)', fontSize: '16px' }}>Pakistan&apos;s first geolocation-enabled and NADRA-vetted tuition engine.</p>
+            <p style={{ color: 'var(--steel)', fontSize: '16px' }}>Pakistan&apos;s trusted platform for private tutoring with verified educators.</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-lg)' }}>
@@ -468,15 +507,47 @@ export default function Home() {
         <div className="container">
           <div className="grid-split" style={{ gap: 'var(--spacing-xxl)', alignItems: 'center' }}>
             <div>
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
+                <button 
+                  onClick={() => setActiveTab('families')}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: 'var(--rounded-full, 9999px)',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: 'none',
+                    backgroundColor: activeTab === 'families' ? 'var(--brand-green-dark)' : 'var(--hairline-strong)',
+                    color: activeTab === 'families' ? 'white' : 'var(--charcoal)',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  For Families
+                </button>
+                <button 
+                  onClick={() => setActiveTab('educators')}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: 'var(--rounded-full, 9999px)',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: 'none',
+                    backgroundColor: activeTab === 'educators' ? 'var(--brand-green-dark)' : 'var(--hairline-strong)',
+                    color: activeTab === 'educators' ? 'white' : 'var(--charcoal)',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  For Educators
+                </button>
+              </div>
+
               <h2 style={{ fontSize: '38px', fontWeight: 700, marginBottom: '24px', lineHeight: '1.2' }}>
-                The Academy Model is Broken. <span style={{ color: 'var(--brand-green-dark)' }}>Here is How We Fixed It.</span>
+                How It Works
               </h2>
-              <p style={{ color: 'var(--steel)', fontSize: '16px', marginBottom: '32px' }}>
-                Academies take up to 40% of what you pay while unverified classified sites offer zero safety. We created a transparent, verified bridge.
-              </p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                {deepDives.map((d, idx) => (
+                {(activeTab === 'families' ? familySteps : educatorSteps).map((d, idx) => (
                   <div key={idx} style={{ display: 'flex', gap: '16px' }}>
                     <div style={{ 
                       width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--brand-green-soft)',
@@ -505,7 +576,7 @@ export default function Home() {
                 <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#FF5F56' }} />
                 <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#FFBD2E' }} />
                 <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#27C93F' }} />
-                <span style={{ fontSize: '12px', color: 'var(--stone)', marginLeft: '12px', fontWeight: 500 }}>FindTutors Workspace Engine v1.0</span>
+                <span style={{ fontSize: '12px', color: 'var(--stone)', marginLeft: '12px', fontWeight: 500 }}>TutorOnline Workspace Engine v1.0</span>
               </div>
               
               {/* App Workspace Mockup */}
@@ -541,12 +612,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. Real-Time Application Workspace Preview */}
+      {/* 6. Secure Milestone Marketplace Preview */}
       <section style={{ padding: '80px 0', backgroundColor: 'var(--canvas)', borderBottom: '1px solid var(--hairline)' }}>
         <div className="container" style={{ textAlign: 'center' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: 700, marginBottom: '16px' }}>Workspace Preview</h2>
+          <h2 style={{ fontSize: '32px', fontWeight: 700, marginBottom: '16px' }}>Secure Milestone Marketplace</h2>
           <p style={{ color: 'var(--steel)', fontSize: '16px', maxWidth: '600px', margin: '0 auto 40px auto' }}>
-            Check how we track online whiteboard usage and physical attendance securely from the parent dashboard.
+            Experience peace of mind with manual academic verification and secure milestone payments.
           </p>
           <div style={{ 
             backgroundColor: 'var(--surface)', 
@@ -559,19 +630,19 @@ export default function Home() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '24px' }}>
               <div style={{ textAlign: 'center' }}>
-                <CheckCircle2 size={36} color="var(--brand-green-dark)" style={{ margin: '0 auto 12px auto' }} />
-                <h5 style={{ margin: '0 0 4px 0' }}>Attendance Vetted</h5>
-                <span style={{ fontSize: '13px', color: 'var(--steel)' }}>GPS Mobile Match Check</span>
+                <ShieldCheck size={36} color="var(--brand-green-dark)" style={{ margin: '0 auto 12px auto' }} />
+                <h5 style={{ margin: '0 0 4px 0' }}>Identity Vetted</h5>
+                <span style={{ fontSize: '13px', color: 'var(--steel)' }}>Manual Verification of CNIC & Degree</span>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <Clock size={36} color="var(--brand-green-dark)" style={{ margin: '0 auto 12px auto' }} />
-                <h5 style={{ margin: '0 0 4px 0' }}>Hourly Transparency</h5>
-                <span style={{ fontSize: '13px', color: 'var(--steel)' }}>Auto Screen-Logs for Remote</span>
+                <h5 style={{ margin: '0 0 4px 0' }}>Risk-Free Trial</h5>
+                <span style={{ fontSize: '13px', color: 'var(--steel)' }}>15-Minute Trial Session First</span>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <DollarSign size={36} color="var(--brand-green-dark)" style={{ margin: '0 auto 12px auto' }} />
                 <h5 style={{ margin: '0 0 4px 0' }}>Escrow Guarantee</h5>
-                <span style={{ fontSize: '13px', color: 'var(--steel)' }}>Safe Release via JazzCash/1Link</span>
+                <span style={{ fontSize: '13px', color: 'var(--steel)' }}>Safe Release via JazzCash/NayaPay/1Link</span>
               </div>
             </div>
           </div>

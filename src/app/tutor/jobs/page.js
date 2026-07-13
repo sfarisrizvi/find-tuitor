@@ -59,7 +59,7 @@ export default function FindJobs() {
       budget_amount: '15000',
       budget_type: 'fixed',
       status: 'open',
-      desc: 'Require home tuition for grade 9 student. Gulshan-e-Iqbal, Karachi. Tutor must check-in via GPS attendance app.'
+      desc: 'Require home tuition for grade 9 student. Gulshan-e-Iqbal, Karachi. Looking for a dedicated teacher for regular milestones.'
     },
     {
       id: 'job-mock-4',
@@ -161,16 +161,16 @@ export default function FindJobs() {
 
   const tutorFaqs = [
     {
-      q: "How much commission does FindTutors charge?",
-      a: "FindTutors operates on a 0% commission model. You keep 100% of your hourly or monthly milestone billing rate. Tutors purchase cheap Connect bundles to bid on tuition posts."
+      q: "How much commission does TutorOnline charge?",
+      a: "TutorOnline operates on a 0% commission model. You keep 100% of your hourly or monthly milestone billing rate. Tutors purchase cheap Connect bundles to bid on tuition posts."
     },
     {
       q: "When and how do I receive my tutoring payments?",
       a: "Payments are held securely in escrow when the parent hires you. Once you deliver the classes and log hours, the parent releases the weekly or monthly milestone directly to your linked JazzCash, NayaPay, or Bank Account."
     },
     {
-      q: "How do geofenced attendance logs work?",
-      a: "For physical home tuitions, you check in and check out using our mobile app. The app automatically cross-references your GPS coordinates with the parent's home bounds to generate tamper-proof attendance sheets."
+      q: "How do trial lessons and milestones work?",
+      a: "When a family shortlists your proposal, you can connect directly via chat and schedule a trial lesson. Once both parties agree on milestones, a contract is initiated and payments are released upon completing each agreed milestone."
     }
   ];
 
