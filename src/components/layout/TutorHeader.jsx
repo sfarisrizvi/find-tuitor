@@ -13,6 +13,8 @@ export function TutorHeader() {
 
   useEffect(() => {
     const supabase = createClient();
+    let cancelled = false;
+
     const loadProfile = async (u) => {
       try {
         const { data } = await supabase
@@ -20,20 +22,27 @@ export function TutorHeader() {
           .select('id, full_name, avatar_url')
           .eq('id', u.id)
           .maybeSingle();
-        if (data) setProfile(data);
+        if (!cancelled && data) setProfile(data);
       } catch (err) {
         console.error('Error loading tutor header profile:', err);
       }
     };
 
     const init = async () => {
-      const { data: { user: u } } = await supabase.auth.getUser();
-      if (u) {
-        setUser(u);
-        await loadProfile(u);
+      try {
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (cancelled) return;
+        if (u) {
+          setUser(u);
+          await loadProfile(u);
+        }
+      } catch (err) {
+        console.error('Error initializing tutor header:', err);
       }
     };
     init();
+
+    return () => { cancelled = true; };
   }, []);
 
   const handleSignOut = async () => {

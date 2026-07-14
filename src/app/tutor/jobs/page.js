@@ -19,7 +19,8 @@ import {
   CheckCircle2,
   User,
   Users,
-  GraduationCap
+  GraduationCap,
+  ArrowRight
 } from 'lucide-react';
 import { createClient } from '../../../utils/supabase/client';
 

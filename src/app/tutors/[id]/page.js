@@ -194,6 +194,7 @@ export default function TutorProfile() {
   const [categories, setCategories] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [errorState, setErrorState] = useState(null);
   const [selectedDay, setSelectedDay] = useState('mon');
   const [editingSlots, setEditingSlots] = useState(null); // { day, slots: [{start, end}] }
   
@@ -204,30 +205,39 @@ export default function TutorProfile() {
   const [isEditingCategories, setIsEditingCategories] = useState(false);
   const [isEditingExperience, setIsEditingExperience] = useState(false);
 
-  const loadData = async () => {
+  const loadData = async (signal) => {
+    if (!id) return;
     try {
-      console.log('[DEBUG] loadData started, id:', id);
       const supabase = createClient();
-      console.log('[DEBUG] Supabase client created');
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+
+      // Simple timeout wrapper
+      const withTimeout = (promise, ms = 10000) => {
+        return Promise.race([
+          promise,
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('TIMEOUT')), ms)
+          )
+        ]);
+      };
+
+      const { data: { user: authUser } } = await withTimeout(supabase.auth.getUser());
+      if (signal?.aborted) return;
       const u = authUser || null;
-      console.log('[DEBUG] User fetched:', u?.id);
       setUser(u);
 
       if (id.startsWith('mock-')) {
-        await Promise.resolve();
-        console.log('[DEBUG] Loading mock tutor');
         const found = MOCK_TUTORS.find(t => t.id === id) || MOCK_TUTORS[0];
         setTutor(found);
         setExperience(found.experience || []);
         setCategories(found.categories || []);
       } else {
-        console.log('[DEBUG] Fetching tutor profile from database');
-        const { data: profile, error: pErr } = await supabase.from('tutor_profiles').select('*').eq('id', id).single();
+        const { data: profile, error: pErr } = await withTimeout(
+          supabase.from('tutor_profiles').select('*').eq('id', id).single()
+        );
+        if (signal?.aborted) return;
         if (pErr) {
           console.error('[DEBUG] Error fetching tutor profile:', pErr);
         }
-        console.log('[DEBUG] Tutor profile fetched:', profile?.id);
         if (profile) {
           if (!u) {
             if (profile.about) {
@@ -240,32 +250,34 @@ export default function TutorProfile() {
           }
           setTutor(profile);
         }
-        console.log('[DEBUG] Fetching experience from database');
-        const { data: exp, error: eErr } = await supabase.from('tutor_experience').select('*').eq('tutor_id', id).order('sort_order');
-        if (eErr) {
-          console.error('[DEBUG] Error fetching tutor experience:', eErr);
-        }
-        console.log('[DEBUG] Experience fetched:', exp?.length);
-        setExperience(exp || []);
 
-        console.log('[DEBUG] Fetching categories from database');
-        const { data: cats, error: cErr } = await supabase.from('tutor_categories').select('*').eq('tutor_id', id);
-        if (cErr) {
-          console.error('[DEBUG] Error fetching tutor categories:', cErr);
-        }
-        console.log('[DEBUG] Categories fetched:', cats?.length);
+        const [{ data: exp }, { data: cats }] = await withTimeout(
+          Promise.all([
+            supabase.from('tutor_experience').select('*').eq('tutor_id', id).order('sort_order'),
+            supabase.from('tutor_categories').select('*').eq('tutor_id', id)
+          ])
+        );
+        if (signal?.aborted) return;
+        setExperience(exp || []);
         setCategories(cats || []);
       }
+      setErrorState(null);
     } catch (err) {
       console.error('[DEBUG] Error loading data:', err);
+      if (!signal?.aborted) {
+        setErrorState(err.message === 'TIMEOUT' ? 'Server not responding' : 'Service not available');
+      }
     } finally {
-      console.log('[DEBUG] loadData finished, setting loading to false');
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    loadData();
+    const controller = new AbortController();
+    loadData(controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -274,6 +286,14 @@ export default function TutorProfile() {
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center', color: 'var(--steel)' }}>Loading profile…</div>
+    </div>
+  );
+
+  if (errorState) return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', backgroundColor: 'var(--surface)' }}>
+      <div style={{ fontSize: '18px', fontWeight: 600, color: '#EF4444' }}>{errorState}</div>
+      <p style={{ color: 'var(--stone)', fontSize: '14px', margin: 0 }}>Please check your internet connection or try again later.</p>
+      <Button variant="outline" onClick={() => { setErrorState(null); setLoading(true); loadData(null); }}>Retry Connection</Button>
     </div>
   );
 
@@ -335,7 +355,12 @@ export default function TutorProfile() {
 
   const handleSaveField = async (field) => {
     const supabase = createClient();
-    const updatePayload = { [field]: editValues[field] };
+    let value = editValues[field];
+    if (field === 'hourly_rate') {
+      value = value ? parseFloat(value) : null;
+      if (isNaN(value)) value = null;
+    }
+    const updatePayload = { [field]: value };
     // If editing location, update both city and area
     if (field === 'location') {
       updatePayload.city = editValues.city;
@@ -1324,27 +1349,95 @@ export default function TutorProfile() {
           <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Contact Card */}
             <div style={{ backgroundColor: 'var(--canvas)', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--hairline)', padding: '24px', position: 'relative' }}>
-              <h3 style={{ margin: '0 0 4px 0', fontSize: '20px', fontWeight: 700 }}>{displayRate}</h3>
-              <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: 'var(--stone)' }}>Hourly rate · Negotiable</p>
+              {editingField === 'hourly_rate' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Edit Hourly Rate (Rs):</label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: 'var(--stone)', fontWeight: 600 }}>Rs</span>
+                    <Input
+                      type="number"
+                      value={editValues.hourly_rate}
+                      onChange={(e) => setEditValues({ ...editValues, hourly_rate: e.target.value })}
+                      style={{ paddingLeft: '36px', height: '36px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button variant="primary" style={{ flex: 1, height: '32px', fontSize: '12px' }} onClick={() => handleSaveField('hourly_rate')}>Save</Button>
+                    <Button variant="outline" style={{ flex: 1, height: '32px', fontSize: '12px' }} onClick={() => setEditingField(null)}>Cancel</Button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 700 }}>{displayRate}</h3>
+                  {isOwner && (
+                    <button 
+                      onClick={() => { setEditValues({ hourly_rate: tutor.hourly_rate || '' }); setEditingField('hourly_rate'); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-green-dark)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px' }}
+                      title="Edit Hourly Rate"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                  )}
+                </div>
+              )}
+              {editingField !== 'hourly_rate' && (
+                <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: 'var(--stone)' }}>Hourly rate · Negotiable</p>
+              )}
 
               {isUnlocked ? (
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: 'var(--rounded-md)', backgroundColor: 'var(--surface-soft)', border: '1px solid var(--hairline)' }}>
-                      <Phone size={16} color="var(--brand-green-dark)" />
-                      <span style={{ fontSize: '14px', fontWeight: 500 }}>{tutor.phone}</span>
-                    </div>
+                    {editingField === 'phone' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px 14px', borderRadius: 'var(--rounded-md)', backgroundColor: 'var(--surface-soft)', border: '1px solid var(--hairline)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Phone size={14} color="var(--brand-green-dark)" />
+                          <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>Phone Number:</label>
+                        </div>
+                        <Input
+                          type="text"
+                          value={editValues.phone}
+                          onChange={(e) => setEditValues({ ...editValues, phone: e.target.value })}
+                          style={{ height: '32px', fontSize: '13px', padding: '0 8px' }}
+                        />
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <Button variant="primary" style={{ flex: 1, height: '24px', fontSize: '11px', padding: 0 }} onClick={() => handleSaveField('phone')}>Save</Button>
+                          <Button variant="outline" style={{ flex: 1, height: '24px', fontSize: '11px', padding: 0 }} onClick={() => setEditingField(null)}>Cancel</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 'var(--rounded-md)', backgroundColor: 'var(--surface-soft)', border: '1px solid var(--hairline)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <Phone size={16} color="var(--brand-green-dark)" />
+                          <span style={{ fontSize: '14px', fontWeight: 500 }}>{tutor.phone}</span>
+                        </div>
+                        {isOwner && (
+                          <button 
+                            onClick={() => { setEditValues({ phone: tutor.phone || '' }); setEditingField('phone'); }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-green-dark)', display: 'inline-flex', padding: '4px' }}
+                            title="Edit Phone"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: 'var(--rounded-md)', backgroundColor: 'var(--surface-soft)', border: '1px solid var(--hairline)' }}>
                       <Mail size={16} color="var(--brand-green-dark)" />
                       <span style={{ fontSize: '14px', fontWeight: 500, wordBreak: 'break-all' }}>{tutor.email}</span>
                     </div>
                   </div>
-                  <Button variant="primary" style={{ width: '100%', height: '44px', marginBottom: '8px' }}>
-                    Send Message
-                  </Button>
-                  <Button variant="secondary" style={{ width: '100%', height: '40px', fontSize: '13px' }}>
-                    Request a Trial Class
-                  </Button>
+
+                  {!isOwner && (
+                    <>
+                      <Button variant="primary" style={{ width: '100%', height: '44px', marginBottom: '8px' }}>
+                        Send Message
+                      </Button>
+                      <Button variant="secondary" style={{ width: '100%', height: '40px', fontSize: '13px' }}>
+                        Request a Trial Class
+                      </Button>
+                    </>
+                  )}
                 </>
               ) : (
                 <>

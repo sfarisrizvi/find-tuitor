@@ -14,6 +14,8 @@ export function GuestHeader() {
 
   useEffect(() => {
     const supabase = createClient();
+    let cancelled = false;
+
     const loadProfile = async (u) => {
       try {
         const role = u.user_metadata?.role;
@@ -24,7 +26,7 @@ export function GuestHeader() {
             .select('id, full_name, avatar_url')
             .eq('id', u.id)
             .maybeSingle();
-          if (data) setProfile({ ...data, role });
+          if (!cancelled && data) setProfile({ ...data, role });
         }
       } catch (err) {
         console.error('Error loading guest header profile:', err);
@@ -32,27 +34,37 @@ export function GuestHeader() {
     };
 
     const init = async () => {
-      const { data: { user: u } } = await supabase.auth.getUser();
-      if (u) {
-        setUser(u);
-        await loadProfile(u);
+      try {
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (cancelled) return;
+        if (u) {
+          setUser(u);
+          await loadProfile(u);
+        }
+      } catch (err) {
+        console.error('Error initializing guest header:', err);
       }
-      setInitialized(true);
+      if (!cancelled) setInitialized(true);
     };
     init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const u = session?.user || null;
-      setUser(u);
-      if (u) {
-        await loadProfile(u);
-      } else {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled) return;
+      // Only react to actual sign-in / sign-out events, not token refreshes
+      if (event === 'SIGNED_IN') {
+        const u = session?.user || null;
+        setUser(u);
+        if (u) loadProfile(u);
+        setInitialized(true);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
         setProfile(null);
+        setInitialized(true);
       }
-      setInitialized(true);
     });
 
     return () => {
+      cancelled = true;
       subscription?.unsubscribe();
     };
   }, []);
@@ -123,6 +135,102 @@ export function GuestHeader() {
     borderBottom: '1px solid var(--hairline)',
   };
 
+  const renderLinks = () => {
+    if (!initialized) {
+      return (
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <div style={{ width: '80px', height: '14px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', animation: 'pulse 1.5s infinite ease-in-out' }} />
+          <div style={{ width: '90px', height: '14px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', animation: 'pulse 1.5s infinite ease-in-out' }} />
+          <div style={{ width: '80px', height: '14px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', animation: 'pulse 1.5s infinite ease-in-out' }} />
+          <div style={{ width: '70px', height: '14px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', animation: 'pulse 1.5s infinite ease-in-out' }} />
+        </div>
+      );
+    }
+    const role = profile?.role || user?.user_metadata?.role;
+    if (user && role === 'tutor') {
+      return (
+        <>
+          <Link href="/tutor/dashboard" style={linkStyle}>Dashboard</Link>
+          <Link href="/tutor/contracts" style={linkStyle}>Active Tuitions</Link>
+          <Link href="/tutor/jobs" style={linkStyle}>Find Tuitions</Link>
+          <Link href="/tutor/messages" style={linkStyle}>Messages</Link>
+        </>
+      );
+    }
+    if (user && role === 'client') {
+      return (
+        <>
+          <Link href="/client/dashboard" style={linkStyle}>Dashboard</Link>
+          <Link href="/client/jobs" style={linkStyle}>Active Teachers</Link>
+          <Link href="/find-tutor" style={linkStyle}>Find Tutor</Link>
+          <Link href="/client/messages" style={linkStyle}>Messages</Link>
+        </>
+      );
+    }
+    return (
+      <>
+        <Link href="/find-tutor" style={linkStyle}>Find Tutors</Link>
+        <Link href="/tutor/jobs" style={linkStyle}>Find Jobs</Link>
+        <Link href="/#how-it-works" style={linkStyle}>How It Works</Link>
+        <Link href="/contact" style={linkStyle}>Contact Us</Link>
+      </>
+    );
+  };
+
+  const renderMobileLinks = () => {
+    if (!initialized) return null;
+    const role = profile?.role || user?.user_metadata?.role;
+    if (user && role === 'tutor') {
+      return (
+        <>
+          <Link href="/tutor/dashboard" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Dashboard</Link>
+          <Link href="/tutor/contracts" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Active Tuitions</Link>
+          <Link href="/tutor/jobs" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Tuitions</Link>
+          <Link href="/tutor/messages" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Messages</Link>
+          <Link href={`/tutors/${user.id}`} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>View Profile</Link>
+          <Link href="/tutor/onboarding" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Settings</Link>
+          <button 
+            onClick={() => { setIsOpen(false); handleSignOut(); }}
+            style={{ width: '100%', padding: '12px 0', fontSize: '18px', fontWeight: 600, color: '#EF4444', border: 'none', backgroundColor: 'transparent', textAlign: 'left', borderBottom: '1px solid var(--hairline)', cursor: 'pointer' }}
+          >
+            Sign Out
+          </button>
+        </>
+      );
+    }
+    if (user && role === 'client') {
+      return (
+        <>
+          <Link href="/client/dashboard" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Dashboard</Link>
+          <Link href="/client/jobs" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Active Teachers</Link>
+          <Link href="/find-tutor" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Tutor</Link>
+          <Link href="/client/messages" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Messages</Link>
+          <Link href="/client/profile" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>View Profile</Link>
+          <button 
+            onClick={() => { setIsOpen(false); handleSignOut(); }}
+            style={{ width: '100%', padding: '12px 0', fontSize: '18px', fontWeight: 600, color: '#EF4444', border: 'none', backgroundColor: 'transparent', textAlign: 'left', borderBottom: '1px solid var(--hairline)', cursor: 'pointer' }}
+          >
+            Sign Out
+          </button>
+        </>
+      );
+    }
+    return (
+      <>
+        <Link href="/find-tutor" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Tutors</Link>
+        <Link href="/tutor/jobs" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Jobs</Link>
+        <Link href="/#how-it-works" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>How It Works</Link>
+        <Link href="/contact" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Contact Us</Link>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+          <Link href="/login" onClick={(e) => { setIsOpen(false); handleSignInClick(e); }} style={{ textAlign: 'center', fontWeight: 600, color: 'var(--ink)' }}>Sign In</Link>
+          <Link href="/signup" onClick={() => setIsOpen(false)}>
+            <Button variant="primary" style={{ width: '100%' }}>Join Free</Button>
+          </Link>
+        </div>
+      </>
+    );
+  };
+
   return (
     <nav style={navStyle}>
       <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -132,10 +240,7 @@ export function GuestHeader() {
           </Link>
           
           <div className="nav-links">
-            <Link href="/find-tutor" style={linkStyle}>Find Tutors</Link>
-            <Link href="/tutor/jobs" style={linkStyle}>Find Jobs</Link>
-            <Link href="/#how-it-works" style={linkStyle}>How It Works</Link>
-            <Link href="/contact" style={linkStyle}>Contact Us</Link>
+            {renderLinks()}
           </div>
         </div>
 
@@ -200,34 +305,7 @@ export function GuestHeader() {
 
       {/* Mobile Drawer Overlay */}
       <div className={`nav-mobile-overlay ${isOpen ? 'open' : ''}`}>
-        <Link href="/find-tutor" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Tutors</Link>
-        <Link href="/tutor/jobs" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Jobs</Link>
-        <Link href="/#how-it-works" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>How It Works</Link>
-        <Link href="/contact" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Contact Us</Link>
-        {initialized && user ? (
-          <>
-            <Link 
-              href={profile?.role === 'tutor' ? '/tutor/dashboard' : '/client/dashboard'} 
-              style={mobileLinkStyle} 
-              onClick={() => setIsOpen(false)}
-            >
-              Dashboard
-            </Link>
-            <button 
-              onClick={() => { setIsOpen(false); handleSignOut(); }}
-              style={{ width: '100%', padding: '12px 0', fontSize: '18px', fontWeight: 600, color: '#EF4444', border: 'none', backgroundColor: 'transparent', textAlign: 'left', borderBottom: '1px solid var(--hairline)', cursor: 'pointer' }}
-            >
-              Sign Out
-            </button>
-          </>
-        ) : initialized && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
-            <Link href="/login" onClick={(e) => { setIsOpen(false); handleSignInClick(e); }} style={{ textAlign: 'center', fontWeight: 600, color: 'var(--ink)' }}>Sign In</Link>
-            <Link href="/signup" onClick={() => setIsOpen(false)}>
-              <Button variant="primary" style={{ width: '100%' }}>Join Free</Button>
-            </Link>
-          </div>
-        )}
+        {renderMobileLinks()}
       </div>
     </nav>
   );

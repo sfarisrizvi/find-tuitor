@@ -242,6 +242,9 @@ function SearchContent() {
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [sortBy, setSortBy] = useState('default');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [showGenderDropdown, setShowGenderDropdown] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   const [filters, setFilters] = useState({
     city: initialCity,
@@ -277,7 +280,7 @@ function SearchContent() {
     const init = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (user) {
         setSession(user);
         const role = user.user_metadata?.role || 'tutor';
@@ -302,7 +305,7 @@ function SearchContent() {
           .select('*')
           .eq('status', 'open')
           .order('created_at', { ascending: false });
-        
+
         if (jobsList && jobsList.length > 0) {
           const parsed = jobsList.map(j => ({
             id: j.id,
@@ -373,9 +376,9 @@ function SearchContent() {
     if (debouncedQuery) {
       const query = debouncedQuery.toLowerCase();
       const match = job.title.toLowerCase().includes(query) ||
-                    job.subject.toLowerCase().includes(query) ||
-                    job.description.toLowerCase().includes(query) ||
-                    job.city.toLowerCase().includes(query);
+        job.subject.toLowerCase().includes(query) ||
+        job.description.toLowerCase().includes(query) ||
+        job.city.toLowerCase().includes(query);
       if (!match) return false;
     }
     if (filters.city && job.city.toLowerCase() !== filters.city.toLowerCase()) return false;
@@ -429,11 +432,11 @@ function SearchContent() {
     }, 1200);
   };
 
-  const showCityWarning = activeJobForApply && 
-                         userRole === 'tutor' && 
-                         activeJobForApply.mode !== 'online' && 
-                         tutorCity && 
-                         tutorCity.toLowerCase() !== activeJobForApply.city.toLowerCase();
+  const showCityWarning = activeJobForApply &&
+    userRole === 'tutor' &&
+    activeJobForApply.mode !== 'online' &&
+    tutorCity &&
+    tutorCity.toLowerCase() !== activeJobForApply.city.toLowerCase();
 
   const getRelativeTime = (dateStr) => {
     const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
@@ -451,8 +454,20 @@ function SearchContent() {
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--surface)', minHeight: '100vh', overflowX: 'hidden' }}>
-      
+    <div style={{ backgroundColor: 'var(--surface)', minHeight: '100vh' }}>
+
+      {/* Click-away overlay to dismiss dropdowns */}
+      {(showCityDropdown || showGenderDropdown || showSortDropdown) && (
+        <div
+          onClick={() => {
+            setShowCityDropdown(false);
+            setShowGenderDropdown(false);
+            setShowSortDropdown(false);
+          }}
+          style={{ position: 'fixed', inset: 0, zIndex: 35, backgroundColor: 'transparent' }}
+        />
+      )}
+
       {/* Search Responsive CSS */}
       <style>{`
         .search-topbar-desktop { display: flex; }
@@ -475,6 +490,10 @@ function SearchContent() {
             gap: 16px !important;
           }
         }
+        .dropdown-item:hover {
+          background-color: var(--brand-green-soft) !important;
+          color: var(--brand-green-dark) !important;
+        }
       `}</style>
 
       {/* Sticky Filters topbar for desktop */}
@@ -487,40 +506,110 @@ function SearchContent() {
         padding: '12px 24px'
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
-          {/* City Selection */}
+          {/* Custom City Selection Dropdown */}
           <div style={{ position: 'relative', minWidth: '160px' }}>
-            <MapPin size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-            <select
-              value={filters.city}
-              onChange={(e) => handleFilterChange('city', e.target.value)}
+            <button
+              onClick={() => { setShowCityDropdown(!showCityDropdown); setShowGenderDropdown(false); }}
               style={{
-                width: '100%', height: '38px', paddingLeft: '34px', paddingRight: '24px',
+                width: '100%', height: '38px', paddingLeft: '34px', paddingRight: '28px',
                 borderRadius: '999px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                fontSize: '13px', cursor: 'pointer', outline: 'none', appearance: 'none', fontWeight: 500
+                fontSize: '13px', cursor: 'pointer', outline: 'none', fontWeight: 500,
+                display: 'flex', alignItems: 'center', justifyContent: 'flex-start', position: 'relative',
+                textAlign: 'left', color: 'var(--ink)'
               }}
             >
-              <option value="">Any City</option>
-              {PAKISTAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <ChevronDown size={12} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
+              <MapPin size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+              <span>{filters.city || 'Any City'}</span>
+              <ChevronDown size={12} style={{ position: 'absolute', right: '12px', top: '50%', transform: showCityDropdown ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)', color: 'var(--stone)', transition: 'transform 0.15s ease' }} />
+            </button>
+            {showCityDropdown && (
+              <div style={{
+                position: 'absolute', left: 0, top: '44px', width: '200px', maxHeight: '280px', overflowY: 'auto',
+                backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--hairline-strong)',
+                boxShadow: 'var(--shadow-lg)', padding: '6px 0', zIndex: 50
+              }}>
+                <div
+                  onClick={() => { handleFilterChange('city', ''); setShowCityDropdown(false); }}
+                  style={{
+                    padding: '8px 16px', fontSize: '13px', cursor: 'pointer',
+                    color: !filters.city ? 'var(--brand-green-dark)' : 'var(--slate)',
+                    backgroundColor: !filters.city ? 'var(--brand-green-soft)' : 'transparent',
+                    fontWeight: !filters.city ? 600 : 500
+                  }}
+                  className="dropdown-item"
+                >
+                  Any City
+                </div>
+                {PAKISTAN_CITIES.map(c => (
+                  <div
+                    key={c}
+                    onClick={() => { handleFilterChange('city', c); setShowCityDropdown(false); }}
+                    style={{
+                      padding: '8px 16px', fontSize: '13px', cursor: 'pointer',
+                      color: filters.city === c ? 'var(--brand-green-dark)' : 'var(--slate)',
+                      backgroundColor: filters.city === c ? 'var(--brand-green-soft)' : 'transparent',
+                      fontWeight: filters.city === c ? 600 : 500
+                    }}
+                    className="dropdown-item"
+                  >
+                    {c}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Gender Preference Selection */}
+          {/* Custom Gender Preference Selection Dropdown */}
           <div style={{ position: 'relative', minWidth: '140px' }}>
-            <User size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-            <select
-              value={filters.gender}
-              onChange={(e) => handleFilterChange('gender', e.target.value)}
+            <button
+              onClick={() => { setShowGenderDropdown(!showGenderDropdown); setShowCityDropdown(false); }}
               style={{
-                width: '100%', height: '38px', paddingLeft: '34px', paddingRight: '24px',
+                width: '100%', height: '38px', paddingLeft: '34px', paddingRight: '28px',
                 borderRadius: '999px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                fontSize: '13px', cursor: 'pointer', outline: 'none', appearance: 'none', fontWeight: 500
+                fontSize: '13px', cursor: 'pointer', outline: 'none', fontWeight: 500,
+                display: 'flex', alignItems: 'center', justifyContent: 'flex-start', position: 'relative',
+                textAlign: 'left', color: 'var(--ink)'
               }}
             >
-              <option value="">Any Gender Pref</option>
-              {GENDERS.map(g => <option key={g} value={g}>{g === 'Any' ? 'No Preference' : g + ' Only'}</option>)}
-            </select>
-            <ChevronDown size={12} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
+              <User size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+              <span>{filters.gender ? (filters.gender === 'Any' ? 'No Preference' : filters.gender + ' Only') : 'Gender'}</span>
+              <ChevronDown size={12} style={{ position: 'absolute', right: '12px', top: '50%', transform: showGenderDropdown ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)', color: 'var(--stone)', transition: 'transform 0.15s ease' }} />
+            </button>
+            {showGenderDropdown && (
+              <div style={{
+                position: 'absolute', left: 0, top: '44px', width: '180px',
+                backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--hairline-strong)',
+                boxShadow: 'var(--shadow-lg)', padding: '6px 0', zIndex: 50
+              }}>
+                <div
+                  onClick={() => { handleFilterChange('gender', ''); setShowGenderDropdown(false); }}
+                  style={{
+                    padding: '8px 16px', fontSize: '13px', cursor: 'pointer',
+                    color: !filters.gender ? 'var(--brand-green-dark)' : 'var(--slate)',
+                    backgroundColor: !filters.gender ? 'var(--brand-green-soft)' : 'transparent',
+                    fontWeight: !filters.gender ? 600 : 500
+                  }}
+                  className="dropdown-item"
+                >
+                  Gender
+                </div>
+                {GENDERS.map(g => (
+                  <div
+                    key={g}
+                    onClick={() => { handleFilterChange('gender', g); setShowGenderDropdown(false); }}
+                    style={{
+                      padding: '8px 16px', fontSize: '13px', cursor: 'pointer',
+                      color: filters.gender === g ? 'var(--brand-green-dark)' : 'var(--slate)',
+                      backgroundColor: filters.gender === g ? 'var(--brand-green-soft)' : 'transparent',
+                      fontWeight: filters.gender === g ? 600 : 500
+                    }}
+                    className="dropdown-item"
+                  >
+                    {g === 'Any' ? 'No Preference' : g + ' Only'}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Search bar inside header */}
@@ -535,40 +624,23 @@ function SearchContent() {
           </div>
 
           {/* Price Filters */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#fff', padding: '2px 12px', borderRadius: '999px', border: '1px solid var(--hairline-strong)', height: '38px' }}>
-            <DollarSign size={14} color="var(--stone)" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fff', padding: '0 16px', borderRadius: '999px', border: '1px solid var(--hairline-strong)', height: '38px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--stone)', marginRight: '2px' }}>Rs</span>
             <input
               type="number"
-              placeholder="Min Budget"
+              placeholder="Min"
               value={filters.min_price}
               onChange={(e) => handleFilterChange('min_price', e.target.value)}
-              style={{ border: 'none', outline: 'none', width: '80px', fontSize: '13px' }}
+              style={{ border: 'none', outline: 'none', width: '70px', fontSize: '13px', fontWeight: 500 }}
             />
-            <span style={{ color: 'var(--muted)', fontSize: '12px' }}>-</span>
+            <span style={{ color: 'var(--hairline-strong)', fontSize: '14px', margin: '0 4px' }}>|</span>
             <input
               type="number"
-              placeholder="Max Budget"
+              placeholder="Max"
               value={filters.max_price}
               onChange={(e) => handleFilterChange('max_price', e.target.value)}
-              style={{ border: 'none', outline: 'none', width: '80px', fontSize: '13px' }}
+              style={{ border: 'none', outline: 'none', width: '70px', fontSize: '13px', fontWeight: 500 }}
             />
-          </div>
-
-          {/* Right side aligned sort */}
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '12px', color: 'var(--steel)', fontWeight: 500 }}>Sort:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              style={{
-                height: '38px', borderRadius: '8px', border: '1px solid var(--hairline-strong)',
-                backgroundColor: 'var(--canvas)', fontSize: '13px', fontWeight: 500, padding: '0 12px', cursor: 'pointer', outline: 'none'
-              }}
-            >
-              <option value="default">Newest First</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-            </select>
           </div>
         </div>
       </div>
@@ -598,7 +670,7 @@ function SearchContent() {
             }}
           />
         </div>
-        
+
         <button
           onClick={() => setShowMobileFilters(true)}
           style={{
@@ -614,12 +686,12 @@ function SearchContent() {
 
       {/* Main Search Panel Grid Layout */}
       <div className="search-main-layout" style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', padding: '32px 24px', gap: '32px' }}>
-        
+
         {/* Left Filters Sidebar */}
         <div className="sidebar-filters-desktop" style={{
           width: '280px', flexShrink: 0, flexDirection: 'column', gap: '24px',
-          position: 'sticky', top: '130px', alignSelf: 'flex-start',
-          maxHeight: 'calc(100vh - 160px)', overflowY: 'auto', paddingRight: '8px'
+          position: 'sticky', top: '138px', alignSelf: 'flex-start',
+          maxHeight: 'calc(100vh - 170px)', overflowY: 'auto', paddingRight: '8px'
         }}>
           {/* Modes */}
           <div>
@@ -700,7 +772,7 @@ function SearchContent() {
                   onChange={(e) => handleFilterChange('verified', e.target.checked)}
                   style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)' }}
                 />
-                <ShieldCheck size={16} color="var(--brand-teal)" /> Verified Parents Only
+                <ShieldCheck size={16} color="var(--brand-teal)" /> Verified Profiles Only
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', fontWeight: 500 }}>
@@ -718,10 +790,87 @@ function SearchContent() {
 
         {/* Right side Jobs Feed */}
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '24px',
+            flexWrap: 'wrap',
+            gap: '12px',
+            position: 'sticky',
+            top: '126px',
+            zIndex: 30,
+            backgroundColor: 'var(--surface)',
+            padding: '12px 0',
+            margin: '-12px 0 12px 0'
+          }}>
             <h3 style={{ fontSize: '22px', fontWeight: 700, margin: 0, color: 'var(--brand-teal-deep)' }}>
               {sortedJobs.length} Tuition Jobs Found
             </h3>
+
+            {/* Custom Sort Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <Button
+                variant="outline"
+                onClick={() => setShowSortDropdown(!showSortDropdown)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px', height: '36px',
+                  borderRadius: '999px', border: '1px solid var(--hairline-strong)',
+                  backgroundColor: showSortDropdown ? 'var(--brand-green-soft)' : '#fff',
+                  color: showSortDropdown ? 'var(--brand-green-dark)' : 'var(--slate)',
+                  fontWeight: 500, fontSize: '13px', padding: '0 16px'
+                }}
+              >
+                <SlidersHorizontal size={14} />
+                <span>Sort: {sortBy === 'price_asc' ? 'Budget: Low to High' : sortBy === 'price_desc' ? 'Budget: High to Low' : 'Newest First'}</span>
+                <ChevronDown size={14} style={{ transform: showSortDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
+              </Button>
+
+              {showSortDropdown && (
+                <div style={{
+                  position: 'absolute', right: 0, top: '44px', width: '220px',
+                  backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--hairline-strong)',
+                  boxShadow: 'var(--shadow-lg)', padding: '6px 0', zIndex: 50, display: 'flex', flexDirection: 'column'
+                }}>
+                  <div
+                    onClick={() => { setSortBy('default'); setShowSortDropdown(false); }}
+                    style={{
+                      padding: '10px 16px', fontSize: '13px', cursor: 'pointer',
+                      color: sortBy === 'default' ? 'var(--brand-green-dark)' : 'var(--slate)',
+                      backgroundColor: sortBy === 'default' ? 'var(--brand-green-soft)' : 'transparent',
+                      fontWeight: sortBy === 'default' ? 600 : 500
+                    }}
+                    className="dropdown-item"
+                  >
+                    Newest First
+                  </div>
+                  <div
+                    onClick={() => { setSortBy('price_asc'); setShowSortDropdown(false); }}
+                    style={{
+                      padding: '10px 16px', fontSize: '13px', cursor: 'pointer',
+                      color: sortBy === 'price_asc' ? 'var(--brand-green-dark)' : 'var(--slate)',
+                      backgroundColor: sortBy === 'price_asc' ? 'var(--brand-green-soft)' : 'transparent',
+                      fontWeight: sortBy === 'price_asc' ? 600 : 500
+                    }}
+                    className="dropdown-item"
+                  >
+                    Budget: Low to High
+                  </div>
+                  <div
+                    onClick={() => { setSortBy('price_desc'); setShowSortDropdown(false); }}
+                    style={{
+                      padding: '10px 16px', fontSize: '13px', cursor: 'pointer',
+                      color: sortBy === 'price_desc' ? 'var(--brand-green-dark)' : 'var(--slate)',
+                      backgroundColor: sortBy === 'price_desc' ? 'var(--brand-green-soft)' : 'transparent',
+                      fontWeight: sortBy === 'price_desc' ? 600 : 500
+                    }}
+                    className="dropdown-item"
+                  >
+                    Budget: High to Low
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {loading ? (
@@ -852,7 +1001,7 @@ function SearchContent() {
                           {job.grade_level}
                         </span>
                       </div>
-                      
+
                       <Button
                         onClick={() => handleApplyClick(job)}
                         variant="primary"
@@ -959,7 +1108,7 @@ function SearchContent() {
                   </div>
                 ) : (
                   <form onSubmit={handleProposalSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    
+
                     {showCityWarning && (
                       <div style={{
                         backgroundColor: '#FFFBEB', border: '1px solid #FCD34D',
@@ -1140,7 +1289,7 @@ function SearchContent() {
                   fontSize: '14px', outline: 'none'
                 }}
               >
-                <option value="">Any Gender Pref</option>
+                <option value="">Gender</option>
                 {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
             </div>

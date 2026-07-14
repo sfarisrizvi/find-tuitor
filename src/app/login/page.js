@@ -30,18 +30,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const nextParam = searchParams.get('next');
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const role = session.user.user_metadata?.role;
-        const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/')));
-        router.replace(targetUrl);
-      }
-    };
-    checkUser();
-  }, [router, nextParam]);
+  // Middleware already redirects logged-in users away from /login
 
   const handleLogin = async (e) => {
     e.preventDefault();

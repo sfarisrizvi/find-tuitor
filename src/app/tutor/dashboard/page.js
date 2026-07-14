@@ -19,17 +19,21 @@ export default function TutorDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const loadProfile = async () => {
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
+        if (cancelled) return;
         if (!user) {
-          window.location.href = '/login';
+          // Don't redirect here — let middleware handle it
+          setLoading(false);
           return;
         }
         
         // Fetch profile
         const { data, error } = await supabase.from('tutor_profiles').select('*').eq('id', user.id).maybeSingle();
+        if (cancelled) return;
         if (!data || error) {
           window.location.href = '/tutor/onboarding';
           return;
@@ -43,15 +47,15 @@ export default function TutorDashboard() {
           .eq('status', 'open')
           .order('created_at', { ascending: false })
           .limit(3);
-        setJobs(dbJobs || []);
+        if (!cancelled) setJobs(dbJobs || []);
       } catch (err) {
         console.error('Error loading dashboard profile:', err);
-        window.location.href = '/login';
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     loadProfile();
+    return () => { cancelled = true; };
   }, []);
 
   const getRelativeTime = (dateStr) => {
