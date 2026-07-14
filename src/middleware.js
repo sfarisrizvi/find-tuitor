@@ -6,6 +6,37 @@ export async function middleware(request) {
     request,
   })
 
+  // Helper to construct response with Supabase auth cookies forwarded to avoid losing session updates
+  const redirect = (targetUrl) => {
+    const res = NextResponse.redirect(targetUrl)
+    supabaseResponse.cookies.getAll().forEach((c) => {
+      res.cookies.set(c.name, c.value, {
+        path: c.path,
+        domain: c.domain,
+        maxAge: c.maxAge,
+        secure: c.secure,
+        sameSite: c.sameSite,
+        expires: c.expires,
+      })
+    })
+    return res
+  }
+
+  const rewrite = (targetUrl) => {
+    const res = NextResponse.rewrite(targetUrl)
+    supabaseResponse.cookies.getAll().forEach((c) => {
+      res.cookies.set(c.name, c.value, {
+        path: c.path,
+        domain: c.domain,
+        maxAge: c.maxAge,
+        secure: c.secure,
+        sameSite: c.sameSite,
+        expires: c.expires,
+      })
+    })
+    return res
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -51,7 +82,7 @@ export async function middleware(request) {
   const hasAccess = hasAccessCookie || hasAccessParam;
 
   if (!hasAccess && url.pathname !== '/coming-soon') {
-    return NextResponse.rewrite(new URL('/coming-soon', request.url));
+    return rewrite(new URL('/coming-soon', request.url));
   }
 
   // Refresh session if expired
@@ -61,13 +92,13 @@ export async function middleware(request) {
     const role = user.user_metadata?.role;
     if (role === 'tutor') {
       url.pathname = '/tutor/dashboard';
-      return NextResponse.redirect(url);
+      return redirect(url);
     } else if (role === 'client') {
       url.pathname = '/client/dashboard';
-      return NextResponse.redirect(url);
+      return redirect(url);
     } else if (role === 'admin') {
       url.pathname = '/admin/dashboard';
-      return NextResponse.redirect(url);
+      return redirect(url);
     }
   }
 
@@ -90,22 +121,22 @@ export async function middleware(request) {
   if (isProtectedRoute) {
     if (!user) {
       url.pathname = '/login'
-      return NextResponse.redirect(url)
+      return redirect(url)
     }
 
     const role = user.user_metadata?.role
     if (role) {
       if (url.pathname.startsWith('/tutor') && role !== 'tutor') {
         url.pathname = role === 'client' ? '/client/dashboard' : '/login'
-        return NextResponse.redirect(url)
+        return redirect(url)
       }
       if (url.pathname.startsWith('/client') && role !== 'client') {
         url.pathname = role === 'tutor' ? '/tutor/dashboard' : '/login'
-        return NextResponse.redirect(url)
+        return redirect(url)
       }
       if (url.pathname.startsWith('/admin') && role !== 'admin') {
         url.pathname = '/login'
-        return NextResponse.redirect(url)
+        return redirect(url)
       }
     }
   }
