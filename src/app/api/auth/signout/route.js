@@ -54,9 +54,14 @@ export async function POST(request) {
 export async function GET(request) {
   await handleSignOutFlow()
   
+  const { searchParams } = new URL(request.url)
+  const nextPath = searchParams.get('next')
+  
   // Safely construct the redirect URL to avoid 0.0.0.0 from internal proxies
   const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || 'signup.tutoronline.pk';
   const protocol = request.headers.get('x-forwarded-proto') || 'https';
   
-  return NextResponse.redirect(new URL('/', `${protocol}://${host}`));
+  const targetPath = (nextPath && nextPath.startsWith('/tutors/')) ? nextPath : '/';
+  
+  return NextResponse.redirect(new URL(targetPath, `${protocol}://${host}`));
 }

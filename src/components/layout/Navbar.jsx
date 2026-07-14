@@ -95,12 +95,21 @@ export function Navbar() {
   const handleSignOut = async () => {
     try {
       const supabase = createClient();
-      supabase.auth.signOut();
+      await supabase.auth.signOut();
     } catch (err) {
       console.error('Error during signout:', err);
     }
-    // Redirect directly to signout endpoint to clear cookies server-side
-    window.location.href = '/api/auth/signout';
+    
+    let redirectUrl = '/api/auth/signout';
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      const search = window.location.search;
+      const fullPath = search ? `${path}${search}` : path;
+      if (path.startsWith('/tutors/')) {
+        redirectUrl += `?next=${encodeURIComponent(fullPath)}`;
+      }
+    }
+    window.location.href = redirectUrl;
   };
 
   const handleSignInClick = (e) => {
@@ -314,8 +323,9 @@ export function Navbar() {
       <div className={`nav-mobile-overlay ${isOpen ? 'open' : ''}`}>
         {isTutor ? (
           <>
-            <Link href="/tutor/jobs" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Jobs</Link>
+            <Link href="/tutor/dashboard" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Dashboard</Link>
             <Link href="/tutor/contracts" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Active Tuitions</Link>
+            <Link href="/tutor/jobs" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Tuitions</Link>
             <Link href="/tutor/messages" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Messages</Link>
             <Link href={`/tutors/${user?.id}`} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>View Profile</Link>
             <Link href="/tutor/onboarding" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Settings</Link>

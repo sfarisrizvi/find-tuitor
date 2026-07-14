@@ -31,7 +31,7 @@ export default function TutorDashboard() {
         // Fetch profile
         const { data, error } = await supabase.from('tutor_profiles').select('*').eq('id', user.id).maybeSingle();
         if (!data || error) {
-          window.location.href = '/login';
+          window.location.href = '/tutor/onboarding';
           return;
         }
         setProfile(data);
