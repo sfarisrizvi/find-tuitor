@@ -10,6 +10,7 @@ export function Navbar() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -72,6 +73,8 @@ export function Navbar() {
         }
       } catch (err) {
         console.error('Error initializing user in navbar:', err);
+      } finally {
+        setInitialized(true);
       }
     };
 
@@ -85,6 +88,7 @@ export function Navbar() {
       } else {
         setProfile(null);
       }
+      setInitialized(true);
     });
 
     return () => {
@@ -177,6 +181,16 @@ export function Navbar() {
   };
 
   const renderLinks = () => {
+    if (!initialized) {
+      return (
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <div style={{ width: '80px', height: '14px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', animation: 'pulse 1.5s infinite ease-in-out' }} />
+          <div style={{ width: '90px', height: '14px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', animation: 'pulse 1.5s infinite ease-in-out' }} />
+          <div style={{ width: '80px', height: '14px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', animation: 'pulse 1.5s infinite ease-in-out' }} />
+          <div style={{ width: '70px', height: '14px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', animation: 'pulse 1.5s infinite ease-in-out' }} />
+        </div>
+      );
+    }
     if (user && isTutor) {
       return (
         <>
@@ -227,7 +241,9 @@ export function Navbar() {
         </div>
 
         <div style={rightActionsStyle} className="nav-links">
-          {user ? (
+          {!initialized ? (
+            <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'var(--hairline-strong)', animation: 'pulse 1.5s infinite ease-in-out' }} />
+          ) : user ? (
             <div style={{ position: 'relative' }}>
               <button 
                 onClick={() => setShowDropdown(!showDropdown)}

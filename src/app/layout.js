@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Navbar } from "../components/layout/Navbar";
+import { AppHeader } from "../components/layout/AppHeader";
 import { Footer } from "../components/layout/Footer";
 
 export const metadata = {
@@ -57,7 +57,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <Navbar />
+        <AppHeader />
         <main style={{ minHeight: 'calc(100vh - 64px - 300px)' }}>
           {children}
         </main>
