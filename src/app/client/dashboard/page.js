@@ -1,10 +1,15 @@
-import React from 'react';
+'use client';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import Link from 'next/link';
+import { createClient } from '../../../utils/supabase/client';
 
 export default function ParentDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [clientName, setClientName] = useState('');
+
   const activeEngagements = [
     {
       id: 1,
@@ -26,15 +31,49 @@ export default function ParentDashboard() {
     }
   ];
 
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('client_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!profile || !profile.onboarding_complete) {
+        window.location.href = '/client/onboarding';
+        return;
+      }
+
+      setClientName(profile.full_name || 'Parent');
+      setLoading(false);
+    };
+    checkOnboarding();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--steel)' }}>
+        <p style={{ fontSize: '18px', fontWeight: 500 }}>Loading dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xl)' }}>
         <div>
-          <h2>Welcome back!</h2>
+          <h2>Welcome back, {clientName}!</h2>
           <p>Here is an overview of your active tuitions.</p>
         </div>
-        <Link href="/parent/jobs/new">
-          <Button variant="primary">Post a New Tuition Requirement</Button>
+        <Link href="/find-tutor">
+          <Button variant="primary" style={{ backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)' }}>Post a New Tuition Requirement</Button>
         </Link>
       </div>
 
@@ -61,7 +100,7 @@ export default function ParentDashboard() {
 
             <div style={{ display: 'flex', gap: '8px' }}>
               <Button variant="secondary" style={{ flex: 1 }}>Message</Button>
-              <Button variant="primary" style={{ flex: 1 }}>Enter Class</Button>
+              <Button variant="primary" style={{ flex: 1, backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)' }}>Enter Class</Button>
             </div>
           </Card>
         ))}

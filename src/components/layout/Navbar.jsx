@@ -276,7 +276,7 @@ export function Navbar() {
                   )}
                   {isClient && (
                     <Link 
-                      href="/client/dashboard" 
+                      href="/client/profile" 
                       onClick={() => setShowDropdown(false)}
                       style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--ink)', fontWeight: 500, textDecoration: 'none', cursor: 'pointer', borderBottom: '1px solid var(--hairline-soft)' }}
                     >
@@ -284,7 +284,7 @@ export function Navbar() {
                     </Link>
                   )}
                   <Link 
-                    href={isTutor ? "/tutor/onboarding" : "/client/onboarding"} 
+                    href={isTutor ? "/tutor/onboarding" : "/client/profile"} 
                     onClick={() => setShowDropdown(false)}
                     style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--ink)', fontWeight: 500, textDecoration: 'none', cursor: 'pointer' }}
                   >
@@ -321,7 +321,7 @@ export function Navbar() {
 
       {/* Mobile Drawer Overlay */}
       <div className={`nav-mobile-overlay ${isOpen ? 'open' : ''}`}>
-        {isTutor ? (
+        {user && isTutor ? (
           <>
             <Link href="/tutor/dashboard" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Dashboard</Link>
             <Link href="/tutor/contracts" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Active Tuitions</Link>
@@ -329,6 +329,20 @@ export function Navbar() {
             <Link href="/tutor/messages" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Messages</Link>
             <Link href={`/tutors/${user?.id}`} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>View Profile</Link>
             <Link href="/tutor/onboarding" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Settings</Link>
+            <button 
+              onClick={() => { setIsOpen(false); handleSignOut(); }}
+              style={{ width: '100%', padding: '12px 0', fontSize: '18px', fontWeight: 600, color: '#EF4444', border: 'none', backgroundColor: 'transparent', textAlign: 'left', borderBottom: '1px solid var(--hairline)', cursor: 'pointer' }}
+            >
+              Sign Out
+            </button>
+          </>
+        ) : user && isClient ? (
+          <>
+            <Link href="/client/dashboard" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Dashboard</Link>
+            <Link href="/client/jobs" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Active Teachers</Link>
+            <Link href="/find-tutor" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Find Teacher</Link>
+            <Link href="/client/messages" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>Messages</Link>
+            <Link href="/client/profile" style={mobileLinkStyle} onClick={() => setIsOpen(false)}>View Profile</Link>
             <button 
               onClick={() => { setIsOpen(false); handleSignOut(); }}
               style={{ width: '100%', padding: '12px 0', fontSize: '18px', fontWeight: 600, color: '#EF4444', border: 'none', backgroundColor: 'transparent', textAlign: 'left', borderBottom: '1px solid var(--hairline)', cursor: 'pointer' }}
