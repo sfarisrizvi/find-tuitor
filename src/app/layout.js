@@ -1,5 +1,6 @@
 import "./globals.css";
-import AccessGate from "./AccessGate";
+import { Navbar } from "../components/layout/Navbar";
+import { Footer } from "../components/layout/Footer";
 
 export const metadata = {
   metadataBase: new URL("https://find-tuitor.com"),
@@ -56,9 +57,11 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <AccessGate>
+        <Navbar />
+        <main style={{ minHeight: 'calc(100vh - 64px - 300px)' }}>
           {children}
-        </AccessGate>
+        </main>
+        <Footer />
       </body>
     </html>
   );

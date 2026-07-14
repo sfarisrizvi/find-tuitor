@@ -22,21 +22,6 @@ export async function middleware(request) {
     return res
   }
 
-  const rewrite = (targetUrl) => {
-    const res = NextResponse.rewrite(targetUrl)
-    supabaseResponse.cookies.getAll().forEach((c) => {
-      res.cookies.set(c.name, c.value, {
-        path: c.path,
-        domain: c.domain,
-        maxAge: c.maxAge,
-        secure: c.secure,
-        sameSite: c.sameSite,
-        expires: c.expires,
-      })
-    })
-    return res
-  }
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -59,31 +44,6 @@ export async function middleware(request) {
   )
 
   const url = request.nextUrl.clone()
-  
-  let hasAccessCookie = false;
-  const cookieVal = request.cookies.get('access_allowed')?.value;
-  if (cookieVal) {
-    const val = decodeURIComponent(cookieVal).trim();
-    if (val === 'true' || val === '{"allow":true}') {
-      hasAccessCookie = true;
-    } else {
-      try {
-        const parsed = JSON.parse(val);
-        if (parsed === true || (parsed && parsed.allow === true)) {
-          hasAccessCookie = true;
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
-  }
-
-  const hasAccessParam = url.searchParams.get('access') === 'allowed' || url.searchParams.has('accessallowed');
-  const hasAccess = hasAccessCookie || hasAccessParam;
-
-  if (!hasAccess && url.pathname !== '/coming-soon') {
-    return rewrite(new URL('/coming-soon', request.url));
-  }
 
   // Refresh session if expired
   const { data: { user } } = await supabase.auth.getUser()
@@ -110,8 +70,7 @@ export async function middleware(request) {
                         url.pathname === '/find-tutor' || 
                         url.pathname.startsWith('/find-tutor/') || 
                         url.pathname === '/tutor/jobs' || 
-                        url.pathname.startsWith('/tutors/') ||
-                        url.pathname === '/coming-soon';
+                        url.pathname.startsWith('/tutors/');
 
   const isProtectedRoute = (url.pathname.startsWith('/client') || 
                             url.pathname.startsWith('/tutor') || 
@@ -139,14 +98,6 @@ export async function middleware(request) {
         return redirect(url)
       }
     }
-  }
-
-  if (hasAccessParam && !hasAccessCookie) {
-    supabaseResponse.cookies.set('access_allowed', JSON.stringify({ allow: true }), {
-      path: '/',
-      maxAge: 315360000, // 10 years (forever)
-      sameSite: 'lax',
-    });
   }
 
   return supabaseResponse
