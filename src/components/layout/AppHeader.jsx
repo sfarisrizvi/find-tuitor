@@ -8,6 +8,11 @@ import { GuestHeader } from './GuestHeader';
 export function AppHeader() {
   const pathname = usePathname();
 
+  // Public job browsing routes should use GuestHeader for dynamic guest/login states
+  if (pathname?.startsWith('/tutor/jobs')) {
+    return <GuestHeader />;
+  }
+
   // Instant static routing checks to avoid any auth queries or glitches on dashboard pages
   if (pathname?.startsWith('/tutor/')) {
     return <TutorHeader />;

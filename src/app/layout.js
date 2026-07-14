@@ -1,6 +1,7 @@
 import "./globals.css";
 import { AppHeader } from "../components/layout/AppHeader";
 import { Footer } from "../components/layout/Footer";
+import Script from "next/script";
 
 export const metadata = {
   metadataBase: new URL("https://find-tuitor.com"),
@@ -57,6 +58,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <AppHeader />
         <main style={{ minHeight: 'calc(100vh - 64px - 300px)' }}>
           {children}

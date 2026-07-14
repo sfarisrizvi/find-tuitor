@@ -69,7 +69,7 @@ export async function middleware(request) {
                         url.pathname === '/contact' || 
                         url.pathname === '/find-tutor' || 
                         url.pathname.startsWith('/find-tutor/') || 
-                        url.pathname === '/tutor/jobs' || 
+                        url.pathname.startsWith('/tutor/jobs') || 
                         url.pathname.startsWith('/tutors/');
 
   const isProtectedRoute = (url.pathname.startsWith('/client') || 

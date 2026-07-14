@@ -13,6 +13,7 @@ export default function FindTutorLanding() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
 
   const mockTutors = [
@@ -48,6 +49,22 @@ export default function FindTutorLanding() {
 
   return (
     <div style={{ backgroundColor: 'var(--surface)', minHeight: '100vh', overflowX: 'hidden' }}>
+      
+      {/* Click-away overlay to dismiss dropdowns */}
+      {showCityDropdown && (
+        <div
+          onClick={() => setShowCityDropdown(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 35, backgroundColor: 'transparent' }}
+        />
+      )}
+
+      <style>{`
+        .dropdown-item:hover {
+          background-color: var(--brand-green-soft) !important;
+          color: var(--brand-green-dark) !important;
+        }
+      `}</style>
+
       <title>Find Tutors Online | Pakistan&apos;s Top Verified Tutors</title>
       <meta name="description" content="Search from our top vetted academic elite tutors for Matric, FSc, O/A Levels, and Entry Tests. Secure milestone escrow protection." />
       <link rel="canonical" href="https://find-tuitor.com/find-tutor" />
@@ -85,8 +102,8 @@ export default function FindTutorLanding() {
           {/* Search bar inside Hero */}
           <div style={{
             backgroundColor: 'var(--canvas)',
-            padding: '16px',
-            borderRadius: 'var(--rounded-xl)',
+            padding: '12px 24px',
+            borderRadius: '999px',
             boxShadow: 'var(--shadow-card)',
             display: 'flex',
             gap: '12px',
@@ -99,31 +116,64 @@ export default function FindTutorLanding() {
                 placeholder="Search by name, subject, keywords..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                style={{ paddingLeft: '48px', border: '1px solid var(--hairline-strong)', color: 'var(--ink)' }}
+                style={{ paddingLeft: '48px', border: '1px solid var(--hairline-strong)', color: 'var(--ink)', borderRadius: '999px' }}
                 onKeyDown={e => e.key === 'Enter' && handleSearch()}
               />
             </div>
 
-            <div style={{ width: '160px', minWidth: '140px' }}>
-              <select
-                className="input-field"
-                value={selectedCity}
-                onChange={e => setSelectedCity(e.target.value)}
+            <div style={{ width: '160px', minWidth: '140px', position: 'relative' }}>
+              <button
+                onClick={() => setShowCityDropdown(!showCityDropdown)}
                 style={{
-                  width: '100%', height: '44px', padding: '0 12px', borderRadius: 'var(--rounded-md)',
-                  border: '1px solid var(--hairline-strong)', backgroundColor: 'var(--canvas)', fontSize: '15px', color: 'var(--ink)'
+                  width: '100%', height: '44px', padding: '0 16px', borderRadius: '999px',
+                  border: '1px solid var(--hairline-strong)', backgroundColor: 'var(--canvas)', fontSize: '15px', color: 'var(--ink)',
+                  cursor: 'pointer', outline: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  position: 'relative', textAlign: 'left', fontWeight: 500
                 }}
               >
-                <option value="">All Cities</option>
-                <option value="Karachi">Karachi</option>
-                <option value="Lahore">Lahore</option>
-                <option value="Islamabad">Islamabad</option>
-                <option value="Rawalpindi">Rawalpindi</option>
-                <option value="Attock">Attock</option>
-              </select>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '8px' }}>
+                  {selectedCity || 'All Cities'}
+                </span>
+                <ChevronDown size={14} style={{ color: 'var(--stone)', transform: showCityDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease', flexShrink: 0 }} />
+              </button>
+              {showCityDropdown && (
+                <div style={{
+                  position: 'absolute', left: 0, top: '50px', width: '200px', maxHeight: '250px', overflowY: 'auto',
+                  backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--hairline-strong)',
+                  boxShadow: 'var(--shadow-lg)', padding: '6px 0', zIndex: 50
+                }}>
+                  <div
+                    onClick={() => { setSelectedCity(''); setShowCityDropdown(false); }}
+                    style={{
+                      padding: '8px 16px', fontSize: '14px', cursor: 'pointer',
+                      color: !selectedCity ? 'var(--brand-green-dark)' : 'var(--slate)',
+                      backgroundColor: !selectedCity ? 'var(--brand-green-soft)' : 'transparent',
+                      fontWeight: !selectedCity ? 600 : 500
+                    }}
+                    className="dropdown-item"
+                  >
+                    All Cities
+                  </div>
+                  {['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Attock'].map(c => (
+                    <div
+                      key={c}
+                      onClick={() => { setSelectedCity(c); setShowCityDropdown(false); }}
+                      style={{
+                        padding: '8px 16px', fontSize: '14px', cursor: 'pointer',
+                        color: selectedCity === c ? 'var(--brand-green-dark)' : 'var(--slate)',
+                        backgroundColor: selectedCity === c ? 'var(--brand-green-soft)' : 'transparent',
+                        fontWeight: selectedCity === c ? 600 : 500
+                      }}
+                      className="dropdown-item"
+                    >
+                      {c}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <Button variant="primary" onClick={handleSearch} style={{ height: '44px', padding: '0 24px', fontWeight: 600 }}>
+            <Button variant="primary" onClick={handleSearch} style={{ height: '44px', padding: '0 24px', fontWeight: 600, borderRadius: '999px' }}>
               Search Tutors
             </Button>
           </div>
