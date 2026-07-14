@@ -1,11 +1,11 @@
 'use client';
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Input } from '../../../components/ui/Input';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Search,
   MapPin,
@@ -14,12 +14,7 @@ import {
   DollarSign,
   Calendar,
   ChevronDown,
-  Award,
-  BookOpen,
-  ArrowRight,
-  SlidersHorizontal,
   Lock,
-  Briefcase,
   Zap,
   CheckCircle2,
   User,
@@ -27,29 +22,6 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { createClient } from '../../../utils/supabase/client';
-
-const GRADE_SUBJECTS = {
-  'Primary': ['Mathematics', 'English', 'Science', 'Urdu', 'Islamiyat', 'General Knowledge'],
-  'Secondary': ['Mathematics', 'English', 'General Science', 'Urdu', 'Islamiyat', 'Social Studies', 'Computer Science'],
-  'Matric': ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'English', 'Urdu'],
-  'FSc': ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'English', 'Urdu'],
-  'O-Level': ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'English', 'Islamiyat', 'Pakistan Studies'],
-  'A-Level': ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Accounting', 'Economics', 'Business Studies'],
-  'University': ['Calculus', 'Computer Programming', 'Data Structures', 'Organic Chemistry', 'Physics', 'English Literature', 'Microeconomics']
-};
-
-const PAKISTAN_CITIES = [
-  'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Peshawar', 'Faisalabad',
-  'Multan', 'Gujranwala', 'Sialkot', 'Quetta', 'Hyderabad', 'Abbottabad'
-];
-
-const GENDERS = ['Male', 'Female', 'Any'];
-const LEVELS = ['Primary', 'Secondary', 'Matric', 'FSc', 'O-Level', 'A-Level', 'University'];
-const MODES = [
-  { id: 'online', label: 'Online / Remote' },
-  { id: 'home_tuition', label: 'Home Tuition (Student\'s Home)' },
-  { id: 'tutor_home', label: 'Tutor\'s Home' }
-];
 
 const MOCK_JOBS = [
   {
@@ -165,95 +137,21 @@ const MOCK_JOBS = [
     experience_level: 'Intermediate',
     hours_per_week: 8,
     created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 'job-mock-7',
-    title: 'Matric Maths Physical Class in Gulshan',
-    subject: 'Mathematics',
-    grade_level: 'Matric',
-    mode: 'home_tuition',
-    city: 'Karachi',
-    gender_preference: 'Male',
-    budget_amount: '14000',
-    budget_type: 'fixed',
-    status: 'open',
-    verified_required: true,
-    immediate_hiring: false,
-    description: 'Requires physical presence in Gulshan-e-Iqbal Karachi. Focus on matric board theorems, algebraic exercises, and trigonometry sections.',
-    duration: '3-6 months',
-    experience_level: 'Intermediate',
-    hours_per_week: 12,
-    created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 'job-mock-8',
-    title: 'MDCAT Physics Crash Course Online',
-    subject: 'Physics',
-    grade_level: 'FSc',
-    mode: 'online',
-    city: 'Peshawar',
-    gender_preference: 'Any',
-    budget_amount: '4000',
-    budget_type: 'hourly',
-    status: 'open',
-    verified_required: false,
-    immediate_hiring: true,
-    description: 'Need an entry test physics specialist. Focus on short methods to solve MCQs on electricity, mechanics, and wave dynamics. Direct student coaching.',
-    duration: '1-3 months',
-    experience_level: 'Expert',
-    hours_per_week: 16,
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 'job-mock-9',
-    title: 'Primary Grade English Grammar Specialist',
-    subject: 'English',
-    grade_level: 'Primary',
-    mode: 'home_tuition',
-    city: 'Peshawar',
-    gender_preference: 'Female',
-    budget_amount: '10000',
-    budget_type: 'fixed',
-    status: 'open',
-    verified_required: false,
-    immediate_hiring: false,
-    description: 'Hayatabad Phase 3. Seeking a home teacher to improve reading speed, grammar parts of speech, and spelling vocabulary for a Grade 4 girl student.',
-    duration: '6+ months',
-    experience_level: 'Beginner',
-    hours_per_week: 8,
-    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   }
 ];
 
-function JobsContent() {
-  const searchParams = useSearchParams();
-  const initialMode = searchParams.get('mode') || '';
-  const initialQuery = searchParams.get('query') || '';
-
+export default function FindJobsLanding() {
+  const router = useRouter();
   const [dbJobs, setDbJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [tutorCity, setTutorCity] = useState('');
 
-  // Filters State
-  const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
-  const [sortBy, setSortBy] = useState('default');
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  // Hero Search inputs
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMode, setSelectedMode] = useState('');
   const [openFaq, setOpenFaq] = useState(null);
-
-  const [filters, setFilters] = useState({
-    city: '',
-    gender: '',
-    modes: initialMode ? [initialMode] : [],
-    levels: [],
-    subjects: [],
-    min_price: '',
-    max_price: '',
-    verified: false,
-    immediate_hiring: false
-  });
 
   // Modal States
   const [activeJobForApply, setActiveJobForApply] = useState(null);
@@ -264,14 +162,6 @@ function JobsContent() {
   const [bookDemoLink, setBookDemoLink] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  // Debounce search query by 600ms
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 600);
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
 
   useEffect(() => {
     const init = async () => {
@@ -301,7 +191,8 @@ function JobsContent() {
           .from('jobs')
           .select('*')
           .eq('status', 'open')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(6);
         
         if (jobsList && jobsList.length > 0) {
           const parsed = jobsList.map(j => ({
@@ -334,107 +225,18 @@ function JobsContent() {
     init();
   }, []);
 
-  // Merge live jobs and mock jobs
-  const allJobs = [...dbJobs];
+  // Merge live jobs and mock jobs to make a perfect 3x2 grid
+  const displayJobs = [...dbJobs];
   MOCK_JOBS.forEach(mock => {
-    if (allJobs.length < 15 && !allJobs.some(j => j.title.toLowerCase() === mock.title.toLowerCase())) {
-      allJobs.push(mock);
+    if (displayJobs.length < 6 && !displayJobs.some(j => j.title.toLowerCase() === mock.title.toLowerCase())) {
+      displayJobs.push(mock);
     }
   });
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const handleHeroSearch = (e) => {
+    e.preventDefault();
+    router.push(`/tutor/jobs/search?mode=${encodeURIComponent(selectedMode)}&query=${encodeURIComponent(searchQuery)}`);
   };
-
-  const toggleFilterArray = (key, val) => {
-    setFilters(prev => {
-      const arr = prev[key] || [];
-      const updated = arr.includes(val) ? arr.filter(item => item !== val) : [...arr, val];
-      return { ...prev, [key]: updated };
-    });
-  };
-
-  const toggleLevel = (lvl) => {
-    setFilters(prev => {
-      const levels = prev.levels.includes(lvl) ? prev.levels.filter(l => l !== lvl) : [...prev.levels, lvl];
-      
-      // Clean up checked subjects if no levels are selected or they are outside the level subjects mapping
-      let validSubjects = [];
-      if (levels.length > 0) {
-        const unique = new Set();
-        levels.forEach(l => (GRADE_SUBJECTS[l] || []).forEach(s => unique.add(s)));
-        validSubjects = Array.from(unique);
-      }
-      const subjects = prev.subjects.filter(s => validSubjects.includes(s));
-      return { ...prev, levels, subjects };
-    });
-  };
-
-  // Filter Jobs logic
-  const filteredJobs = allJobs.filter(job => {
-    // 1. Text keyword search
-    if (debouncedQuery) {
-      const query = debouncedQuery.toLowerCase();
-      const match = job.title.toLowerCase().includes(query) ||
-                    job.subject.toLowerCase().includes(query) ||
-                    job.description.toLowerCase().includes(query) ||
-                    job.city.toLowerCase().includes(query);
-      if (!match) return false;
-    }
-
-    // 2. City
-    if (filters.city && job.city.toLowerCase() !== filters.city.toLowerCase()) return false;
-
-    // 3. Gender preference
-    if (filters.gender && filters.gender !== 'Any') {
-      if (job.gender_preference !== 'Any' && job.gender_preference !== filters.gender) return false;
-    }
-
-    // 4. Mode
-    if (filters.modes.length > 0 && !filters.modes.includes(job.mode)) return false;
-
-    // 5. Grade level
-    if (filters.levels.length > 0 && !filters.levels.includes(job.grade_level)) return false;
-
-    // 6. Subjects
-    if (filters.subjects.length > 0 && !filters.subjects.includes(job.subject)) return false;
-
-    // 7. Verified
-    if (filters.verified && !job.verified_required) return false;
-
-    // 8. Immediate Hiring
-    if (filters.immediate_hiring && !job.immediate_hiring) return false;
-
-    // 9. Pricing Min/Max range
-    const price = parseFloat(job.budget_amount) || 0;
-    if (filters.min_price && price < parseFloat(filters.min_price)) return false;
-    if (filters.max_price && price > parseFloat(filters.max_price)) return false;
-
-    return true;
-  });
-
-  // Sorting
-  const sortedJobs = [...filteredJobs].sort((a, b) => {
-    if (sortBy === 'price_asc') {
-      return (parseFloat(a.budget_amount) || 0) - (parseFloat(b.budget_amount) || 0);
-    }
-    if (sortBy === 'price_desc') {
-      return (parseFloat(b.budget_amount) || 0) - (parseFloat(a.budget_amount) || 0);
-    }
-    return new Date(b.created_at) - new Date(a.created_at); // Latest first
-  });
-
-  const activeFilterCount = [
-    filters.city,
-    filters.gender,
-    filters.modes.length > 0,
-    filters.levels.length > 0,
-    filters.subjects.length > 0,
-    filters.min_price,
-    filters.max_price,
-    filters.verified,
-    filters.immediate_hiring
-  ].filter(Boolean).length;
 
   const handleApplyClick = (job) => {
     setActiveJobForApply(job);
@@ -453,14 +255,12 @@ function JobsContent() {
     if (proposalMessage.length < 20) return;
 
     setIsSubmitting(true);
-    // Simulate API connection request
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSuccess(true);
     }, 1200);
   };
 
-  // Warning check: tutor city vs job city for physical mode
   const showCityWarning = activeJobForApply && 
                          userRole === 'tutor' && 
                          activeJobForApply.mode !== 'online' && 
@@ -485,16 +285,12 @@ function JobsContent() {
   return (
     <div style={{ backgroundColor: 'var(--surface)', minHeight: '100vh', overflowX: 'hidden' }}>
       
-      {/* Search Responsive CSS */}
+      {/* Styling tweaks */}
       <style>{`
-        .search-topbar-desktop { display: flex; }
-        .search-topbar-mobile { display: none; }
-        .sidebar-filters-desktop { display: flex; }
-        .mobile-filter-overlay { display: none; }
-        .jobs-results-grid {
+        .jobs-landing-grid {
           display: grid;
-          grid-template-columns: 1fr;
-          gap: 20px;
+          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+          gap: 24px;
         }
         .main-hero-search-box {
           background-color: var(--canvas);
@@ -524,12 +320,7 @@ function JobsContent() {
           background-repeat: no-repeat;
           background-position: right center;
         }
-
         @media (max-width: 768px) {
-          .search-topbar-desktop { display: none !important; }
-          .search-topbar-mobile { display: flex !important; }
-          .sidebar-filters-desktop { display: none !important; }
-          .mobile-filter-overlay { display: flex !important; }
           .main-hero-search-box {
             border-radius: var(--rounded-lg) !important;
             flex-direction: column !important;
@@ -543,9 +334,8 @@ function JobsContent() {
             padding-bottom: 8px !important;
             height: auto !important;
           }
-          .search-main-layout {
-            flex-direction: column !important;
-            padding: 16px !important;
+          .jobs-landing-grid {
+            grid-template-columns: 1fr !important;
             gap: 16px !important;
           }
         }
@@ -555,7 +345,7 @@ function JobsContent() {
       <section style={{
         background: 'linear-gradient(135deg, #001E2B 0%, #002e42 100%)',
         color: 'var(--on-dark)',
-        padding: '64px 0 80px 0',
+        padding: '80px 0 100px 0',
         textAlign: 'center',
         position: 'relative',
         borderBottom: '1px solid var(--hairline-dark)'
@@ -564,21 +354,18 @@ function JobsContent() {
           <Badge variant="green-soft" style={{ marginBottom: '16px', color: 'var(--brand-green)', backgroundColor: 'rgba(0, 237, 100, 0.1)', fontSize: '13px', padding: '6px 16px', borderRadius: '999px' }}>
             0% Commission Academy Platform
           </Badge>
-          <h1 style={{ fontSize: '42px', color: 'white', fontWeight: 700, marginBottom: '16px', letterSpacing: '-1px' }}>
+          <h1 style={{ fontSize: '46px', color: 'white', fontWeight: 700, marginBottom: '16px', letterSpacing: '-1px' }}>
             Find High-Paying Tutoring Jobs
           </h1>
-          <p style={{ color: 'var(--on-dark-muted)', fontSize: '17px', marginBottom: '32px', maxWidth: '650px', margin: '0 auto 32px auto' }}>
+          <p style={{ color: 'var(--on-dark-muted)', fontSize: '18px', marginBottom: '40px', maxWidth: '650px', margin: '0 auto 40px auto' }}>
             Browse active home tuition requirements or remote slots across Pakistan. Apply directly with custom rates and keep 100% of your earnings.
           </p>
 
-          {/* Search Box: Mode first, then search query input */}
-          <div className="main-hero-search-box">
+          {/* Search Box */}
+          <form onSubmit={handleHeroSearch} className="main-hero-search-box">
             <select
-              value={filters.modes[0] || ''}
-              onChange={(e) => {
-                const val = e.target.value;
-                setFilters(prev => ({ ...prev, modes: val ? [val] : [] }));
-              }}
+              value={selectedMode}
+              onChange={(e) => setSelectedMode(e.target.value)}
               className="mode-select-hero"
               style={{ minWidth: '150px' }}
             >
@@ -603,423 +390,249 @@ function JobsContent() {
                   paddingRight: '36px'
                 }}
               />
-              <Search size={18} style={{ position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+              <button type="submit" style={{ border: 'none', background: 'transparent', position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', cursor: 'pointer' }}>
+                <Search size={18} />
+              </button>
             </div>
-          </div>
+          </form>
         </div>
       </section>
 
-      {/* Sticky Filters topbar for desktop */}
-      <div className="search-topbar-desktop" style={{
-        backgroundColor: 'var(--canvas)',
-        borderBottom: '1px solid var(--hairline-strong)',
-        position: 'sticky',
-        top: '64px',
-        zIndex: 40,
-        padding: '12px 24px'
-      }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
-          {/* City Selection */}
-          <div style={{ position: 'relative', minWidth: '160px' }}>
-            <MapPin size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-            <select
-              value={filters.city}
-              onChange={(e) => handleFilterChange('city', e.target.value)}
-              style={{
-                width: '100%', height: '38px', paddingLeft: '34px', paddingRight: '24px',
-                borderRadius: '999px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                fontSize: '13px', cursor: 'pointer', outline: 'none', appearance: 'none', fontWeight: 500
-              }}
-            >
-              <option value="">Any City</option>
-              {PAKISTAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <ChevronDown size={12} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
-          </div>
-
-          {/* Gender Preference Selection */}
-          <div style={{ position: 'relative', minWidth: '140px' }}>
-            <User size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-            <select
-              value={filters.gender}
-              onChange={(e) => handleFilterChange('gender', e.target.value)}
-              style={{
-                width: '100%', height: '38px', paddingLeft: '34px', paddingRight: '24px',
-                borderRadius: '999px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                fontSize: '13px', cursor: 'pointer', outline: 'none', appearance: 'none', fontWeight: 500
-              }}
-            >
-              <option value="">Any Gender Pref</option>
-              {GENDERS.map(g => <option key={g} value={g}>{g === 'Any' ? 'No Preference' : g + ' Only'}</option>)}
-            </select>
-            <ChevronDown size={12} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
-          </div>
-
-          {/* Price Filters */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#fff', padding: '2px 12px', borderRadius: '999px', border: '1px solid var(--hairline-strong)', height: '38px' }}>
-            <DollarSign size={14} color="var(--stone)" />
-            <input
-              type="number"
-              placeholder="Min Budget"
-              value={filters.min_price}
-              onChange={(e) => handleFilterChange('min_price', e.target.value)}
-              style={{ border: 'none', outline: 'none', width: '80px', fontSize: '13px' }}
-            />
-            <span style={{ color: 'var(--muted)', fontSize: '12px' }}>-</span>
-            <input
-              type="number"
-              placeholder="Max Budget"
-              value={filters.max_price}
-              onChange={(e) => handleFilterChange('max_price', e.target.value)}
-              style={{ border: 'none', outline: 'none', width: '80px', fontSize: '13px' }}
-            />
-          </div>
-
-          {/* Right side aligned sort */}
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '12px', color: 'var(--steel)', fontWeight: 500 }}>Sort:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              style={{
-                height: '38px', borderRadius: '8px', border: '1px solid var(--hairline-strong)',
-                backgroundColor: 'var(--canvas)', fontSize: '13px', fontWeight: 500, padding: '0 12px', cursor: 'pointer', outline: 'none'
-              }}
-            >
-              <option value="default">Newest First</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Sticky top bar for mobile */}
-      <div className="search-topbar-mobile" style={{
-        backgroundColor: 'var(--canvas)',
-        borderBottom: '1px solid var(--hairline-strong)',
-        position: 'sticky',
-        top: '64px',
-        zIndex: 40,
-        padding: '12px 16px',
-        alignItems: 'center',
-        gap: '12px'
-      }}>
-        <div style={{ flex: 1, position: 'relative' }}>
-          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-          <input
-            type="text"
-            placeholder="Search tuition requirements..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            style={{
-              height: '40px', paddingLeft: '36px', fontSize: '13px',
-              border: '1px solid var(--hairline-strong)', borderRadius: '999px',
-              backgroundColor: '#fff', width: '100%', outline: 'none'
-            }}
-          />
-        </div>
-        
-        <button
-          onClick={() => setShowMobileFilters(true)}
-          style={{
-            width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-            backgroundColor: activeFilterCount > 0 ? 'var(--brand-green-dark)' : 'var(--canvas)',
-            border: activeFilterCount > 0 ? 'none' : '1px solid var(--hairline-strong)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative'
-          }}
-        >
-          <SlidersHorizontal size={16} color={activeFilterCount > 0 ? '#fff' : 'var(--slate)'} />
-          {activeFilterCount > 0 && (
-            <span style={{
-              position: 'absolute', top: '-4px', right: '-4px', backgroundColor: 'var(--brand-green)',
-              color: 'var(--ink)', width: '18px', height: '18px', borderRadius: '50%',
-              fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Main Search Panel Grid Layout */}
-      <div className="search-main-layout" style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', padding: '32px 24px', gap: '32px' }}>
-        
-        {/* Left Filters Sidebar */}
-        <div className="sidebar-filters-desktop" style={{
-          width: '280px', flexShrink: 0, flexDirection: 'column', gap: '24px',
-          position: 'sticky', top: '130px', alignSelf: 'flex-start',
-          maxHeight: 'calc(100vh - 160px)', overflowY: 'auto', paddingRight: '8px'
-        }}>
-          {/* Modes */}
-          <div>
-            <h4 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--brand-teal-deep)', marginBottom: '12px' }}>
-              Teaching Mode
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {MODES.map(mode => (
-                <label key={mode.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', fontWeight: 500 }}>
-                  <input
-                    type="checkbox"
-                    checked={filters.modes.includes(mode.id)}
-                    onChange={() => toggleFilterArray('modes', mode.id)}
-                    style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)' }}
-                  />
-                  {mode.label}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <hr style={{ border: 'none', borderTop: '1px solid var(--hairline-strong)' }} />
-
-          {/* Grades Levels & Collapsible Subjects */}
-          <div>
-            <h4 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--brand-teal-deep)', marginBottom: '12px' }}>
-              Grades / Levels
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {LEVELS.map(lvl => {
-                const isLevelChecked = filters.levels.includes(lvl);
-                const lvlSubjects = GRADE_SUBJECTS[lvl] || [];
-                return (
-                  <div key={lvl} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', fontWeight: 600 }}>
-                      <input
-                        type="checkbox"
-                        checked={isLevelChecked}
-                        onChange={() => toggleLevel(lvl)}
-                        style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)' }}
-                      />
-                      {lvl}
-                    </label>
-
-                    {isLevelChecked && (
-                      <div style={{ paddingLeft: '16px', borderLeft: '1.5px solid var(--hairline-strong)', display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '7px', marginTop: '4px' }}>
-                        {lvlSubjects.map(sub => (
-                          <label key={sub} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--slate)' }}>
-                            <input
-                              type="checkbox"
-                              checked={filters.subjects.includes(sub)}
-                              onChange={() => toggleFilterArray('subjects', sub)}
-                              style={{ width: '14px', height: '14px', accentColor: 'var(--brand-green-dark)' }}
-                            />
-                            {sub}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <hr style={{ border: 'none', borderTop: '1px solid var(--hairline-strong)' }} />
-
-          {/* Badges / Verified Requirements */}
-          <div>
-            <h4 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--brand-teal-deep)', marginBottom: '12px' }}>
-              Requirements
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', fontWeight: 500 }}>
-                <input
-                  type="checkbox"
-                  checked={filters.verified}
-                  onChange={(e) => handleFilterChange('verified', e.target.checked)}
-                  style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)' }}
-                />
-                <ShieldCheck size={16} color="var(--brand-teal)" /> Verified Parents Only
-              </label>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', fontWeight: 500 }}>
-                <input
-                  type="checkbox"
-                  checked={filters.immediate_hiring}
-                  onChange={(e) => handleFilterChange('immediate_hiring', e.target.checked)}
-                  style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)' }}
-                />
-                <Zap size={16} color="#f59e0b" /> Immediate Hiring
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* Right side Jobs Feed */}
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '22px', fontWeight: 700, margin: 0, color: 'var(--brand-teal-deep)' }}>
-              Latest Tuition Requests ({sortedJobs.length})
-            </h3>
-            {activeFilterCount > 0 && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setFilters({
-                    city: '', gender: '', modes: [], levels: [], subjects: [], min_price: '', max_price: '', verified: false, immediate_hiring: false
-                  });
-                  setSearchQuery('');
-                }}
-                style={{ fontSize: '13px', color: '#EF4444', fontWeight: 600 }}
-              >
-                Clear All Filters
-              </Button>
-            )}
+      {/* 3x2 grid of jobs */}
+      <section style={{ padding: '80px 0', backgroundColor: 'var(--surface)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <h2 style={{ fontSize: '32px', fontWeight: 700 }}>Featured Tuition Jobs</h2>
+            <p style={{ color: 'var(--steel)', fontSize: '16px' }}>Submit custom budget proposals directly to local families.</p>
           </div>
 
           {loading ? (
-            <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ color: 'var(--steel)' }}>Loading tuition requirements feed...</p>
+            <div style={{ minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <p style={{ color: 'var(--steel)' }}>Loading featured jobs...</p>
             </div>
-          ) : sortedJobs.length === 0 ? (
-            <Card style={{ padding: '64px 24px', textAlign: 'center', border: '1px dashed var(--hairline-strong)' }}>
-              <h4 style={{ color: 'var(--steel)', fontWeight: 600, marginBottom: '8px' }}>No Tuition Requests Found</h4>
-              <p style={{ color: 'var(--stone)', fontSize: '14px', margin: 0 }}>Try clearing filters or adapting your search keywords.</p>
-            </Card>
           ) : (
-            <div className="jobs-results-grid">
-              {sortedJobs.map((job) => {
-                const isHourly = job.budget_type === 'hourly';
-                return (
-                  <Card
-                    key={job.id}
-                    style={{
-                      padding: '28px',
-                      border: '1px solid var(--hairline-strong)',
-                      backgroundColor: 'var(--canvas)',
-                      boxShadow: 'var(--shadow-subtle)',
-                      transition: 'all 0.2s ease',
-                      position: 'relative'
-                    }}
-                  >
-                    {/* Tags row */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <Badge variant={job.mode === 'online' ? 'purple' : 'green-soft'}>
-                          {job.mode === 'online' ? 'Remote / Online' : job.mode === 'tutor_home' ? 'At Tutor\'s Home' : 'Physical Home Tuition'}
-                        </Badge>
-                        {job.verified_required && (
-                          <Badge variant="blue" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            <ShieldCheck size={11} /> Verified Parent
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '48px' }}>
+              <div className="jobs-landing-grid" style={{ width: '100%' }}>
+                {displayJobs.map((job) => {
+                  const isHourly = job.budget_type === 'hourly';
+                  return (
+                    <Card
+                      key={job.id}
+                      style={{
+                        padding: '24px',
+                        border: '1px solid var(--hairline-strong)',
+                        backgroundColor: 'var(--canvas)',
+                        boxShadow: 'var(--shadow-subtle)',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      <div>
+                        {/* Tags */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <Badge variant={job.mode === 'online' ? 'purple' : 'green-soft'}>
+                            {job.mode === 'online' ? 'Remote' : job.mode === 'tutor_home' ? 'Tutor Home' : 'Physical'}
                           </Badge>
-                        )}
-                        {job.immediate_hiring && (
-                          <Badge variant="popular" style={{ display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#d97706' }}>
-                            <Zap size={11} /> Immediate Hiring
-                          </Badge>
-                        )}
-                      </div>
-                      <span style={{ fontSize: '12px', color: 'var(--stone)', fontWeight: 500 }}>
-                        {getRelativeTime(job.created_at)}
-                      </span>
-                    </div>
+                          <span style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 500 }}>
+                            {getRelativeTime(job.created_at)}
+                          </span>
+                        </div>
 
-                    {/* Job Title */}
-                    <h3 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--brand-teal-deep)', margin: '0 0 16px 0', lineHeight: '1.4' }}>
-                      {job.title}
-                    </h3>
+                        {/* Title */}
+                        <h4 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--brand-teal-deep)', margin: '0 0 12px 0', minHeight: '44px', lineHeight: '1.4' }}>
+                          {job.title}
+                        </h4>
 
-                    {/* Upwork Style Key Specs (Icons/Tags Row) */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                      gap: '12px',
-                      padding: '16px',
-                      backgroundColor: 'var(--surface)',
-                      borderRadius: '8px',
-                      border: '1px solid var(--hairline-soft)',
-                      marginBottom: '20px'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <DollarSign size={16} color="var(--brand-green-dark)" />
-                        <div>
-                          <div style={{ fontSize: '13px', fontWeight: 700 }}>
-                            Rs {parseInt(job.budget_amount).toLocaleString()} {isHourly ? '/ hr' : '/ month'}
+                        {/* Basic Info */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px', fontSize: '13px', color: 'var(--slate)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: 600 }}>Budget:</span>
+                            <span style={{ color: 'var(--brand-green-dark)', fontWeight: 700 }}>
+                              Rs {parseInt(job.budget_amount).toLocaleString()} {isHourly ? '/ hr' : '/ month'}
+                            </span>
                           </div>
-                          <div style={{ fontSize: '11px', color: 'var(--stone)' }}>{isHourly ? 'Hourly Rate' : 'Fixed Monthly Budget'}</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: 600 }}>Grade/Subject:</span>
+                            <span>{job.grade_level} • {job.subject}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: 600 }}>Location:</span>
+                            <span>{job.city}</span>
+                          </div>
                         </div>
+
+                        {/* Short Description */}
+                        <p style={{
+                          fontSize: '13px', color: 'var(--steel)', lineHeight: '1.5', marginBottom: '20px',
+                          display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden'
+                        }}>
+                          {job.description}
+                        </p>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Clock size={16} color="var(--brand-green-dark)" />
-                        <div>
-                          <div style={{ fontSize: '13px', fontWeight: 700 }}>{job.hours_per_week} hrs/week</div>
-                          <div style={{ fontSize: '11px', color: 'var(--stone)' }}>Estimated Schedule</div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Calendar size={16} color="var(--brand-green-dark)" />
-                        <div>
-                          <div style={{ fontSize: '13px', fontWeight: 700 }}>{job.duration}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--stone)' }}>Contract Duration</div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <GraduationCap size={16} color="var(--brand-green-dark)" />
-                        <div>
-                          <div style={{ fontSize: '13px', fontWeight: 700 }}>{job.grade_level}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--stone)' }}>Grade / Level</div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <MapPin size={16} color="var(--brand-green-dark)" />
-                        <div>
-                          <div style={{ fontSize: '13px', fontWeight: 700 }}>{job.city}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--stone)' }}>Location Address</div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <User size={16} color="var(--brand-green-dark)" />
-                        <div>
-                          <div style={{ fontSize: '13px', fontWeight: 700 }}>{job.gender_preference === 'Any' ? 'Any Gender' : job.gender_preference + ' Tutor'}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--stone)' }}>Tutor Preference</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Description Paragraph */}
-                    <p style={{
-                      fontSize: '14.5px', color: 'var(--slate)', lineHeight: '1.6', marginBottom: '20px',
-                      display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden'
-                    }}>
-                      {job.description}
-                    </p>
-
-                    {/* Skills/Subject pills row & Apply Button */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', borderTop: '1px solid var(--hairline)', paddingTop: '20px' }}>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <span style={{ fontSize: '11px', color: 'var(--brand-teal-deep)', backgroundColor: 'var(--hairline-strong)', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>
-                          {job.subject}
-                        </span>
-                        <span style={{ fontSize: '11px', color: 'var(--brand-teal-deep)', backgroundColor: 'var(--hairline-strong)', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>
-                          {job.grade_level}
-                        </span>
-                      </div>
-                      
                       <Button
                         onClick={() => handleApplyClick(job)}
                         variant="primary"
                         style={{
                           backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)',
-                          fontWeight: 700, padding: '10px 24px', fontSize: '14px', borderRadius: '999px',
-                          display: 'flex', alignItems: 'center', gap: '4px'
+                          fontWeight: 700, width: '100%', borderRadius: '8px'
                         }}
                       >
                         Apply Now
                       </Button>
-                    </div>
-                  </Card>
-                );
-              })}
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Browse more jobs CTA button */}
+              <Link href="/tutor/jobs/search">
+                <Button
+                  variant="primary"
+                  style={{
+                    padding: '16px 36px', fontSize: '15px', fontWeight: 700,
+                    backgroundColor: 'var(--brand-teal-deep)', color: '#fff',
+                    borderRadius: '999px', boxShadow: 'var(--shadow-card)',
+                    display: 'flex', alignItems: 'center', gap: '8px'
+                  }}
+                >
+                  Browse More Jobs <ArrowRight size={16} />
+                </Button>
+              </Link>
             </div>
           )}
         </div>
-      </div>
+      </section>
+
+      {/* Why teach with us */}
+      <section style={{ padding: '64px 0', backgroundColor: 'var(--canvas)', borderTop: '1px solid var(--hairline)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 48px auto' }}>
+            <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '12px' }}>Why Teach With Us</h2>
+            <p style={{ color: 'var(--steel)', fontSize: '15px' }}>Keep all your earnings. Secure your billing. Teach on your own terms.</p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+            <Card style={{ padding: '24px', border: '1px solid var(--hairline-strong)' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '8px', backgroundColor: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                <DollarSign size={20} color="var(--brand-green-dark)" />
+              </div>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '10px' }}>0% Commission Rates</h3>
+              <p style={{ color: 'var(--slate)', fontSize: '13.5px', lineHeight: '1.6', margin: 0 }}>
+                Stop paying academy hubs 30-40% of your earnings. Keep 100% of the milestone billing amount. We charge a flat connect bidding fee.
+              </p>
+            </Card>
+
+            <Card style={{ padding: '24px', border: '1px solid var(--hairline-strong)' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '8px', backgroundColor: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                <Lock size={20} color="var(--brand-green-dark)" />
+              </div>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '10px' }}>Escrow Payout Guarantee</h3>
+              <p style={{ color: 'var(--slate)', fontSize: '13.5px', lineHeight: '1.6', margin: 0 }}>
+                Never get ghosted after delivering lessons. Milestone funds are deposited by parents before you start, and released directly upon verification.
+              </p>
+            </Card>
+
+            <Card style={{ padding: '24px', border: '1px solid var(--hairline-strong)' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '8px', backgroundColor: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                <Calendar size={20} color="var(--brand-green-dark)" />
+              </div>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '10px' }}>Flexible Schedule Control</h3>
+              <p style={{ color: 'var(--slate)', fontSize: '13.5px', lineHeight: '1.6', margin: 0 }}>
+                Define your own hourly tuition slots. Match with home tuition requests in your locality or teach students remotely from across Pakistan.
+              </p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section style={{ padding: '80px 0', backgroundColor: 'var(--surface)', borderTop: '1px solid var(--hairline)' }}>
+        <div className="container">
+          <div className="grid-split" style={{ gap: 'var(--spacing-xxl)', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: '32px', fontWeight: 700, marginBottom: '24px' }}>
+                Get Verified and Start Earning.
+              </h2>
+              <p style={{ color: 'var(--steel)', fontSize: '16px', marginBottom: '32px' }}>
+                Sign up in minutes. Pass our manual academic transcript verification and place custom bids on tuition requests.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--brand-green-soft)', color: 'var(--brand-green-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '14px', flexShrink: 0 }}>1</div>
+                  <div>
+                    <h4 style={{ fontSize: '17px', fontWeight: 600, marginBottom: '4px' }}>Create Profile & Upload Documents</h4>
+                    <p style={{ color: 'var(--slate)', fontSize: '14px', margin: 0 }}>Upload your CNIC and degree transcripts. Our admin verifies your credentials in 24 hours.</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--brand-green-soft)', color: 'var(--brand-green-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '14px', flexShrink: 0 }}>2</div>
+                  <div>
+                    <h4 style={{ fontSize: '17px', fontWeight: 600, marginBottom: '4px' }}>Bid on Tuition Requirements</h4>
+                    <p style={{ color: 'var(--slate)', fontSize: '14px', margin: 0 }}>Review student posts, analyze local rates, and submit tailored pricing bids with your intro video.</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--brand-green-soft)', color: 'var(--brand-green-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '14px', flexShrink: 0 }}>3</div>
+                  <div>
+                    <h4 style={{ fontSize: '17px', fontWeight: 600, marginBottom: '4px' }}>Log Sessions & Secure Income</h4>
+                    <p style={{ color: 'var(--slate)', fontSize: '14px', margin: 0 }}>Check-in on location or use remote logs. Payouts are made directly to your JazzCash or bank account.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: 'var(--canvas)', borderRadius: 'var(--rounded-xxl)', border: '1px solid var(--hairline-strong)', boxShadow: 'var(--shadow-mockup)', padding: '24px' }}>
+              <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--rounded-lg)', padding: '16px', border: '1px solid var(--hairline)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--hairline)', paddingBottom: '12px', marginBottom: '16px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600 }}>Tutor Wallet Balance</span>
+                  <span style={{ fontSize: '12px', backgroundColor: 'var(--brand-green-soft)', color: 'var(--brand-green-dark)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>Active</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '120px', justifyContent: 'center', alignItems: 'center' }}>
+                  <span style={{ fontSize: '14px', color: 'var(--steel)' }}>Escrow Funds Released</span>
+                  <h2 style={{ fontSize: '32px', fontWeight: 700, color: 'var(--brand-green-dark)', margin: 0 }}>Rs 48,000</h2>
+                  <span style={{ fontSize: '12px', color: 'var(--stone)' }}>Settled to JazzCash: 0300****567</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQs */}
+      <section style={{ padding: '64px 0', backgroundColor: 'var(--canvas)', borderTop: '1px solid var(--hairline)' }}>
+        <div className="container" style={{ maxWidth: '800px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <h2 style={{ fontSize: '28px', fontWeight: 700 }}>Tutor FAQs</h2>
+            <p style={{ color: 'var(--steel)', fontSize: '15px' }}>Answers to your questions about scheduling, escrows, and verification.</p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {tutorFaqs.map((faq, idx) => (
+              <div key={idx} style={{ backgroundColor: 'var(--canvas)', borderRadius: '8px', border: '1px solid var(--hairline-strong)', overflow: 'hidden' }}>
+                <button
+                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  style={{
+                    width: '100%', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    fontWeight: 600, fontSize: '15px', color: 'var(--ink)', textAlign: 'left', border: 'none', backgroundColor: 'transparent', cursor: 'pointer'
+                  }}
+                >
+                  {faq.q}
+                  <ChevronDown size={16} style={{ transform: openFaq === idx ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: 'var(--stone)' }} />
+                </button>
+                {openFaq === idx && (
+                  <div style={{ padding: '0 20px 16px 20px', fontSize: '13.5px', color: 'var(--slate)', lineHeight: '1.6', borderTop: '1px solid var(--hairline-soft)' }}>
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Application Sheet / Modal */}
       {activeJobForApply && (
@@ -1035,7 +648,6 @@ function JobsContent() {
             maxHeight: '90vh', overflowY: 'auto', padding: '32px', position: 'relative',
             animation: 'scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
           }}>
-            {/* Close Button */}
             <button
               onClick={() => setActiveJobForApply(null)}
               style={{
@@ -1074,7 +686,6 @@ function JobsContent() {
                   Submit your proposal for: <strong>{activeJobForApply.title}</strong>
                 </p>
 
-                {/* --- 1. UNAUTHENTICATED STATE --- */}
                 {!session ? (
                   <div style={{
                     backgroundColor: 'rgba(239, 68, 68, 0.05)', border: '1px solid #FCA5A5',
@@ -1083,7 +694,7 @@ function JobsContent() {
                     <Lock size={32} color="#EF4444" style={{ margin: '0 auto 12px auto' }} />
                     <h4 style={{ color: '#EF4444', fontSize: '16px', fontWeight: 700, margin: '0 0 8px 0' }}>Sign In Required</h4>
                     <p style={{ fontSize: '14px', color: 'var(--slate)', margin: '0 0 20px 0' }}>
-                      You must be signed in as a Tutor to submit application proposals for active tuition requirements.
+                      You must be signed in as a Tutor to submit proposals for active tuition requirements.
                     </p>
                     <Link href={`/login?next=/tutor/jobs`}>
                       <Button variant="primary" style={{ backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', width: '100%' }}>
@@ -1092,7 +703,6 @@ function JobsContent() {
                     </Link>
                   </div>
                 ) : userRole === 'client' ? (
-                  /* --- 2. CLIENT / PARENT RESTRICTION STATE --- */
                   <div style={{
                     backgroundColor: 'rgba(239, 68, 68, 0.05)', border: '1px solid #FCA5A5',
                     borderRadius: '12px', padding: '24px', textAlign: 'center'
@@ -1109,10 +719,8 @@ function JobsContent() {
                     </Link>
                   </div>
                 ) : (
-                  /* --- 3. TUTOR FORM STATE --- */
                   <form onSubmit={handleProposalSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     
-                    {/* Cross-City Validation Warning Banner */}
                     {showCityWarning && (
                       <div style={{
                         backgroundColor: '#FFFBEB', border: '1px solid #FCD34D',
@@ -1125,7 +733,6 @@ function JobsContent() {
                       </div>
                     )}
 
-                    {/* Proposal Budget / Pricing inputs */}
                     <div>
                       <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px' }}>
                         Your Proposed Rate
@@ -1161,7 +768,6 @@ function JobsContent() {
                       </p>
                     </div>
 
-                    {/* Proposal Message */}
                     <div>
                       <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px' }}>
                         Proposal message / Pitch
@@ -1188,7 +794,6 @@ function JobsContent() {
                       </div>
                     </div>
 
-                    {/* Optional Demo Lecture Link */}
                     <div>
                       <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '4px' }}>
                         Demo Lecture Link <span style={{ color: 'var(--stone)', fontSize: '11px', fontWeight: 400 }}>(Optional)</span>
@@ -1201,7 +806,6 @@ function JobsContent() {
                       />
                     </div>
 
-                    {/* Optional Slot Booking Link */}
                     <div>
                       <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '4px' }}>
                         Calendar Scheduling / Booking Link <span style={{ color: 'var(--stone)', fontSize: '11px', fontWeight: 400 }}>(Optional)</span>
@@ -1214,7 +818,6 @@ function JobsContent() {
                       />
                     </div>
 
-                    {/* Action buttons */}
                     <div style={{ display: 'flex', gap: '16px', marginTop: '10px' }}>
                       <Button
                         type="button"
@@ -1241,256 +844,6 @@ function JobsContent() {
         </div>
       )}
 
-      {/* Mobile filter Overlay Sheet */}
-      {showMobileFilters && (
-        <div className="mobile-filter-overlay" style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          zIndex: 9999, flexDirection: 'column', backgroundColor: 'rgba(0,0,0,0.4)',
-          animation: 'fadeIn 0.2s ease'
-        }}>
-          <div style={{ flex: 1 }} onClick={() => setShowMobileFilters(false)} />
-          <div style={{
-            backgroundColor: 'var(--canvas)', borderRadius: '24px 24px 0 0',
-            maxHeight: '85vh', overflowY: 'auto', padding: '24px 20px 32px 20px',
-            animation: 'slideUp 0.3s ease', boxShadow: '0 -8px 30px rgba(0,0,0,0.12)'
-          }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Advanced Filters</h3>
-              <button
-                onClick={() => setShowMobileFilters(false)}
-                style={{
-                  width: '32px', height: '32px', borderRadius: '50%', border: 'none',
-                  backgroundColor: 'var(--surface)', display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', fontSize: '16px', cursor: 'pointer'
-                }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* City */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--brand-teal-deep)', textTransform: 'uppercase', marginBottom: '8px' }}>City</label>
-              <select
-                value={filters.city}
-                onChange={(e) => handleFilterChange('city', e.target.value)}
-                style={{
-                  width: '100%', height: '40px', padding: '0 12px',
-                  borderRadius: '8px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                  fontSize: '14px', outline: 'none'
-                }}
-              >
-                <option value="">Any City</option>
-                {PAKISTAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-
-            {/* Gender Preference */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--brand-teal-deep)', textTransform: 'uppercase', marginBottom: '8px' }}>Gender Preference</label>
-              <select
-                value={filters.gender}
-                onChange={(e) => handleFilterChange('gender', e.target.value)}
-                style={{
-                  width: '100%', height: '40px', padding: '0 12px',
-                  borderRadius: '8px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                  fontSize: '14px', outline: 'none'
-                }}
-              >
-                <option value="">Any Gender Pref</option>
-                {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
-              </select>
-            </div>
-
-            {/* Modes */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--brand-teal-deep)', textTransform: 'uppercase', marginBottom: '8px' }}>Teaching Modes</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {MODES.map(mode => (
-                  <label key={mode.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={filters.modes.includes(mode.id)}
-                      onChange={() => toggleFilterArray('modes', mode.id)}
-                      style={{ width: '16px', height: '16px', accentColor: 'var(--brand-green-dark)' }}
-                    />
-                    {mode.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Pricing range */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--brand-teal-deep)', textTransform: 'uppercase', marginBottom: '8px' }}>Budget Range</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <Input
-                  type="number"
-                  placeholder="Min"
-                  value={filters.min_price}
-                  onChange={(e) => handleFilterChange('min_price', e.target.value)}
-                />
-                <Input
-                  type="number"
-                  placeholder="Max"
-                  value={filters.max_price}
-                  onChange={(e) => handleFilterChange('max_price', e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Requirements */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--brand-teal-deep)', textTransform: 'uppercase', marginBottom: '8px' }}>Requirements</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={filters.verified}
-                    onChange={(e) => handleFilterChange('verified', e.target.checked)}
-                    style={{ width: '16px', height: '16px' }}
-                  />
-                  Verified Only
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={filters.immediate_hiring}
-                    onChange={(e) => handleFilterChange('immediate_hiring', e.target.checked)}
-                    style={{ width: '16px', height: '16px' }}
-                  />
-                  Immediate Hiring
-                </label>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => {
-                  setFilters({
-                    city: '', gender: '', modes: [], levels: [], subjects: [], min_price: '', max_price: '', verified: false, immediate_hiring: false
-                  });
-                  setShowMobileFilters(false);
-                }}
-                style={{
-                  flex: 1, height: '44px', borderRadius: '8px', border: '1px solid var(--hairline-strong)',
-                  backgroundColor: '#fff', fontSize: '14px', fontWeight: 600, color: 'var(--slate)', cursor: 'pointer'
-                }}
-              >
-                Reset All
-              </button>
-              <button
-                onClick={() => setShowMobileFilters(false)}
-                style={{
-                  flex: 1, height: '44px', borderRadius: '8px', border: 'none',
-                  backgroundColor: 'var(--brand-green-dark)', fontSize: '14px', fontWeight: 600, color: '#fff', cursor: 'pointer'
-                }}
-              >
-                Apply Filters
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Benefits section */}
-      <section style={{ padding: '64px 0', backgroundColor: 'var(--canvas)', borderTop: '1px solid var(--hairline)' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 48px auto' }}>
-            <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '12px' }}>Why Teach With Us</h2>
-            <p style={{ color: 'var(--steel)', fontSize: '15px' }}>Keep all your earnings. Secure your billing. Teach on your own terms.</p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-            <Card style={{ padding: '24px', border: '1px solid var(--hairline-strong)' }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '8px', backgroundColor: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-                <DollarSign size={20} color="var(--brand-green-dark)" />
-              </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '10px' }}>0% Commission Rates</h3>
-              <p style={{ color: 'var(--slate)', fontSize: '13.5px', lineHeight: '1.6', margin: 0 }}>
-                Stop paying academy hubs 30-40% of your earnings. Keep 100% of the milestone billing amount. We charge a flat bidding connect fee.
-              </p>
-            </Card>
-
-            <Card style={{ padding: '24px', border: '1px solid var(--hairline-strong)' }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '8px', backgroundColor: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-                <Lock size={20} color="var(--brand-green-dark)" />
-              </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '10px' }}>Escrow Payout Guarantee</h3>
-              <p style={{ color: 'var(--slate)', fontSize: '13.5px', lineHeight: '1.6', margin: 0 }}>
-                Never get ghosted after delivering lessons. Milestone funds are deposited by parents before you start, and released directly upon verification.
-              </p>
-            </Card>
-
-            <Card style={{ padding: '24px', border: '1px solid var(--hairline-strong)' }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '8px', backgroundColor: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-                <Calendar size={20} color="var(--brand-green-dark)" />
-              </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '10px' }}>Flexible Schedule Control</h3>
-              <p style={{ color: 'var(--slate)', fontSize: '13.5px', lineHeight: '1.6', margin: 0 }}>
-                Define your own hourly tuition slots. Match with home tuition requests in your locality or teach students remotely from across Pakistan.
-              </p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQs Section */}
-      <section style={{ padding: '64px 0', backgroundColor: 'var(--surface)', borderTop: '1px solid var(--hairline)' }}>
-        <div className="container" style={{ maxWidth: '800px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <h2 style={{ fontSize: '28px', fontWeight: 700 }}>Tutor FAQs</h2>
-            <p style={{ color: 'var(--steel)', fontSize: '15px' }}>Answers to your questions about scheduling, escrows, and verification.</p>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {tutorFaqs.map((faq, idx) => (
-              <div key={idx} style={{ backgroundColor: 'var(--canvas)', borderRadius: '8px', border: '1px solid var(--hairline-strong)', overflow: 'hidden' }}>
-                <button
-                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  style={{
-                    width: '100%', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    fontWeight: 600, fontSize: '15px', color: 'var(--ink)', textAlign: 'left', border: 'none', backgroundColor: 'transparent', cursor: 'pointer'
-                  }}
-                >
-                  {faq.q}
-                  <ChevronDown size={16} style={{ transform: openFaq === idx ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: 'var(--stone)' }} />
-                </button>
-                {openFaq === idx && (
-                  <div style={{ padding: '0 20px 16px 20px', fontSize: '13.5px', color: 'var(--slate)', lineHeight: '1.6', borderTop: '1px solid var(--hairline-soft)' }}>
-                    {faq.a}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Bottom Call-to-action */}
-      <section style={{
-        background: 'var(--brand-teal-deep)',
-        color: 'var(--on-dark)',
-        padding: '64px 0',
-        textAlign: 'center'
-      }}>
-        <div className="container" style={{ maxWidth: '650px' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: 700, color: 'white', marginBottom: '12px' }}>
-            Ready to Begin Teaching?
-          </h2>
-          <p style={{ fontSize: '15px', color: 'var(--on-dark-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
-            Create your profile, pass academic credentials check and bid directly on matching jobs.
-          </p>
-          <Link href="/register">
-            <Button variant="primary" style={{ padding: '12px 32px', fontSize: '15px', backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', fontWeight: 700, borderRadius: '999px' }}>
-              Join Tutor Network
-            </Button>
-          </Link>
-        </div>
-      </section>
-
     </div>
   );
 }
@@ -1509,15 +862,3 @@ const tutorFaqs = [
     a: "When a family shortlists your proposal, you can connect directly via chat and schedule a trial lesson. Once both parties agree on milestones, a contract is initiated and payments are released upon completing each agreed milestone."
   }
 ];
-
-export default function FindJobs() {
-  return (
-    <Suspense fallback={
-      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: 'var(--steel)' }}>Loading jobs board...</p>
-      </div>
-    }>
-      <JobsContent />
-    </Suspense>
-  );
-}
