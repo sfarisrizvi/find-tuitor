@@ -279,14 +279,13 @@ export default function Home() {
             <div>
               <span style={{
                 color: 'var(--brand-green)',
-                fontWeight: 600,
-                letterSpacing: '1px',
-                textTransform: 'uppercase',
-                fontSize: '13px',
+                fontWeight: 400,
+                letterSpacing: '0.5px',
+                fontSize: '12px',
                 display: 'block',
                 marginBottom: '16px'
               }}>
-                The Infrastructure for Private Education
+                The infrastructure for private education
               </span>
 
               <h1 style={{
@@ -305,7 +304,7 @@ export default function Home() {
                 color: 'var(--on-dark-muted)',
                 marginBottom: '32px'
               }}>
-                Every Child Deserves the Right Teacher. TutorOnline helps families discover verified educators, compare teaching styles, book trial lessons, and pay only when agreed milestones are completed—so you can choose with complete confidence, whether learning happens at home, online, or at the teacher&apos;s place.
+                Every child deserves the right teacher. TutorOnline helps families discover verified educators, compare teaching styles, book trial lessons, and pay only when agreed milestones are completed—so you can choose with complete confidence, whether learning happens at home, online, or at the teacher&apos;s place.
               </p>
 
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '40px' }}>
