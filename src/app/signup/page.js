@@ -146,7 +146,7 @@ export default function Signup() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: '90vh',
       backgroundColor: 'var(--canvas)',
       display: 'grid',
       gridTemplateColumns: '1.2fr 1fr',
