@@ -44,9 +44,6 @@ export default function ClientProfile() {
   const [studentSchool, setStudentSchool] = useState('');
   const [studentSubjects, setStudentSubjects] = useState([]);
 
-  // Children Edit State
-  const [editChildrenList, setEditChildrenList] = useState([]);
-
   useEffect(() => {
     const loadProfileData = async () => {
       const supabase = createClient();
@@ -85,9 +82,7 @@ export default function ClientProfile() {
           .from('children')
           .select('*')
           .eq('client_id', authUser.id);
-        const childrenList = kids || [];
-        setChildren(childrenList);
-        setEditChildrenList(childrenList.map(c => ({ ...c })));
+        setChildren(kids || []);
       }
       setLoading(false);
     };
@@ -139,76 +134,77 @@ export default function ClientProfile() {
     }
   };
 
-  // Parent Child list modifiers
+  // Add temp blank child profile
   const handleAddChild = () => {
-    setEditChildrenList([
-      ...editChildrenList,
-      { id: `temp-${Date.now()}`, client_id: user.id, name: '', grade: 'Primary', school_college: '', subjects: [] }
+    const tempId = `temp-${Date.now()}`;
+    setChildren(prev => [
+      ...prev,
+      { id: tempId, client_id: user.id, name: '', grade: 'Primary', school_college: '', subjects: [] }
     ]);
   };
 
-  const handleRemoveChild = (index) => {
-    setEditChildrenList(editChildrenList.filter((_, i) => i !== index));
-  };
-
-  const handleChildFieldChange = (index, field, value) => {
-    const updated = [...editChildrenList];
-    updated[index][field] = value;
-    if (field === 'grade') {
-      updated[index].subjects = [];
-    }
-    setEditChildrenList(updated);
-  };
-
-  const handleChildSubjectToggle = (childIndex, subject) => {
-    const updated = [...editChildrenList];
-    const currentSubjects = updated[childIndex].subjects || [];
-    if (currentSubjects.includes(subject)) {
-      updated[childIndex].subjects = currentSubjects.filter(s => s !== subject);
-    } else {
-      updated[childIndex].subjects = [...currentSubjects, subject];
-    }
-    setEditChildrenList(updated);
-  };
-
-  const handleSaveChildren = async () => {
+  // Save single child details
+  const handleSaveSingleChild = async (childId, editData) => {
     setSaving(true);
     const supabase = createClient();
     try {
-      await supabase.from('children').delete().eq('client_id', user.id);
-      
-      const inserts = editChildrenList.map(c => ({
+      const isNew = childId.startsWith('temp-');
+      const payload = {
         client_id: user.id,
-        name: c.name,
-        academic_route: c.grade,
-        grade: c.grade,
-        school_college: c.school_college,
-        subjects: c.subjects
-      }));
+        name: editData.name,
+        academic_route: editData.grade,
+        grade: editData.grade,
+        school_college: editData.school_college,
+        subjects: editData.subjects
+      };
 
-      if (inserts.length > 0) {
-        await supabase.from('children').insert(inserts);
+      if (isNew) {
+        const { data, error } = await supabase
+          .from('children')
+          .insert(payload)
+          .select()
+          .single();
+        if (error) throw error;
+        setChildren(prev => prev.map(c => c.id === childId ? data : c));
+      } else {
+        const { data, error } = await supabase
+          .from('children')
+          .update(payload)
+          .eq('id', childId)
+          .select()
+          .single();
+        if (error) throw error;
+        setChildren(prev => prev.map(c => c.id === childId ? data : c));
       }
-
-      const { data: kids } = await supabase
-        .from('children')
-        .select('*')
-        .eq('client_id', user.id);
-      
-      const childrenList = kids || [];
-      setChildren(childrenList);
-      setEditChildrenList(childrenList.map(c => ({ ...c })));
-      setEditAcademic(false);
     } catch (err) {
-      console.error('Error saving children list:', err);
+      console.error('Error saving child details:', err);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCancelChildrenEdit = () => {
-    setEditChildrenList(children.map(c => ({ ...c })));
-    setEditAcademic(false);
+  // Delete single child profile
+  const handleDeleteChild = async (childId) => {
+    const isNew = childId.startsWith('temp-');
+    if (isNew) {
+      setChildren(prev => prev.filter(c => c.id !== childId));
+      return;
+    }
+
+    setSaving(true);
+    const supabase = createClient();
+    try {
+      const { error } = await supabase
+        .from('children')
+        .delete()
+        .eq('id', childId);
+      if (error) throw error;
+      setChildren(prev => prev.filter(c => c.id !== childId));
+    } catch (err) {
+      console.error('Error deleting child:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleStudentSubjectToggle = (subject) => {
@@ -437,175 +433,46 @@ export default function ClientProfile() {
 
               {profile.client_type === 'parent' ? (
                 /* PARENT VIEW */
-                editAcademic ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    {editChildrenList.map((child, idx) => (
-                      <div key={child.id || idx} style={{ padding: '24px', backgroundColor: 'var(--canvas)', borderRadius: '12px', border: '1px solid var(--hairline-strong)', position: 'relative' }}>
-                        {editChildrenList.length > 1 && (
-                          <button 
-                            type="button" 
-                            onClick={() => handleRemoveChild(idx)} 
-                            style={{ position: 'absolute', top: '18px', right: '18px', border: 'none', backgroundColor: 'transparent', color: '#EF4444', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-
-                        <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 700, color: 'var(--brand-teal-deep)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          Child #{idx + 1}
-                        </h4>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                          <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '8px' }}>Child&apos;s Name</label>
-                            <Input value={child.name} onChange={(e) => handleChildFieldChange(idx, 'name', e.target.value)} required />
-                          </div>
-
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                            <div>
-                              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '8px' }}>Grade / Class</label>
-                              <select 
-                                style={{
-                                  width: '100%', height: '44px', padding: '0 16px',
-                                  borderRadius: 'var(--rounded-md)', border: '1px solid var(--hairline-strong)',
-                                  backgroundColor: 'var(--canvas)', fontSize: '15px', color: 'var(--ink)'
-                                }}
-                                value={child.grade}
-                                onChange={(e) => handleChildFieldChange(idx, 'grade', e.target.value)}
-                                required
-                              >
-                                {Object.keys(GRADE_SUBJECTS).map(g => <option key={g} value={g}>{g}</option>)}
-                              </select>
-                            </div>
-                            <div>
-                              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '8px' }}>School / College</label>
-                              <Input value={child.school_college} onChange={(e) => handleChildFieldChange(idx, 'school_college', e.target.value)} />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '10px' }}>Subjects Needed</label>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                              {(GRADE_SUBJECTS[child.grade] || []).map(sub => {
-                                const isChecked = (child.subjects || []).includes(sub);
-                                return (
-                                  <label key={sub} style={{
-                                    display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px',
-                                    borderRadius: '6px', backgroundColor: isChecked ? 'var(--brand-green-soft)' : 'var(--surface-soft)',
-                                    border: `1.5px solid ${isChecked ? 'var(--brand-green-dark)' : 'var(--hairline-soft)'}`,
-                                    fontSize: '13px', cursor: 'pointer', fontWeight: isChecked ? 600 : 500,
-                                    transition: 'all 0.15s ease'
-                                  }}>
-                                    <input 
-                                      type="checkbox" 
-                                      checked={isChecked}
-                                      onChange={() => handleChildSubjectToggle(idx, sub)}
-                                      style={{ accentColor: 'var(--brand-green-dark)' }}
-                                    />
-                                    {sub}
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {children.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '30px', color: 'var(--stone)', fontSize: '14px', fontStyle: 'italic' }}>
+                        No children added yet. Click the button below to add your children.
                       </div>
-                    ))}
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                      <Button type="button" onClick={handleAddChild} variant="ghost" style={{ display: 'flex', gap: '6px', color: 'var(--brand-green-dark)', fontWeight: 600, padding: '8px 12px' }}>
-                        <Plus size={15} /> Add another child
-                      </Button>
-                      
-                      <div style={{ display: 'flex', gap: '12px' }}>
-                        <Button onClick={handleCancelChildrenEdit} variant="secondary">Cancel</Button>
-                        <Button onClick={handleSaveChildren} disabled={saving || editChildrenList.some(c => !c.name.trim())} variant="primary" style={{ backgroundColor: 'var(--brand-green-dark)', color: '#fff', display: 'flex', gap: '8px' }}>
-                          <Save size={15} /> {saving ? 'Saving...' : 'Save Changes'}
-                        </Button>
-                      </div>
-                    </div>
+                    ) : (
+                      children.map((child, idx) => (
+                        <ChildCard 
+                          key={child.id} 
+                          child={child} 
+                          onSave={(editData) => handleSaveSingleChild(child.id, editData)} 
+                          onDelete={() => handleDeleteChild(child.id)}
+                          saving={saving}
+                        />
+                      ))
+                    )}
                   </div>
-                ) : (
-                  /* Display View of children list with Add More Child Button */
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      {children.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '30px', color: 'var(--stone)', fontSize: '14px', fontStyle: 'italic' }}>
-                          No children added yet. Click the button below to add your children.
-                        </div>
-                      ) : (
-                        children.map((child, idx) => (
-                          <div key={child.id} style={{ border: '1px solid var(--hairline-soft)', borderRadius: '12px', padding: '24px', backgroundColor: 'var(--canvas)', boxShadow: 'var(--shadow-subtle)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                              <h4 style={{ margin: 0, fontSize: '16px', color: 'var(--brand-teal-deep)', fontWeight: 700 }}>
-                                {child.name}
-                              </h4>
-                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-green-dark)', backgroundColor: 'var(--brand-green-soft)', padding: '3px 10px', borderRadius: '4px' }}>
-                                  Grade {child.grade}
-                                </span>
-                                <button 
-                                  onClick={() => {
-                                    setEditAcademic(true);
-                                  }}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--stone)', transition: 'color 0.2s' }}
-                                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--brand-green-dark)'}
-                                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--stone)'}
-                                  title="Edit Children Info"
-                                >
-                                  <Edit3 size={14} />
-                                </button>
-                              </div>
-                            </div>
-                            
-                            <div style={{ fontSize: '13px', color: 'var(--steel)', marginBottom: '16px' }}>
-                              <strong>Institution:</strong> {child.school_college || 'Not specified'}
-                            </div>
-                            
-                            <div style={{ borderTop: '1px dashed var(--hairline)', paddingTop: '14px' }}>
-                              <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Subjects Requested</div>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                {(child.subjects || []).length > 0 ? (
-                                  child.subjects.map(s => (
-                                    <span key={s} style={{ fontSize: '12px', fontWeight: 500, color: 'var(--steel)', backgroundColor: 'var(--surface-soft)', border: '1px solid var(--hairline-soft)', padding: '4px 10px', borderRadius: '6px' }}>
-                                      {s}
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span style={{ fontSize: '12px', color: 'var(--stone)' }}>No subjects selected</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
 
-                    {/* Full width button to add more child */}
-                    <Button 
-                      type="button" 
-                      onClick={() => { 
-                        setEditAcademic(true); 
-                        handleAddChild(); 
-                      }} 
-                      variant="primary" 
-                      style={{ 
-                        width: '100%', 
-                        backgroundColor: 'var(--brand-green-dark)', 
-                        display: 'flex', 
-                        gap: '8px', 
-                        justifyContent: 'center', 
-                        height: '44px', 
-                        fontWeight: 600, 
-                        color: '#fff', 
-                        border: 'none', 
-                        borderRadius: 'var(--rounded-md)' 
-                      }}
-                    >
-                      <Plus size={18} /> Add More Child
-                    </Button>
-                  </div>
-                )
+                  {/* Full width button to add more child */}
+                  <Button 
+                    type="button" 
+                    onClick={handleAddChild} 
+                    variant="primary" 
+                    style={{ 
+                      width: '100%', 
+                      backgroundColor: 'var(--brand-green-dark)', 
+                      display: 'flex', 
+                      gap: '8px', 
+                      justifyContent: 'center', 
+                      height: '44px', 
+                      fontWeight: 600, 
+                      color: '#fff', 
+                      border: 'none', 
+                      borderRadius: 'var(--rounded-md)' 
+                    }}
+                  >
+                    <Plus size={18} /> Add More Child
+                  </Button>
+                </div>
               ) : (
                 /* STUDENT VIEW */
                 editAcademic ? (
@@ -723,6 +590,154 @@ export default function ClientProfile() {
 
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+// INDEPENDENT CARD FOR EACH CHILD PROFILE
+function ChildCard({ child, onSave, onDelete, saving }) {
+  const [editName, setEditName] = useState(child.name || '');
+  const [editGrade, setEditGrade] = useState(child.grade || 'Primary');
+  const [editSchool, setEditSchool] = useState(child.school_college || '');
+  const [editSubjects, setEditSubjects] = useState(child.subjects || []);
+  const [isEditing, setIsEditing] = useState(child.id.startsWith('temp-'));
+
+  const handleSubjectToggle = (sub) => {
+    setEditSubjects(prev => 
+      prev.includes(sub) ? prev.filter(s => s !== sub) : [...prev, sub]
+    );
+  };
+
+  const handleTriggerSave = async () => {
+    await onSave({
+      name: editName,
+      grade: editGrade,
+      school_college: editSchool,
+      subjects: editSubjects
+    });
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div style={{ padding: '24px', backgroundColor: 'var(--canvas)', borderRadius: '12px', border: '1px solid var(--hairline-strong)', display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 700, color: 'var(--brand-teal-deep)' }}>
+          {child.id.startsWith('temp-') ? 'Add New Child' : 'Edit Child Profile'}
+        </h4>
+
+        <div>
+          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '6px' }}>Child&apos;s Name</label>
+          <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Enter child's name" required style={{ height: '38px', fontSize: '13px' }} />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '6px' }}>Grade / Class</label>
+            <select 
+              style={{
+                width: '100%', height: '38px', padding: '0 12px',
+                borderRadius: 'var(--rounded-md)', border: '1px solid var(--hairline-strong)',
+                backgroundColor: 'var(--canvas)', fontSize: '14px', color: 'var(--ink)'
+              }}
+              value={editGrade}
+              onChange={e => { setEditGrade(e.target.value); setEditSubjects([]); }}
+              required
+            >
+              {Object.keys(GRADE_SUBJECTS).map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '6px' }}>School / College</label>
+            <Input value={editSchool} onChange={e => setEditSchool(e.target.value)} placeholder="School or college" style={{ height: '38px', fontSize: '13px' }} />
+          </div>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '10px' }}>Subjects Needed</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {(GRADE_SUBJECTS[editGrade] || []).map(sub => {
+              const isChecked = editSubjects.includes(sub);
+              return (
+                <label key={sub} style={{
+                  display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px',
+                  borderRadius: '6px', backgroundColor: isChecked ? 'var(--brand-green-soft)' : 'var(--surface-soft)',
+                  border: `1.5px solid ${isChecked ? 'var(--brand-green-dark)' : 'var(--hairline-soft)'}`,
+                  fontSize: '13px', cursor: 'pointer', fontWeight: isChecked ? 600 : 500,
+                  transition: 'all 0.15s ease'
+                }}>
+                  <input 
+                    type="checkbox" 
+                    checked={isChecked}
+                    onChange={() => handleSubjectToggle(sub)}
+                    style={{ accentColor: 'var(--brand-green-dark)' }}
+                  />
+                  {sub}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
+          <Button onClick={() => { if (child.id.startsWith('temp-')) onDelete(); else setIsEditing(false); }} variant="secondary" style={{ height: '34px', fontSize: '12px', padding: '0 12px' }}>Cancel</Button>
+          <Button 
+            onClick={handleTriggerSave} 
+            disabled={saving || !editName.trim()} 
+            variant="primary" 
+            style={{ backgroundColor: 'var(--brand-green-dark)', color: '#fff', display: 'flex', gap: '6px', height: '34px', fontSize: '12px', padding: '0 12px' }}
+          >
+            <Save size={14} /> Save
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ border: '1px solid var(--hairline-soft)', borderRadius: '12px', padding: '24px', backgroundColor: 'var(--canvas)', boxShadow: 'var(--shadow-subtle)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+        <h4 style={{ margin: 0, fontSize: '16px', color: 'var(--brand-teal-deep)', fontWeight: 700 }}>
+          {child.name}
+        </h4>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-green-dark)', backgroundColor: 'var(--brand-green-soft)', padding: '3px 10px', borderRadius: '4px' }}>
+            Grade {child.grade}
+          </span>
+          <button 
+            onClick={() => setIsEditing(true)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--stone)', display: 'flex', alignItems: 'center' }}
+            title="Edit Child Profile"
+          >
+            <Edit3 size={14} />
+          </button>
+          <button 
+            onClick={onDelete}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', display: 'flex', alignItems: 'center' }}
+            title="Delete Child Profile"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </div>
+      
+      <div style={{ fontSize: '13px', color: 'var(--steel)', marginBottom: '16px' }}>
+        <strong>Institution:</strong> {child.school_college || 'Not specified'}
+      </div>
+      
+      <div style={{ borderTop: '1px dashed var(--hairline)', paddingTop: '14px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Subjects Requested</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {(child.subjects || []).length > 0 ? (
+            child.subjects.map(s => (
+              <span key={s} style={{ fontSize: '12px', fontWeight: 500, color: 'var(--steel)', backgroundColor: 'var(--surface-soft)', border: '1px solid var(--hairline-soft)', padding: '4px 10px', borderRadius: '6px' }}>
+                {s}
+              </span>
+            ))
+          ) : (
+            <span style={{ fontSize: '12px', color: 'var(--stone)' }}>No subjects selected</span>
+          )}
+        </div>
       </div>
     </div>
   );
