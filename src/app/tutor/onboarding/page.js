@@ -390,6 +390,7 @@ function OnboardingContent() {
     'BS/MS': false
   });
   const [selectedSubjectsByLevel, setSelectedSubjectsByLevel] = useState({});
+  const [customSubjectInputs, setCustomSubjectInputs] = useState({});
 
   // Step 4: Languages
   const [selectedLanguages, setSelectedLanguages] = useState([]);
@@ -529,6 +530,12 @@ function OnboardingContent() {
           if (row.subject) {
             if (!subMap[row.level]) subMap[row.level] = [];
             subMap[row.level].push(row.subject);
+
+            // Auto-check 'Other' if we load a custom subject not in LEVEL_SUBJECTS static list
+            const staticList = LEVEL_SUBJECTS[row.level] || [];
+            if (!staticList.includes(row.subject) && !subMap[row.level].includes('Other')) {
+              subMap[row.level].push('Other');
+            }
           }
         });
         setActiveLevels(activeMap);
@@ -642,7 +649,8 @@ function OnboardingContent() {
           if (activeLevels[levelName]) {
             const hasSubjects = ['Matric', 'Inter', 'BS/MS'].includes(levelName);
             if (hasSubjects) {
-              const subs = selectedSubjectsByLevel[levelName] || [];
+              // Filter out the literal word 'Other' from database rows so it does not pollute the table
+              const subs = (selectedSubjectsByLevel[levelName] || []).filter(s => s !== 'Other');
               if (subs.length > 0) {
                 subs.forEach(subj => {
                   rows.push({
@@ -792,6 +800,23 @@ function OnboardingContent() {
       }
       return { ...prev, [levelName]: newList };
     });
+  };
+
+  const addCustomSubject = (levelName) => {
+    const text = (customSubjectInputs[levelName] || '').trim();
+    if (!text) return;
+    
+    setSelectedSubjectsByLevel(prev => {
+      const currentList = prev[levelName] || [];
+      if (currentList.includes(text)) return prev;
+      
+      const newList = [...currentList, text];
+      // Auto-check parent level
+      setActiveLevels(l => ({ ...l, [levelName]: true }));
+      return { ...prev, [levelName]: newList };
+    });
+
+    setCustomSubjectInputs(prev => ({ ...prev, [levelName]: '' }));
   };
 
   const toggleAccordion = (levelName) => {
@@ -1220,8 +1245,13 @@ function OnboardingContent() {
                 const isActive = activeLevels[levelName];
                 const isExpanded = expandedAccordions[levelName];
                 const hasSubjects = ['Matric', 'Inter', 'BS/MS'].includes(levelName);
-                const subjects = LEVEL_SUBJECTS[levelName] || [];
+                const baseSubjects = LEVEL_SUBJECTS[levelName] || [];
                 const selectedSubs = selectedSubjectsByLevel[levelName] || [];
+                const subjects = [
+                  ...baseSubjects.filter(s => s !== 'Other'),
+                  ...selectedSubs.filter(s => !baseSubjects.includes(s) && s !== 'Other'),
+                  ...(baseSubjects.includes('Other') ? ['Other'] : [])
+                ];
 
                 // Format the preview of checked subjects: e.g. " (Maths, Physics)"
                 let previewText = '';
@@ -1301,38 +1331,72 @@ function OnboardingContent() {
                         borderTop: '1px solid var(--hairline)'
                       }}>
                         {hasSubjects ? (
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                            gap: '12px'
-                          }}>
-                            {subjects.map(subj => {
-                              const isChecked = selectedSubs.includes(subj);
-                              return (
-                                <label key={subj} style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '8px',
-                                  cursor: 'pointer',
-                                  fontSize: '14px',
-                                  color: 'var(--ink)',
-                                  padding: '6px 0'
-                                }}>
-                                  <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => toggleLevelSubject(levelName, subj)}
-                                    style={{
-                                      width: '16px',
-                                      height: '16px',
-                                      accentColor: 'var(--brand-green-dark)',
-                                      cursor: 'pointer'
-                                    }}
-                                  />
-                                  {subj}
-                                </label>
-                              );
-                            })}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                              gap: '12px'
+                            }}>
+                              {subjects.map(subj => {
+                                const isChecked = selectedSubs.includes(subj);
+                                return (
+                                  <label key={subj} style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    color: 'var(--ink)',
+                                    padding: '6px 0'
+                                  }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => toggleLevelSubject(levelName, subj)}
+                                      style={{
+                                        width: '16px',
+                                        height: '16px',
+                                        accentColor: 'var(--brand-green-dark)',
+                                        cursor: 'pointer'
+                                      }}
+                                    />
+                                    {subj}
+                                  </label>
+                                );
+                              })}
+                            </div>
+
+                            {selectedSubs.includes('Other') && (
+                              <div style={{
+                                display: 'flex',
+                                gap: '8px',
+                                marginTop: '8px',
+                                borderTop: '1px dashed var(--hairline)',
+                                paddingTop: '12px',
+                                maxWidth: '400px'
+                              }}>
+                                <Input
+                                  placeholder="Add other subject (e.g. Sociology)"
+                                  value={customSubjectInputs[levelName] || ''}
+                                  onChange={e => setCustomSubjectInputs(prev => ({ ...prev, [levelName]: e.target.value }))}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      addCustomSubject(levelName);
+                                    }
+                                  }}
+                                  style={{ height: '36px', fontSize: '13px' }}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() => addCustomSubject(levelName)}
+                                  style={{ height: '36px', padding: '0 16px', fontSize: '13px' }}
+                                >
+                                  Add
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div style={{ fontSize: '13px', color: 'var(--stone)', fontStyle: 'italic' }}>
