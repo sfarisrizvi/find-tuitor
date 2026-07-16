@@ -95,6 +95,19 @@ if (targetDir) {
     fs.copyFileSync(envLocalSrc, envLocalDest);
   }
 
+  // Patch server.js for Hostinger Passenger Unix socket routing compatibility
+  const targetServerJs = path.join(targetDir, 'server.js');
+  if (fs.existsSync(targetServerJs)) {
+    console.log('Patching server.js for Hostinger Passenger compatibility...');
+    let serverContent = fs.readFileSync(targetServerJs, 'utf8');
+    serverContent = serverContent.replace(
+      'parseInt(process.env.PORT, 10) || 3000',
+      'process.env.PORT ? (isNaN(Number(process.env.PORT)) ? process.env.PORT : parseInt(process.env.PORT, 10)) : 3000'
+    );
+    fs.writeFileSync(targetServerJs, serverContent);
+    console.log('server.js patched successfully!');
+  }
+
   console.log('Postbuild static asset copy completed successfully.');
 } else {
   console.log('Could not find server.js inside .next/standalone. Ensure output: "standalone" is set in next.config.mjs');
