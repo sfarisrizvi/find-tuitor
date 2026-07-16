@@ -74,7 +74,7 @@ export function Navbar() {
             alignItems: 'center',
             gap: '8px'
           }}>
-            <img src="/logo.svg" alt="TutorOnline.pk" style={{ height: '32px' }} />
+            <img src="/dark%20logo.svg" alt="TutorOnline.pk" style={{ height: '32px' }} />
           </Link>
         </div>
 

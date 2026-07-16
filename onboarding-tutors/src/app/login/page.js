@@ -153,7 +153,7 @@ function LoginForm() {
         {/* Welcome Back Header with Logo */}
         <div style={{ marginBottom: '32px' }}>
           <div style={{ marginBottom: '24px' }}>
-            <img src="/logo.svg" alt="TutorOnline.pk" style={{ height: '36px' }} />
+            <img src="/dark%20logo.svg" alt="TutorOnline.pk" style={{ height: '36px' }} />
           </div>
           <h1 style={{ fontSize: '36px', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--ink)' }}>
             Welcome back!

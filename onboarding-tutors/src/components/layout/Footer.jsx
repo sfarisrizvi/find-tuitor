@@ -28,7 +28,7 @@ export function Footer() {
       }}>
         {/* Logo */}
         <div>
-          <img src="/logo_dark.svg" alt="TutorOnline.pk" style={{ height: '36px' }} />
+          <img src="/light%20logo.svg" alt="TutorOnline.pk" style={{ height: '36px' }} />
         </div>
         
         {/* Description */}
