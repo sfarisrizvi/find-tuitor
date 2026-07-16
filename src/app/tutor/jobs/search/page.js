@@ -454,7 +454,7 @@ function SearchContent() {
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--surface)', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--surface)', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* Click-away overlay to dismiss dropdowns */}
       {(showCityDropdown || showGenderDropdown || showSortDropdown) && (
@@ -501,7 +501,6 @@ function SearchContent() {
         backgroundColor: 'var(--canvas)',
         borderBottom: '1px solid var(--hairline-strong)',
         position: 'sticky',
-        top: '64px',
         zIndex: 40,
         padding: '12px 24px'
       }}>
@@ -790,20 +789,7 @@ function SearchContent() {
 
         {/* Right side Jobs Feed */}
         <div style={{ flex: 1 }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '24px',
-            flexWrap: 'wrap',
-            gap: '12px',
-            position: 'sticky',
-            top: '126px',
-            zIndex: 30,
-            backgroundColor: 'var(--surface)',
-            padding: '12px 0',
-            margin: '-12px 0 12px 0'
-          }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <h3 style={{ fontSize: '22px', fontWeight: 700, margin: 0, color: 'var(--brand-teal-deep)' }}>
               {sortedJobs.length} Tuition Jobs Found
             </h3>

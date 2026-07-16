@@ -24,10 +24,10 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "/favicon.png",
-        width: 512,
-        height: 512,
-        alt: "Find Tuitor Logo",
+        url: "/featured-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "TutorOnline.pk",
       },
     ],
   },
@@ -35,7 +35,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Find Tutor Online | Pakistan's Top Tutors",
     description: "Connecting students with Pakistan's best verified educators.",
-    images: ["/favicon.png"],
+    images: ["/featured-image.jpg"],
   },
 };
 
