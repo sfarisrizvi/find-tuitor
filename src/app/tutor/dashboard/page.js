@@ -116,7 +116,7 @@ export default function TutorDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-xl)' }}>
         <Card variant="feature-dark">
           <p style={{ fontSize: '14px', color: 'var(--on-dark-muted)', margin: '0 0 8px 0' }}>Available Balance</p>
-          <h2 style={{ margin: 0 }}>Rs 45,000</h2>
+          <h2 style={{ margin: 0, color: '#fff' }}>Rs 45,000</h2>
           <Button variant="secondary-on-dark" style={{ marginTop: '16px', fontSize: '12px', padding: '6px 12px' }}>Withdraw Funds</Button>
         </Card>
         <Card>
