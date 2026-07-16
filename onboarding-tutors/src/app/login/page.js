@@ -6,7 +6,7 @@ import { createClient } from '../../utils/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
-import { TutorCarousel } from '../../components/layout/TutorCarousel';
+import { AuthSidebar } from '../../components/layout/AuthSidebar';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -376,8 +376,8 @@ function LoginForm() {
         </div>
       </div>
 
-      {/* Right Side: Reusable Tutor Carousel */}
-      <TutorCarousel />
+      {/* Right Side: Reusable Auth Sidebar with Lottie */}
+      <AuthSidebar />
 
     </div>
   );

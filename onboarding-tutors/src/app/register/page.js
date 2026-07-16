@@ -6,7 +6,7 @@ import { createClient } from '../../utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { User, Mail, Lock, Phone, MapPin, Eye, EyeOff, ChevronDown } from 'lucide-react';
-import { TutorCarousel } from '../../components/layout/TutorCarousel';
+import { AuthSidebar } from '../../components/layout/AuthSidebar';
 
 const PAKISTANI_CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
 
@@ -439,8 +439,8 @@ export default function Register() {
         )}
       </div>
 
-      {/* Right Side: Reusable Tutor Carousel */}
-      <TutorCarousel />
+      {/* Right Side: Reusable Auth Sidebar with Lottie */}
+      <AuthSidebar />
 
     </div>
   );

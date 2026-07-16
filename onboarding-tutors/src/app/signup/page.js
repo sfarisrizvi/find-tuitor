@@ -6,7 +6,7 @@ import { createClient } from '../../utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { User, Mail, Lock, Users, BookOpen, Eye, EyeOff } from 'lucide-react';
-import { TutorCarousel } from '../../components/layout/TutorCarousel';
+import { AuthSidebar } from '../../components/layout/AuthSidebar';
 
 export default function Signup() {
   const [roleSelection, setRoleSelection] = useState('parent');
@@ -131,7 +131,7 @@ export default function Signup() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: '90vh',
       backgroundColor: 'var(--canvas)',
       display: 'grid',
       gridTemplateColumns: '1.2fr 1fr',
@@ -439,8 +439,8 @@ export default function Signup() {
         )}
       </div>
 
-      {/* Right Side: Reusable Tutor Carousel */}
-      <TutorCarousel />
+      {/* Right Side: Reusable Auth Sidebar with Lottie */}
+      <AuthSidebar />
     </div>
   );
 }
