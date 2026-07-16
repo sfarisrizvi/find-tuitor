@@ -25,7 +25,7 @@ export function AuthSidebar() {
         if (animRef.current) {
           animRef.current.destroy();
         }
-        
+
         animRef.current = window.lottie.loadAnimation({
           container: containerRef.current,
           renderer: 'svg',
@@ -60,14 +60,11 @@ export function AuthSidebar() {
       overflow: 'hidden',
       minHeight: '90vh'
     }}>
-      {/* Dynamic background circles */}
-      <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '350px', height: '350px', borderRadius: '50%', background: 'rgba(0,104,74,0.02)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '450px', height: '450px', borderRadius: '50%', background: 'rgba(0,104,74,0.02)', pointerEvents: 'none' }} />
-      
+
       <div style={{ maxWidth: '480px', textAlign: 'center', zIndex: 10 }}>
         {/* Lottie Animation Container */}
-        <div ref={containerRef} style={{ width: '100%', height: '560px', margin: '-90px auto 0' }} />
-        
+        <div ref={containerRef} style={{ width: '100%', height: '400px', margin: '-50% auto 0' }} />
+
         <h2 style={{ fontSize: '28px', fontWeight: 800, margin: '0 0 16px 0', color: '#0b1a24', letterSpacing: '-0.5px' }}>
           Connect with Expert Tutors
         </h2>
