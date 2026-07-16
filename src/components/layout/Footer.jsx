@@ -42,7 +42,7 @@ export function Footer() {
             alignItems: 'center',
             gap: '8px'
           }}>
-            <img src="/logo_dark.svg" alt="TutorOnline.pk" style={{ height: '24px' }} />
+            <img src="/light%20logo.svg" alt="TutorOnline.pk" style={{ height: '24px' }} />
           </div>
           <p style={{ fontSize: '14px', color: 'var(--on-dark-muted)' }}>
             TutorOnline is building the trusted infrastructure for private education—helping families discover exceptional educators while empowering teachers to build meaningful careers & earnings.

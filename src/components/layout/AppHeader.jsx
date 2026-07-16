@@ -201,7 +201,7 @@ export function AppHeader() {
       <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Link href={logoHref} style={{ marginRight: 'var(--spacing-xl)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img src="/logo.svg" alt="TutorOnline.pk" style={{ height: '24px' }} />
+            <img src="/dark%20logo.svg" alt="TutorOnline.pk" style={{ height: '24px' }} />
           </Link>
 
           {/* Desktop Nav Links */}
