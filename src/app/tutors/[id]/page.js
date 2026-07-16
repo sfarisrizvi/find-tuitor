@@ -17,6 +17,28 @@ import { ExperienceEditModal } from '../../../components/ui/ExperienceEditModal'
 
 const PAKISTANI_CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
 
+const maskPhone = (phone) => {
+  if (!phone) return '';
+  if (phone.length > 7) {
+    return phone.slice(0, -7) + '*******';
+  }
+  return '**********';
+};
+
+const maskEmail = (email) => {
+  if (!email) return '';
+  const parts = email.split('@');
+  if (parts.length === 2) {
+    const name = parts[0];
+    const domain = parts[1];
+    if (name.length > 3) {
+      return name.slice(0, 3) + '***@' + domain;
+    }
+    return '***@' + domain;
+  }
+  return '******@******.***';
+};
+
 // ─── Mock data for demo ───────────────────────────────────────
 const MOCK_TUTORS = [
   {
@@ -227,9 +249,18 @@ export default function TutorProfile() {
 
       if (id.startsWith('mock-')) {
         const found = MOCK_TUTORS.find(t => t.id === id) || MOCK_TUTORS[0];
-        setTutor(found);
-        setExperience(found.experience || []);
-        setCategories(found.categories || []);
+        const profile = { ...found };
+        const isOwner = u && u.id === id;
+        const userRole = u?.user_metadata?.role;
+        const isAdmin = userRole === 'admin';
+        
+        if (!isOwner && !isAdmin) {
+          profile.phone = maskPhone(profile.phone);
+          profile.email = maskEmail(profile.email);
+        }
+        setTutor(profile);
+        setExperience(profile.experience || []);
+        setCategories(profile.categories || []);
       } else {
         const { data: profile, error: pErr } = await withTimeout(
           supabase.from('tutor_profiles').select('*').eq('id', id).single()
@@ -239,12 +270,18 @@ export default function TutorProfile() {
           console.error('[DEBUG] Error fetching tutor profile:', pErr);
         }
         if (profile) {
-          if (!u) {
+          const isOwner = u && u.id === id;
+          const userRole = u?.user_metadata?.role;
+          const isAdmin = userRole === 'admin';
+          
+          if (!isOwner && !isAdmin) {
             if (profile.about) {
-              profile.about = profile.about.substring(0, 150) + '...';
+              if (!u) {
+                profile.about = profile.about.substring(0, 150) + '...';
+              }
             }
-            profile.phone = '+92 **********';
-            profile.email = '******@******.***';
+            profile.phone = maskPhone(profile.phone);
+            profile.email = maskEmail(profile.email);
             profile.kyc_status = null;
             profile.kyc_docs = null;
           }

@@ -321,8 +321,8 @@ Marketing surfaces give content generous breathing room — `{spacing.hero}` (12
 | Mobile (small) | < 480px | Single column. Hero 36px. Pricing 1-up. Course catalog 1-up. |
 | Mobile (large) | 480 – 767px | Course tiles 2-up. Hero 48px. |
 | Tablet | 768 – 1023px | 2-column feature grids. Hero 56px. |
-| Desktop | 1024 – 1279px | 3-tier pricing card row. 3-up course catalog. Hero 64px. |
-| Wide Desktop | ≥ 1280px | Full 72px hero presentation. |
+| Desktop | 1400px | 3-tier pricing card row. 3-up course catalog. Hero 64px. |
+| Wide Desktop | ≥ 1400px | Full 72px hero presentation. |
 
 ### Touch Targets
 - Pill buttons render at 40–44px effective height

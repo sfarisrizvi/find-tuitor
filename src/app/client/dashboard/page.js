@@ -72,7 +72,7 @@ export default function ParentDashboard() {
           <h2>Welcome back, {clientName}!</h2>
           <p>Here is an overview of your active tuitions.</p>
         </div>
-        <Link href="/find-tutor">
+        <Link href="/client/jobs/new">
           <Button variant="primary" style={{ backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)' }}>Post a New Tuition Requirement</Button>
         </Link>
       </div>
