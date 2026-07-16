@@ -230,7 +230,6 @@ export default function ClientProfile() {
     );
   }
 
-  // Get user initials for avatar
   const initials = (profile.full_name || 'C')
     .split(' ')
     .map(n => n[0])
@@ -250,7 +249,6 @@ export default function ClientProfile() {
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Decorative circular shapes */}
         <div style={{ position: 'absolute', top: '-10%', left: '-5%', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '-20%', right: '-5%', width: '400px', height: '400px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', pointerEvents: 'none' }} />
 
@@ -266,14 +264,14 @@ export default function ClientProfile() {
 
       <div style={{ maxWidth: '1100px', margin: '-40px auto 0', padding: '0 20px', position: 'relative', zIndex: 10 }}>
         
-        {/* Main Grid: Left Sidebar + Right Settings */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px', alignItems: 'start' }}>
+        {/* Main Grid: Left Sidebar (Personal Info) + Right Settings (Academic / Children) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px', alignItems: 'start' }}>
           
-          {/* LEFT SIDEBAR: PROFILE OVERVIEW */}
+          {/* LEFT COLUMN: PERSONAL DETAILS & SUMMARY */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            
+            {/* Avatar Circle card */}
             <Card style={{ padding: '32px', textAlign: 'center', boxShadow: 'var(--shadow-md)' }}>
-              
-              {/* Initials Avatar */}
               <div style={{ 
                 width: '90px', 
                 height: '90px', 
@@ -294,7 +292,7 @@ export default function ClientProfile() {
               <h3 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ink)', margin: '0 0 6px 0' }}>
                 {profile.full_name}
               </h3>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', alignItems: 'center', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', alignItems: 'center', marginBottom: '8px' }}>
                 <span style={{ 
                   backgroundColor: 'var(--brand-green-soft)', 
                   color: 'var(--brand-green-dark)', 
@@ -310,24 +308,91 @@ export default function ClientProfile() {
                 <span style={{ fontSize: '13px', color: 'var(--steel)' }}>&bull;</span>
                 <span style={{ fontSize: '13px', color: 'var(--steel)', fontWeight: 500 }}>{profile.city}</span>
               </div>
+            </Card>
 
-              {/* Stat list */}
-              <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: '20px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Mail size={16} color="var(--steel)" />
-                  <div>
-                    <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase' }}>Email Address</div>
-                    <div style={{ fontSize: '13px', color: 'var(--ink)', fontWeight: 500 }}>{profile.email}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Phone size={16} color="var(--steel)" />
-                  <div>
-                    <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase' }}>Phone Contact</div>
-                    <div style={{ fontSize: '13px', color: 'var(--ink)', fontWeight: 500 }}>{profile.phone || 'Not added'}</div>
-                  </div>
-                </div>
+            {/* Editable Personal Details Card */}
+            <Card style={{ padding: '32px', boxShadow: 'var(--shadow-md)', transition: 'all 0.3s ease' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--brand-teal-deep)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <User size={18} color="var(--brand-green)" /> Personal Details
+                </h3>
+                {!editBasic && (
+                  <button 
+                    onClick={() => setEditBasic(true)} 
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--brand-green-dark)', fontWeight: 600 }}
+                    title="Edit Personal Details"
+                  >
+                    <Edit3 size={15} />
+                  </button>
+                )}
               </div>
+
+              {editBasic ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '6px' }}>Full Name</label>
+                    <Input value={fullName} onChange={(e) => setFullName(e.target.value)} required style={{ height: '38px', fontSize: '14px' }} />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '6px' }}>Phone Number</label>
+                    <Input value={phone} onChange={(e) => setPhone(e.target.value)} required style={{ height: '38px', fontSize: '14px' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '6px' }}>City</label>
+                    <select 
+                      style={{
+                        width: '100%', height: '38px', padding: '0 12px',
+                        borderRadius: 'var(--rounded-md)', border: '1px solid var(--hairline-strong)',
+                        backgroundColor: 'var(--canvas)', fontSize: '14px', color: 'var(--ink)'
+                      }}
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      required
+                    >
+                      {PAKISTAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '6px' }}>Address / Location</label>
+                    <Input value={address} onChange={(e) => setAddress(e.target.value)} required style={{ height: '38px', fontSize: '14px' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                    <Button onClick={() => { setEditBasic(false); setFullName(profile.full_name); setPhone(profile.phone); setCity(profile.city); setAddress(profile.address); }} variant="secondary" style={{ height: '34px', fontSize: '12px', padding: '0 12px' }}>Cancel</Button>
+                    <Button onClick={handleSaveBasic} disabled={saving || !fullName || !phone || !city || !address} variant="primary" style={{ backgroundColor: 'var(--brand-green-dark)', color: '#fff', display: 'flex', gap: '6px', height: '34px', fontSize: '12px', padding: '0 12px' }}>
+                      <Save size={14} /> {saving ? 'Saving...' : 'Save'}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ backgroundColor: 'var(--surface-soft)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--hairline-soft)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>Full Name</div>
+                    <div style={{ fontSize: '13px', color: 'var(--ink)', fontWeight: 600 }}>{profile.full_name || 'N/A'}</div>
+                  </div>
+                  <div style={{ backgroundColor: 'var(--surface-soft)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--hairline-soft)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>Email Address</div>
+                    <div style={{ fontSize: '13px', color: 'var(--ink)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Mail size={12} color="var(--steel)" /> {profile.email}
+                    </div>
+                  </div>
+                  <div style={{ backgroundColor: 'var(--surface-soft)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--hairline-soft)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>Phone Number</div>
+                    <div style={{ fontSize: '13px', color: 'var(--ink)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Phone size={12} color="var(--steel)" /> {profile.phone || 'N/A'}
+                    </div>
+                  </div>
+                  <div style={{ backgroundColor: 'var(--surface-soft)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--hairline-soft)' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>City & Address</div>
+                    <div style={{ fontSize: '13px', color: 'var(--ink)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <MapPin size={12} color="var(--steel)" /> {profile.address ? `${profile.address}, ${profile.city}` : `${profile.city}`}
+                    </div>
+                  </div>
+                </div>
+              )}
             </Card>
 
             {/* QUICK ACTIONS CARD */}
@@ -347,7 +412,7 @@ export default function ClientProfile() {
                   </Button>
                 </Link>
                 <Link href="/client/jobs/new" style={{ textDecoration: 'none' }}>
-                  <Button variant="primary" style={{ width: '100%', justifyContent: 'center', fontSize: '13px', height: '38px', backgroundColor: 'var(--brand-green-dark)' }}>
+                  <Button variant="primary" style={{ width: '100%', justifyContent: 'center', fontSize: '13px', height: '38px', backgroundColor: 'var(--brand-green)', color: '#fff', border: 'none' }}>
                     Post a New Job
                   </Button>
                 </Link>
@@ -355,88 +420,15 @@ export default function ClientProfile() {
             </Card>
           </div>
 
-          {/* RIGHT PANELS: FORM FIELDS */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', flex: 2 }}>
+          {/* RIGHT COLUMN: ACADEMIC DETAILS OR CHILDREN */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
-            {/* PANEL 1: PERSONAL DETAILS */}
-            <Card style={{ padding: '32px', boxShadow: 'var(--shadow-md)', transition: 'all 0.3s ease' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--brand-teal-deep)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <User size={20} color="var(--brand-green)" /> Personal Details
-                </h3>
-                {!editBasic && (
-                  <Button onClick={() => setEditBasic(true)} variant="ghost" style={{ display: 'flex', gap: '6px', fontSize: '13px', color: 'var(--brand-green-dark)', padding: '6px 12px' }}>
-                    <Edit3 size={14} /> Edit
-                  </Button>
-                )}
-              </div>
-
-              {editBasic ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '8px' }}>Full Name</label>
-                    <Input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-                  </div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '8px' }}>Phone Number</label>
-                      <Input value={phone} onChange={(e) => setPhone(e.target.value)} required />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '8px' }}>City</label>
-                      <select 
-                        style={{
-                          width: '100%', height: '44px', padding: '0 16px',
-                          borderRadius: 'var(--rounded-md)', border: '1px solid var(--hairline-strong)',
-                          backgroundColor: 'var(--canvas)', fontSize: '15px', color: 'var(--ink)'
-                        }}
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        required
-                      >
-                        {PAKISTAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '8px' }}>Area Address / Location</label>
-                    <Input value={address} onChange={(e) => setAddress(e.target.value)} required />
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
-                    <Button onClick={() => { setEditBasic(false); setFullName(profile.full_name); setPhone(profile.phone); setCity(profile.city); setAddress(profile.address); }} variant="secondary">Cancel</Button>
-                    <Button onClick={handleSaveBasic} disabled={saving || !fullName || !phone || !city || !address} variant="primary" style={{ backgroundColor: 'var(--brand-green-dark)', color: '#fff', display: 'flex', gap: '8px' }}>
-                      <Save size={15} /> {saving ? 'Saving...' : 'Save Profile'}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
-                  <div style={{ backgroundColor: 'var(--surface-soft)', padding: '14px 18px', borderRadius: '8px', border: '1px solid var(--hairline-soft)' }}>
-                    <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>Full Name</div>
-                    <div style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600 }}>{profile.full_name || 'N/A'}</div>
-                  </div>
-                  <div style={{ backgroundColor: 'var(--surface-soft)', padding: '14px 18px', borderRadius: '8px', border: '1px solid var(--hairline-soft)' }}>
-                    <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>Phone Number</div>
-                    <div style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600 }}>{profile.phone || 'N/A'}</div>
-                  </div>
-                  <div style={{ backgroundColor: 'var(--surface-soft)', padding: '14px 18px', borderRadius: '8px', border: '1px solid var(--hairline-soft)', gridColumn: 'span 2' }}>
-                    <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>City & Address</div>
-                    <div style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600 }}>{profile.address ? `${profile.address}, ${profile.city}` : `${profile.city}`}</div>
-                  </div>
-                </div>
-              )}
-            </Card>
-
-            {/* PANEL 2: ACADEMIC DETAILS OR CHILDREN */}
             <Card style={{ padding: '32px', boxShadow: 'var(--shadow-md)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--brand-teal-deep)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <GraduationCap size={20} color="var(--brand-green)" /> {profile.client_type === 'parent' ? 'Children Details' : 'Academic Setup'}
                 </h3>
-                {!editAcademic && (
+                {(!editAcademic && profile.client_type === 'student') && (
                   <Button onClick={() => setEditAcademic(true)} variant="ghost" style={{ display: 'flex', gap: '6px', fontSize: '13px', color: 'var(--brand-green-dark)', padding: '6px 12px' }}>
                     <Edit3 size={14} /> Edit Info
                   </Button>
@@ -444,7 +436,7 @@ export default function ClientProfile() {
               </div>
 
               {profile.client_type === 'parent' ? (
-                /* PARENT ACCOUNT: CHILDREN MANAGEMENT */
+                /* PARENT VIEW */
                 editAcademic ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {editChildrenList.map((child, idx) => (
@@ -534,49 +526,88 @@ export default function ClientProfile() {
                     </div>
                   </div>
                 ) : (
-                  /* Display View of children list */
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {children.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '30px', color: 'var(--stone)', fontSize: '14px', fontStyle: 'italic' }}>
-                        No children added. Click edit to configure children academic details.
-                      </div>
-                    ) : (
-                      children.map((child, idx) => (
-                        <div key={child.id} style={{ border: '1px solid var(--hairline-soft)', borderRadius: '12px', padding: '24px', backgroundColor: 'var(--canvas)', boxShadow: 'var(--shadow-subtle)' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                            <h4 style={{ margin: 0, fontSize: '16px', color: 'var(--brand-teal-deep)', fontWeight: 700 }}>
-                              {child.name}
-                            </h4>
-                            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-green-dark)', backgroundColor: 'var(--brand-green-soft)', padding: '3px 10px', borderRadius: '4px' }}>
-                              Grade {child.grade}
-                            </span>
-                          </div>
-                          
-                          <div style={{ fontSize: '13px', color: 'var(--steel)', marginBottom: '16px' }}>
-                            <strong>Institution:</strong> {child.school_college || 'Not specified'}
-                          </div>
-                          
-                          <div style={{ borderTop: '1px dashed var(--hairline)', paddingTop: '14px' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Subjects Requested</div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                              {(child.subjects || []).length > 0 ? (
-                                child.subjects.map(s => (
-                                  <span key={s} style={{ fontSize: '12px', fontWeight: 500, color: 'var(--steel)', backgroundColor: 'var(--surface-soft)', border: '1px solid var(--hairline-soft)', padding: '4px 10px', borderRadius: '6px' }}>
-                                    {s}
-                                  </span>
-                                ))
-                              ) : (
-                                <span style={{ fontSize: '12px', color: 'var(--stone)' }}>No subjects selected</span>
-                              )}
+                  /* Display View of children list with Add More Child Button */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {children.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '30px', color: 'var(--stone)', fontSize: '14px', fontStyle: 'italic' }}>
+                          No children added yet. Click the button below to add your children.
+                        </div>
+                      ) : (
+                        children.map((child, idx) => (
+                          <div key={child.id} style={{ border: '1px solid var(--hairline-soft)', borderRadius: '12px', padding: '24px', backgroundColor: 'var(--canvas)', boxShadow: 'var(--shadow-subtle)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                              <h4 style={{ margin: 0, fontSize: '16px', color: 'var(--brand-teal-deep)', fontWeight: 700 }}>
+                                {child.name}
+                              </h4>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-green-dark)', backgroundColor: 'var(--brand-green-soft)', padding: '3px 10px', borderRadius: '4px' }}>
+                                  Grade {child.grade}
+                                </span>
+                                <button 
+                                  onClick={() => {
+                                    setEditAcademic(true);
+                                  }}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--stone)', transition: 'color 0.2s' }}
+                                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--brand-green-dark)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--stone)'}
+                                  title="Edit Children Info"
+                                >
+                                  <Edit3 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                            
+                            <div style={{ fontSize: '13px', color: 'var(--steel)', marginBottom: '16px' }}>
+                              <strong>Institution:</strong> {child.school_college || 'Not specified'}
+                            </div>
+                            
+                            <div style={{ borderTop: '1px dashed var(--hairline)', paddingTop: '14px' }}>
+                              <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Subjects Requested</div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {(child.subjects || []).length > 0 ? (
+                                  child.subjects.map(s => (
+                                    <span key={s} style={{ fontSize: '12px', fontWeight: 500, color: 'var(--steel)', backgroundColor: 'var(--surface-soft)', border: '1px solid var(--hairline-soft)', padding: '4px 10px', borderRadius: '6px' }}>
+                                      {s}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span style={{ fontSize: '12px', color: 'var(--stone)' }}>No subjects selected</span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
-                    )}
+                        ))
+                      )}
+                    </div>
+
+                    {/* Full width button to add more child */}
+                    <Button 
+                      type="button" 
+                      onClick={() => { 
+                        setEditAcademic(true); 
+                        handleAddChild(); 
+                      }} 
+                      variant="primary" 
+                      style={{ 
+                        width: '100%', 
+                        backgroundColor: 'var(--brand-green-dark)', 
+                        display: 'flex', 
+                        gap: '8px', 
+                        justifyContent: 'center', 
+                        height: '44px', 
+                        fontWeight: 600, 
+                        color: '#fff', 
+                        border: 'none', 
+                        borderRadius: 'var(--rounded-md)' 
+                      }}
+                    >
+                      <Plus size={18} /> Add More Child
+                    </Button>
                   </div>
                 )
               ) : (
-                /* STUDENT ACCOUNT: DIRECT STUDENT ACADEMIC INFO */
+                /* STUDENT VIEW */
                 editAcademic ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
@@ -636,31 +667,53 @@ export default function ClientProfile() {
                     </div>
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
-                    <div style={{ backgroundColor: 'var(--surface-soft)', padding: '14px 18px', borderRadius: '8px', border: '1px solid var(--hairline-soft)' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>Grade / Class</div>
-                      <div style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600 }}>{profile.grade || 'N/A'}</div>
-                    </div>
-                    
-                    <div style={{ backgroundColor: 'var(--surface-soft)', padding: '14px 18px', borderRadius: '8px', border: '1px solid var(--hairline-soft)' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>School / College</div>
-                      <div style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600 }}>{profile.school_college || 'Not specified'}</div>
-                    </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
+                      <div style={{ backgroundColor: 'var(--surface-soft)', padding: '14px 18px', borderRadius: '8px', border: '1px solid var(--hairline-soft)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>Grade / Class</div>
+                        <div style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600 }}>{profile.grade || 'N/A'}</div>
+                      </div>
+                      
+                      <div style={{ backgroundColor: 'var(--surface-soft)', padding: '14px 18px', borderRadius: '8px', border: '1px solid var(--hairline-soft)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>School / College</div>
+                        <div style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600 }}>{profile.school_college || 'Not specified'}</div>
+                      </div>
 
-                    <div style={{ gridColumn: 'span 2', borderTop: '1px dashed var(--hairline)', paddingTop: '20px', marginTop: '4px' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Subjects Needed</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {studentSubjects.length > 0 ? (
-                          studentSubjects.map(s => (
-                            <span key={s} style={{ fontSize: '12px', fontWeight: 500, color: 'var(--steel)', backgroundColor: 'var(--surface-soft)', border: '1px solid var(--hairline-soft)', padding: '4px 10px', borderRadius: '6px' }}>
-                              {s}
-                            </span>
-                          ))
-                        ) : (
-                          <span style={{ fontSize: '12px', color: 'var(--stone)' }}>No subjects selected</span>
-                        )}
+                      <div style={{ gridColumn: 'span 2', borderTop: '1px dashed var(--hairline)', paddingTop: '20px', marginTop: '4px' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Subjects Needed</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {studentSubjects.length > 0 ? (
+                            studentSubjects.map(s => (
+                              <span key={s} style={{ fontSize: '12px', fontWeight: 500, color: 'var(--steel)', backgroundColor: 'var(--surface-soft)', border: '1px solid var(--hairline-soft)', padding: '4px 10px', borderRadius: '6px' }}>
+                                {s}
+                              </span>
+                            ))
+                          ) : (
+                            <span style={{ fontSize: '12px', color: 'var(--stone)' }}>No subjects selected</span>
+                          )}
+                        </div>
                       </div>
                     </div>
+
+                    <Button 
+                      type="button" 
+                      onClick={() => setEditAcademic(true)} 
+                      variant="primary" 
+                      style={{ 
+                        width: '100%', 
+                        backgroundColor: 'var(--brand-green-dark)', 
+                        display: 'flex', 
+                        gap: '8px', 
+                        justifyContent: 'center', 
+                        height: '44px', 
+                        fontWeight: 600, 
+                        color: '#fff', 
+                        border: 'none', 
+                        borderRadius: 'var(--rounded-md)' 
+                      }}
+                    >
+                      <Edit3 size={16} /> Edit Academic Details
+                    </Button>
                   </div>
                 )
               )}
