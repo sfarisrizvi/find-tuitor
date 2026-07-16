@@ -358,7 +358,7 @@ export default function ClientProfile() {
 
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '10px' }}>
                     <Button onClick={() => { setEditBasic(false); setFullName(profile.full_name); setPhone(profile.phone); setCity(profile.city); setAddress(profile.address); }} variant="secondary" style={{ height: '34px', fontSize: '12px', padding: '0 12px' }}>Cancel</Button>
-                    <Button onClick={handleSaveBasic} disabled={saving || !fullName || !phone || !city || !address} variant="primary" style={{ backgroundColor: 'var(--brand-green-dark)', color: '#fff', display: 'flex', gap: '6px', height: '34px', fontSize: '12px', padding: '0 12px' }}>
+                    <Button onClick={handleSaveBasic} disabled={saving || !fullName || !phone || !city || !address} variant="primary" style={{ backgroundColor: 'var(--brand-green)', color: '#0b1a24', borderRadius: '999px', display: 'flex', gap: '6px', height: '34px', fontSize: '12px', padding: '0 16px', border: 'none', fontWeight: 700 }}>
                       <Save size={14} /> {saving ? 'Saving...' : 'Save'}
                     </Button>
                   </div>
@@ -408,7 +408,7 @@ export default function ClientProfile() {
                   </Button>
                 </Link>
                 <Link href="/client/jobs/new" style={{ textDecoration: 'none' }}>
-                  <Button variant="primary" style={{ width: '100%', justifyContent: 'center', fontSize: '13px', height: '38px', backgroundColor: 'var(--brand-green)', color: '#fff', border: 'none' }}>
+                  <Button variant="primary" style={{ width: '100%', justifyContent: 'center', fontSize: '13px', height: '38px', backgroundColor: 'var(--brand-green)', color: '#0b1a24', border: 'none', borderRadius: '999px', fontWeight: 700 }}>
                     Post a New Job
                   </Button>
                 </Link>
@@ -459,15 +459,15 @@ export default function ClientProfile() {
                     variant="primary" 
                     style={{ 
                       width: '100%', 
-                      backgroundColor: 'var(--brand-green-dark)', 
+                      backgroundColor: 'var(--brand-green)', 
                       display: 'flex', 
                       gap: '8px', 
                       justifyContent: 'center', 
                       height: '44px', 
-                      fontWeight: 600, 
-                      color: '#fff', 
+                      fontWeight: 700, 
+                      color: '#0b1a24', 
                       border: 'none', 
-                      borderRadius: 'var(--rounded-md)' 
+                      borderRadius: '999px' 
                     }}
                   >
                     <Plus size={18} /> Add More Child
@@ -528,7 +528,7 @@ export default function ClientProfile() {
 
                     <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
                       <Button onClick={() => { setEditAcademic(false); setStudentGrade(profile.grade); setStudentSchool(profile.school_college); setStudentSubjects(profile.subjects); }} variant="secondary">Cancel</Button>
-                      <Button onClick={handleSaveStudentAcademic} disabled={saving} variant="primary" style={{ backgroundColor: 'var(--brand-green-dark)', color: '#fff', display: 'flex', gap: '8px' }}>
+                      <Button onClick={handleSaveStudentAcademic} disabled={saving} variant="primary" style={{ backgroundColor: 'var(--brand-green)', color: '#0b1a24', borderRadius: '999px', display: 'flex', gap: '8px', fontWeight: 700, border: 'none' }}>
                         <Save size={15} /> {saving ? 'Saving...' : 'Save Academic Details'}
                       </Button>
                     </div>
@@ -568,15 +568,15 @@ export default function ClientProfile() {
                       variant="primary" 
                       style={{ 
                         width: '100%', 
-                        backgroundColor: 'var(--brand-green-dark)', 
+                        backgroundColor: 'var(--brand-green)', 
                         display: 'flex', 
                         gap: '8px', 
                         justifyContent: 'center', 
                         height: '44px', 
-                        fontWeight: 600, 
-                        color: '#fff', 
+                        fontWeight: 700, 
+                        color: '#0b1a24', 
                         border: 'none', 
-                        borderRadius: 'var(--rounded-md)' 
+                        borderRadius: '999px' 
                       }}
                     >
                       <Edit3 size={16} /> Edit Academic Details
@@ -685,7 +685,7 @@ function ChildCard({ child, onSave, onDelete, saving }) {
             onClick={handleTriggerSave} 
             disabled={saving || !editName.trim()} 
             variant="primary" 
-            style={{ backgroundColor: 'var(--brand-green-dark)', color: '#fff', display: 'flex', gap: '6px', height: '34px', fontSize: '12px', padding: '0 12px' }}
+            style={{ backgroundColor: 'var(--brand-green)', color: '#0b1a24', borderRadius: '999px', display: 'flex', gap: '6px', height: '34px', fontSize: '12px', padding: '0 16px', border: 'none', fontWeight: 700 }}
           >
             <Save size={14} /> Save
           </Button>
