@@ -1160,50 +1160,6 @@ function OnboardingContent() {
               </div>
             </div>
 
-            {/* Dynamic Heading Inputs */}
-            <div style={{
-              backgroundColor: 'var(--canvas)',
-              borderRadius: '12px',
-              border: '1px solid var(--hairline-strong)',
-              padding: '20px',
-              marginTop: '4px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
-            }}>
-              <h4 style={{ fontSize: '15px', fontWeight: 600, margin: '0', color: 'var(--ink)' }}>Professional Title & Qualification</h4>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '6px', fontSize: '13px', color: 'var(--slate)' }}>Current Role</label>
-                  <Input 
-                    placeholder="e.g. Marketing Manager" 
-                    value={currentRole} 
-                    onChange={e => setCurrentRole(e.target.value)} 
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '6px', fontSize: '13px', color: 'var(--slate)' }}>Current Company / Institution</label>
-                  <Input 
-                    placeholder="e.g. Quecko" 
-                    value={currentCompany} 
-                    onChange={e => setCurrentCompany(e.target.value)} 
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '6px', fontSize: '13px', color: 'var(--slate)' }}>Highest Qualification</label>
-                  <Input 
-                    placeholder="e.g. BSCS" 
-                    value={qualification} 
-                    onChange={e => setQualification(e.target.value)} 
-                  />
-                </div>
-              </div>
-              <div style={{ fontSize: '12px', color: 'var(--stone)', lineHeight: '1.4' }}>
-                These fields are used to show a dynamic tagline under your name on search results, e.g., <strong>{currentRole || 'Marketing Manager'} at {currentCompany || 'Quecko'} & {qualification || 'BSCS'} Qualified</strong>.
-              </div>
-            </div>
-
             <div>
               <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', fontSize: '14px' }}>Short Bio <span style={{ color: 'var(--stone)', fontWeight: 400 }}>(displayed under your name)</span></label>
               <textarea

@@ -1147,11 +1147,6 @@ function SearchContent() {
                       </div>
                     </div>
 
-                    {getHeadingText(tutor) && (
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px', lineHeight: '1.4' }}>
-                        {getHeadingText(tutor)}
-                      </div>
-                    )}
 
                     <div style={{ fontSize: '13px', color: 'var(--steel)', marginBottom: '16px', lineHeight: '1.5', flex: 1 }}>
                       {tutor.bio || 'Experienced tutor dedicated to student success.'}
