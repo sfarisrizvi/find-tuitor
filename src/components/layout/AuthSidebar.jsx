@@ -66,7 +66,7 @@ export function AuthSidebar() {
       
       <div style={{ maxWidth: '480px', textAlign: 'center', zIndex: 10 }}>
         {/* Lottie Animation Container */}
-        <div ref={containerRef} style={{ width: '100%', height: '480px', margin: '-50px auto 10px' }} />
+        <div ref={containerRef} style={{ width: '100%', height: '560px', margin: '-90px auto 0' }} />
         
         <h2 style={{ fontSize: '28px', fontWeight: 800, margin: '0 0 16px 0', color: '#0b1a24', letterSpacing: '-0.5px' }}>
           Connect with Expert Tutors
