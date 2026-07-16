@@ -103,6 +103,19 @@ export function AppHeader() {
     };
   }, [staticRole]);
 
+  useEffect(() => {
+    if (!showDropdown) return;
+    const closeDropdown = (e) => {
+      const avatarBtn = document.getElementById('header-avatar-btn');
+      const dropdownMenu = document.getElementById('header-dropdown-menu');
+      if (avatarBtn && !avatarBtn.contains(e.target) && dropdownMenu && !dropdownMenu.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('click', closeDropdown);
+    return () => document.removeEventListener('click', closeDropdown);
+  }, [showDropdown]);
+
   const handleSignOut = async () => {
     try {
       const supabase = createClient();
@@ -165,7 +178,7 @@ export function AppHeader() {
     alignItems: 'center',
     position: 'sticky',
     top: 0,
-    zIndex: 50,
+    zIndex: 1000,
   };
 
   const linkStyle = {
@@ -217,6 +230,7 @@ export function AppHeader() {
           ) : user ? (
             <div style={{ position: 'relative' }}>
               <button
+                id="header-avatar-btn"
                 onClick={() => setShowDropdown(!showDropdown)}
                 style={{
                   width: '38px', height: '38px', borderRadius: '50%',
@@ -229,11 +243,14 @@ export function AppHeader() {
               </button>
 
               {showDropdown && (
-                <div style={{
-                  position: 'absolute', right: 0, top: '46px', backgroundColor: 'var(--canvas)',
-                  border: '1px solid var(--hairline)', borderRadius: '8px', boxShadow: 'var(--shadow-md)',
-                  width: '180px', padding: '6px 0', zIndex: 100, display: 'flex', flexDirection: 'column'
-                }}>
+                <div 
+                  id="header-dropdown-menu"
+                  style={{
+                    position: 'absolute', right: 0, top: '46px', backgroundColor: 'var(--canvas)',
+                    border: '1px solid var(--hairline)', borderRadius: '8px', boxShadow: 'var(--shadow-md)',
+                    width: '180px', padding: '6px 0', zIndex: 100, display: 'flex', flexDirection: 'column'
+                  }}
+                >
                   <Link href={profileHref} onClick={() => setShowDropdown(false)} style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--ink)', fontWeight: 500, textDecoration: 'none', cursor: 'pointer', borderBottom: '1px solid var(--hairline-soft)' }}>
                     Profile
                   </Link>

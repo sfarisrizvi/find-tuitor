@@ -1763,7 +1763,7 @@ function OnboardingContent() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--surface)' }}>
       {/* Top progress bar */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 100, backgroundColor: 'var(--canvas)', borderBottom: '1px solid var(--hairline)', padding: '20px 24px 24px 24px' }}>
+      <div style={{ position: 'sticky', top: '64px', zIndex: 10, backgroundColor: 'var(--canvas)', borderBottom: '1px solid var(--hairline)', padding: '20px 24px 24px 24px' }}>
         <div style={{ maxWidth: '1150px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--slate)' }}>Tutor Profile Setup</span>
