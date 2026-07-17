@@ -13,7 +13,12 @@ import {
   Phone,
   MapPin,
   BookOpen,
-  Shield
+  Shield,
+  ChevronDown,
+  ChevronUp,
+  User,
+  GraduationCap,
+  School
 } from 'lucide-react';
 
 export default function ClientsDirectory() {
@@ -30,6 +35,11 @@ export default function ClientsDirectory() {
   // Selected Client details drawer
   const [selectedClient, setSelectedClient] = useState(null);
   const [submittingAction, setSubmittingAction] = useState(false);
+
+  // Parent Children state
+  const [childrenList, setChildrenList] = useState([]);
+  const [loadingChildren, setLoadingChildren] = useState(false);
+  const [openChildIndices, setOpenChildIndices] = useState({});
 
   const fetchClients = async () => {
     setLoading(true);
@@ -64,6 +74,47 @@ export default function ClientsDirectory() {
     };
     checkAuth();
   }, [router]);
+
+  // Load children list if selected client is parent
+  useEffect(() => {
+    if (!selectedClient || selectedClient.client_type !== 'parent') {
+      setChildrenList([]);
+      setOpenChildIndices({});
+      return;
+    }
+
+    const fetchChildren = async () => {
+      setLoadingChildren(true);
+      const supabase = createClient();
+      try {
+        const { data, error } = await supabase
+          .from('children')
+          .select('*')
+          .eq('client_id', selectedClient.id);
+        
+        if (error) throw error;
+        setChildrenList(data || []);
+        
+        // Open the first child accordian by default
+        if (data && data.length > 0) {
+          setOpenChildIndices({ 0: true });
+        }
+      } catch (err) {
+        console.error('Error fetching children list:', err);
+      } finally {
+        setLoadingChildren(false);
+      }
+    };
+
+    fetchChildren();
+  }, [selectedClient]);
+
+  const toggleChildAccordian = (idx) => {
+    setOpenChildIndices(prev => ({
+      ...prev,
+      [idx]: !prev[idx]
+    }));
+  };
 
   // Handle Suspension toggle
   const toggleSuspension = async () => {
@@ -393,14 +444,124 @@ export default function ClientsDirectory() {
                   <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--steel)', display: 'block', marginBottom: '4px' }}>City</span>
                   <strong>{selectedClient.city || 'No City'}</strong>
                 </div>
-                <div>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--steel)', display: 'block', marginBottom: '4px' }}>Academic Route</span>
-                  <strong>{selectedClient.academic_route || 'Not set'}</strong>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--steel)', display: 'block', marginBottom: '4px' }}>Address</span>
+                  <strong>{selectedClient.address || 'No address set'}</strong>
                 </div>
-                <div>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--steel)', display: 'block', marginBottom: '4px' }}>Onboarding Complete</span>
-                  <strong>{selectedClient.onboarding_complete ? 'Yes' : 'No'}</strong>
-                </div>
+              </div>
+
+              {/* Dynamic Role Sections: Parent children OR Student classes */}
+              <div style={{ borderTop: '1px solid var(--hairline-soft)', paddingTop: '20px' }}>
+                {selectedClient.client_type === 'parent' ? (
+                  <div>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <User size={16} /> Children Details ({childrenList.length})
+                    </h4>
+                    
+                    {loadingChildren ? (
+                      <p style={{ fontSize: '12px', color: 'var(--steel)' }}>Loading children data...</p>
+                    ) : childrenList.length === 0 ? (
+                      <p style={{ fontSize: '12px', color: 'var(--steel)', fontStyle: 'italic' }}>No children details registered on onboarding.</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {childrenList.map((kid, index) => {
+                          const isOpen = !!openChildIndices[index];
+                          return (
+                            <div 
+                              key={kid.id || index}
+                              style={{ 
+                                border: '1px solid var(--hairline)', 
+                                borderRadius: 'var(--rounded-md)', 
+                                backgroundColor: 'var(--canvas-dark)', 
+                                overflow: 'hidden' 
+                              }}
+                            >
+                              {/* Accordian Title Bar */}
+                              <div 
+                                onClick={() => toggleChildAccordian(index)}
+                                style={{ 
+                                  padding: '12px 16px', 
+                                  display: 'flex', 
+                                  justifyContent: 'space-between', 
+                                  alignItems: 'center', 
+                                  cursor: 'pointer',
+                                  backgroundColor: 'var(--surface-soft)',
+                                  userSelect: 'none'
+                                }}
+                              >
+                                <span style={{ fontWeight: 600, fontSize: '13px' }}>Child #{index + 1}: {kid.name || 'Unnamed Child'}</span>
+                                {isOpen ? <ChevronUp size={16} style={{ color: 'var(--steel)' }} /> : <ChevronDown size={16} style={{ color: 'var(--steel)' }} />}
+                              </div>
+
+                              {/* Accordian Content Pane */}
+                              {isOpen && (
+                                <div style={{ padding: '16px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid var(--hairline-soft)' }}>
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div>
+                                      <span style={{ fontSize: '10px', color: 'var(--steel)', display: 'block' }}>Academic Grade</span>
+                                      <strong>{kid.grade || 'Primary'}</strong>
+                                    </div>
+                                    <div>
+                                      <span style={{ fontSize: '10px', color: 'var(--steel)', display: 'block' }}>School / College</span>
+                                      <strong>{kid.school_college || 'Not specified'}</strong>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span style={{ fontSize: '10px', color: 'var(--steel)', display: 'block', marginBottom: '6px' }}>Enrolled Subjects</span>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                      {Array.isArray(kid.subjects) && kid.subjects.length > 0 ? (
+                                        kid.subjects.map((sub, sIdx) => (
+                                          <span key={sIdx} className="admin-badge admin-badge-grey" style={{ fontSize: '10px' }}>
+                                            {sub}
+                                          </span>
+                                        ))
+                                      ) : (
+                                        <span style={{ fontSize: '11px', color: 'var(--steel)', fontStyle: 'italic' }}>No subjects specified</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Student dashboard details */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <GraduationCap size={16} /> Student Academic Profile
+                    </h4>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', fontSize: '13px', backgroundColor: 'var(--canvas-dark)', padding: '16px', borderRadius: 'var(--rounded-md)', border: '1px solid var(--hairline)' }}>
+                      <div>
+                        <span style={{ fontSize: '11px', color: 'var(--steel)', display: 'block', marginBottom: '2px' }}><GraduationCap size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />Grade / Class</span>
+                        <strong>{selectedClient.grade || 'Not specified'}</strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '11px', color: 'var(--steel)', display: 'block', marginBottom: '2px' }}><School size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />School / College</span>
+                        <strong>{selectedClient.school_college || 'Not specified'}</strong>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--steel)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Enrolled Subjects</span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {Array.isArray(selectedClient.subjects) && selectedClient.subjects.length > 0 ? (
+                          selectedClient.subjects.map((sub, sIdx) => (
+                            <span key={sIdx} className="admin-badge admin-badge-grey" style={{ fontSize: '11px' }}>
+                              {sub}
+                            </span>
+                          ))
+                        ) : (
+                          <span style={{ fontSize: '12px', color: 'var(--steel)', fontStyle: 'italic' }}>No subjects selected.</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Joining Details */}
