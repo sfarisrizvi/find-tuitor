@@ -371,6 +371,7 @@ function OnboardingContent() {
   const [degree, setDegree] = useState(null);
   const [certificates, setCertificates] = useState([]);
   const [hasKycDocs, setHasKycDocs] = useState(false);
+  const [kycObjections, setKycObjections] = useState(null);
 
   // Step 3: Teaching Categories (Accordion checkboxes & checked subjects)
   const [activeLevels, setActiveLevels] = useState({
@@ -458,6 +459,9 @@ function OnboardingContent() {
           if (profile.kyc_docs.cnic_back) setCnicBack(profile.kyc_docs.cnic_back);
           if (profile.kyc_docs.degree) setDegree(profile.kyc_docs.degree);
           if (profile.kyc_docs.certificates) setCertificates(profile.kyc_docs.certificates);
+        }
+        if (profile.kyc_objections) {
+          setKycObjections(profile.kyc_objections);
         }
 
         if (profile.availability_slots && Object.keys(profile.availability_slots).length > 0) {
@@ -1205,6 +1209,17 @@ function OnboardingContent() {
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <StepHeader step={2} title="Identity & Documents" desc="Uploaded documents are securely stored and only reviewed by our admin team. They are never publicly visible." />
+            
+            {kycObjections && Object.keys(kycObjections).length > 0 && (
+              <div style={{ backgroundColor: '#FFEBEE', border: '1px solid #FFCDD2', borderRadius: 'var(--rounded-md)', padding: '16px', color: '#B71C1C', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                <AlertCircle size={20} color="#B71C1C" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: 600, color: '#B71C1C' }}>Rejection Objections from Administration</h4>
+                  <p style={{ margin: '0 0 4px 0', fontSize: '13px' }}><strong>Flagged Documents:</strong> {kycObjections.flagged_documents?.join(', ')}</p>
+                  <p style={{ margin: 0, fontSize: '13px' }}><strong>Correction Instructions:</strong> {kycObjections.comment}</p>
+                </div>
+              </div>
+            )}
             <div style={{ backgroundColor: '#FFF9E6', border: '1px solid #FFD566', borderRadius: 'var(--rounded-md)', padding: '12px 16px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
               <AlertCircle size={16} color="#B8860B" style={{ flexShrink: 0, marginTop: '2px' }} />
               <p style={{ margin: 0, fontSize: '13px', color: '#7A5C00' }}>All documents are stored in an encrypted, private folder and are never shared or deleted even upon account closure.</p>

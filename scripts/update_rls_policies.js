@@ -44,6 +44,30 @@ ON tutor_profiles
 FOR DELETE 
 TO authenticated 
 USING ( (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin' );
+
+-- Create policies for contact_queries
+DROP POLICY IF EXISTS "Admins can view all contact queries" ON contact_queries;
+DROP POLICY IF EXISTS "Admins can update contact queries" ON contact_queries;
+DROP POLICY IF EXISTS "Admins can delete contact queries" ON contact_queries;
+
+CREATE POLICY "Admins can view all contact queries" 
+ON contact_queries 
+FOR SELECT 
+TO authenticated 
+USING ( (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin' );
+
+CREATE POLICY "Admins can update contact queries" 
+ON contact_queries 
+FOR UPDATE 
+TO authenticated 
+USING ( (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin' )
+WITH CHECK ( (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin' );
+
+CREATE POLICY "Admins can delete contact queries" 
+ON contact_queries 
+FOR DELETE 
+TO authenticated 
+USING ( (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin' );
 `;
 
 async function run() {
