@@ -99,13 +99,17 @@ function SearchContent() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(12);
+  const [hasMore, setHasMore] = useState(true);
+
   // Helper to dynamically get subjects by level
   const getSubjectOptions = (level) => {
     if (!level) return [];
     return LEVEL_SUBJECTS[level] || [];
   };
 
-  const fetchTutors = async (currentFilters) => {
+  const fetchTutors = async (currentFilters = filters, pageNum = 1) => {
     try {
       setLoading(true);
       const supabase = createClient();
@@ -124,7 +128,9 @@ function SearchContent() {
         p_min_price: currentFilters.min_price ? parseFloat(currentFilters.min_price) : null,
         p_max_price: currentFilters.max_price ? parseFloat(currentFilters.max_price) : null,
         p_min_experience: resolvedMinExp,
-        p_modes: currentFilters.modes.length > 0 ? currentFilters.modes : null
+        p_modes: currentFilters.modes.length > 0 ? currentFilters.modes : null,
+        p_limit: pageSize,
+        p_offset: (pageNum - 1) * pageSize
       };
 
       console.log('[DEBUG] Calling search_tutors RPC with params:', rpcParams);
@@ -132,14 +138,19 @@ function SearchContent() {
       
       if (error) {
         console.error("Error fetching tutors:", error);
-        setTutors([]);
+        if (pageNum === 1) setTutors([]);
       } else {
         console.log('[DEBUG] Search results loaded:', data?.length);
-        setTutors(data || []);
+        if (pageNum === 1) {
+          setTutors(data || []);
+        } else {
+          setTutors(prev => [...prev, ...(data || [])]);
+        }
+        setHasMore((data || []).length === pageSize);
       }
     } catch (err) {
       console.error("Exception in fetchTutors:", err);
-      setTutors([]);
+      if (pageNum === 1) setTutors([]);
     } finally {
       setLoading(false);
     }
@@ -150,7 +161,7 @@ function SearchContent() {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-      fetchTutors(filters);
+      fetchTutors(filters, 1);
     };
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,7 +170,8 @@ function SearchContent() {
   const handleFilterChange = (key, value) => {
     let newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
-    fetchTutors(newFilters);
+    setPage(1);
+    fetchTutors(newFilters, 1);
   };
 
   const toggleExperience = (val) => {
@@ -202,7 +214,8 @@ function SearchContent() {
     }
     
     setFilters(newFilters);
-    fetchTutors(newFilters);
+    setPage(1);
+    fetchTutors(newFilters, 1);
   };
 
   const toggleSubjectFilter = (subj) => {
@@ -219,7 +232,8 @@ function SearchContent() {
     }
     
     setFilters(newFilters);
-    fetchTutors(newFilters);
+    setPage(1);
+    fetchTutors(newFilters, 1);
   };
 
   const toggleMode = (modeId) => {
@@ -709,7 +723,8 @@ function SearchContent() {
                 onClick={() => {
                   setFilters({ city: '', subjects: [], custom_subject: '', levels: [], min_price: '', max_price: '', gender: '', min_experience: [], verified: false, immediate_hiring: false, modes: [] });
                   setSortBy('default');
-                  fetchTutors({ city: '', subjects: [], custom_subject: '', levels: [], min_price: '', max_price: '', gender: '', min_experience: [], verified: false, immediate_hiring: false, modes: [] });
+                  setPage(1);
+                  fetchTutors({ city: '', subjects: [], custom_subject: '', levels: [], min_price: '', max_price: '', gender: '', min_experience: [], verified: false, immediate_hiring: false, modes: [] }, 1);
                 }}
                 style={{
                   flex: 1, height: '48px', borderRadius: '12px',
@@ -1198,6 +1213,32 @@ function SearchContent() {
                   <p>Try adjusting your filters to see more results.</p>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Load More Button */}
+          {session && hasMore && !loading && tutors.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px', paddingBottom: '40px' }}>
+              <Button
+                variant="outline"
+                style={{ 
+                  height: '48px', 
+                  padding: '0 32px', 
+                  borderRadius: '999px', 
+                  fontSize: '15px', 
+                  fontWeight: 600, 
+                  border: '1.5px solid var(--brand-green-dark)',
+                  color: 'var(--brand-green-dark)',
+                  backgroundColor: 'transparent'
+                }}
+                onClick={() => {
+                  const nextPage = page + 1;
+                  setPage(nextPage);
+                  fetchTutors(filters, nextPage);
+                }}
+              >
+                Load More Tutors
+              </Button>
             </div>
           )}
 

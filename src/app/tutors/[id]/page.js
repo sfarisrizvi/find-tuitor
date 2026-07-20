@@ -258,9 +258,16 @@ export default function TutorProfile() {
           profile.phone = maskPhone(profile.phone);
           profile.email = maskEmail(profile.email);
         }
-        setTutor(profile);
-        setExperience(profile.experience || []);
-        setCategories(profile.categories || []);
+        
+        setTimeout(() => {
+          if (!signal?.aborted) {
+            setTutor(profile);
+            setExperience(profile.experience || []);
+            setCategories(profile.categories || []);
+            setErrorState(null);
+            setLoading(false);
+          }
+        }, 0);
       } else {
         const { data: profile, error: pErr } = await withTimeout(
           supabase.from('tutor_profiles').select('*').eq('id', id).single()

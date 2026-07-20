@@ -1138,7 +1138,7 @@ function SearchContent() {
                         </div>
                       </div>
                       <p style={{ fontSize: '11px', color: 'var(--stone)', marginTop: '6px' }}>
-                        Parent\'s budget: Rs {parseInt(activeJobForApply.budget_amount).toLocaleString()} {activeJobForApply.budget_type === 'hourly' ? '/ hr' : '/ month'}
+                        Parent&apos;s budget: Rs {parseInt(activeJobForApply.budget_amount).toLocaleString()} {activeJobForApply.budget_type === 'hourly' ? '/ hr' : '/ month'}
                       </p>
                     </div>
 

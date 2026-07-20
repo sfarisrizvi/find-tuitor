@@ -373,7 +373,7 @@ export default function FindJobsLanding() {
               <option value="">Any Mode</option>
               <option value="online">Online / Remote</option>
               <option value="home_tuition">Home Tuition</option>
-              <option value="tutor_home">Tutor's Home</option>
+              <option value="tutor_home">Tutor&apos;s Home</option>
             </select>
 
             <div style={{ flex: 1, position: 'relative', display: 'flex', width: '100%' }}>
@@ -765,7 +765,7 @@ export default function FindJobsLanding() {
                         </div>
                       </div>
                       <p style={{ fontSize: '11px', color: 'var(--stone)', marginTop: '6px' }}>
-                        Parent\'s budget: Rs {parseInt(activeJobForApply.budget_amount).toLocaleString()} {activeJobForApply.budget_type === 'hourly' ? '/ hr' : '/ month'}
+                        Parent&apos;s budget: Rs {parseInt(activeJobForApply.budget_amount).toLocaleString()} {activeJobForApply.budget_type === 'hourly' ? '/ hr' : '/ month'}
                       </p>
                     </div>
 
