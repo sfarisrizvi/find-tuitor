@@ -7,10 +7,38 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export const metadata = {
-  title: "TutorOnline | Pakistan's Top Tutors",
+  metadataBase: new URL("https://find-tuitor.com"),
+  title: "Find Tutor Online | Pakistan's Top Tutors",
   description: "Connecting students with Pakistan's best verified educators.",
+  alternates: {
+    canonical: "./",
+  },
   icons: {
-    icon: '/favicon.png?v=2',
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
+  openGraph: {
+    title: "Find Tutor Online | Pakistan's Top Tutors",
+    description: "Connecting students with Pakistan's best verified educators.",
+    url: "https://find-tuitor.com",
+    siteName: "Find Tuitor",
+    locale: "en_PK",
+    type: "website",
+    images: [
+      {
+        url: "/featured-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "TutorOnline.pk",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Find Tutor Online | Pakistan's Top Tutors",
+    description: "Connecting students with Pakistan's best verified educators.",
+    images: ["/featured-image.jpg"],
   },
 };
 
