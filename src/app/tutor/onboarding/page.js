@@ -424,6 +424,8 @@ function OnboardingContent() {
   const [about, setAbout] = useState('');
   const [introVideo, setIntroVideo] = useState(null);
 
+  const [suspended, setSuspended] = useState(false);
+
   useEffect(() => {
     const init = async () => {
       const supabase = createClient();
@@ -433,6 +435,7 @@ function OnboardingContent() {
       // Load existing progress
       const { data: profile } = await supabase.from('tutor_profiles').select('*').eq('id', u.id).single();
       if (profile) {
+        setSuspended(profile.suspended || false);
         // If onboarding already completed and no specific step requested, redirect to profile
         if (profile.onboarding_complete && !stepParam) {
           router.push('/tutor/dashboard');
@@ -1838,6 +1841,36 @@ function OnboardingContent() {
         return null;
     }
   };
+
+  if (suspended) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', backgroundColor: 'var(--surface)', padding: '24px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <AlertCircle size={32} color="#EF4444" />
+          <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'var(--ink)' }}>Account Suspended</h2>
+        </div>
+        <p style={{ color: 'var(--stone)', fontSize: '15px', maxWidth: '520px', margin: 0, lineHeight: 1.5 }}>
+          Your tutor account has been suspended by the administrator. During suspension, you cannot complete onboarding, edit your profile details, or make updates to your profile. Please get in touch with administrator support to resolve this suspension.
+        </p>
+        <div style={{ marginTop: '12px', display: 'flex', gap: '12px' }}>
+          <a href="mailto:support@tutoronline.pk" style={{ textDecoration: 'none' }}>
+            <Button style={{ backgroundColor: '#EF4444', color: '#fff', border: 'none' }}>Get Admin Support</Button>
+          </a>
+          <button 
+            onClick={async () => {
+              const supabase = createClient();
+              await supabase.auth.signOut();
+              router.push('/login');
+            }}
+            className="admin-btn admin-btn-secondary"
+            style={{ padding: '10px 20px', borderRadius: 'var(--rounded-md)' }}
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--surface)' }}>

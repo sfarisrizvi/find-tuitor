@@ -78,8 +78,26 @@ export default function TutorDashboard() {
 
   return (
     <div className="container">
+      {/* Suspension Alert */}
+      {!loading && profile?.suspended && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: '#FEE2E2', border: '1px solid #EF4444', borderRadius: 'var(--rounded-lg)', padding: '20px', marginBottom: 'var(--spacing-lg)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <AlertCircle size={24} color="#EF4444" />
+            <span style={{ fontWeight: 700, color: '#991B1B', fontSize: '16px' }}>Your account has been suspended</span>
+          </div>
+          <p style={{ margin: 0, fontSize: '14px', color: '#991B1B', lineHeight: 1.5 }}>
+            An administrator has suspended your tutor profile. You cannot edit your profile, apply for jobs, or receive new student enquiries. Please contact administrator support to resolve this suspension.
+          </p>
+          <div style={{ marginTop: '8px' }}>
+            <a href="mailto:support@tutoronline.pk" style={{ textDecoration: 'none' }}>
+              <Button style={{ backgroundColor: '#EF4444', color: '#fff', border: 'none' }}>Get Admin Support</Button>
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Onboarding Ticker */}
-      {!loading && !isComplete && (
+      {!loading && !isComplete && !profile?.suspended && (
         <Link href="/tutor/onboarding" style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'var(--brand-teal-deep)', borderRadius: 'var(--rounded-lg)', padding: '16px 20px', marginBottom: 'var(--spacing-lg)', cursor: 'pointer', border: '1px solid rgba(0,237,100,0.2)' }}>
             <AlertCircle size={20} color="var(--brand-green)" style={{ flexShrink: 0 }} />
@@ -104,7 +122,7 @@ export default function TutorDashboard() {
         </Link>
       )}
 
-      {!loading && isComplete && (
+      {!loading && isComplete && !profile?.suspended && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-lg)', padding: '14px 20px', marginBottom: 'var(--spacing-lg)' }}>
           <CheckCircle2 size={20} color="var(--brand-green-dark)" />
           <span style={{ fontWeight: 600, color: 'var(--brand-green-dark)', fontSize: '14px' }}>Your profile is complete and live!</span>
@@ -160,8 +178,10 @@ export default function TutorDashboard() {
                 }}>
                   {job.subject}
                 </span>
-                <Link href="/tutor/jobs" style={{ marginLeft: 'auto' }}>
-                  <Button variant="primary">Submit Proposal</Button>
+                <Link href={profile?.suspended ? "#" : "/tutor/jobs"} style={{ marginLeft: 'auto', pointerEvents: profile?.suspended ? 'none' : 'auto' }}>
+                  <Button variant="primary" disabled={profile?.suspended}>
+                    {profile?.suspended ? "Account Suspended" : "Submit Proposal"}
+                  </Button>
                 </Link>
               </div>
             </Card>

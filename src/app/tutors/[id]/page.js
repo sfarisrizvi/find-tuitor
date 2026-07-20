@@ -289,8 +289,15 @@ export default function TutorProfile() {
             }
             profile.phone = maskPhone(profile.phone);
             profile.email = maskEmail(profile.email);
-            profile.kyc_status = null;
-            profile.kyc_docs = null;
+            if (profile.kyc_docs) {
+              const maskedDocs = {};
+              for (const key of Object.keys(profile.kyc_docs)) {
+                if (profile.kyc_docs[key]) {
+                  maskedDocs[key] = true;
+                }
+              }
+              profile.kyc_docs = maskedDocs;
+            }
           }
           setTutor(profile);
         }
@@ -345,10 +352,27 @@ export default function TutorProfile() {
     <div style={{ textAlign: 'center', padding: '80px', color: 'var(--steel)' }}>Tutor not found.</div>
   );
 
+  const userRole = user?.user_metadata?.role;
+  const isAdmin = userRole === 'admin';
+  const isOwner = user && user.id === tutor.id;
+
+  if (tutor.suspended && !isOwner && !isAdmin) {
+    return (
+      <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', backgroundColor: 'var(--surface)', padding: '24px', textAlign: 'center' }}>
+        <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)' }}>Profile Unavailable</div>
+        <p style={{ color: 'var(--stone)', fontSize: '15px', maxWidth: '480px', margin: 0, lineHeight: 1.5 }}>
+          This tutor profile has been suspended by the administrator and is not publicly accessible.
+        </p>
+        <Link href="/" style={{ textDecoration: 'none', marginTop: '8px' }}>
+          <Button variant="primary">Return Home</Button>
+        </Link>
+      </div>
+    );
+  }
+
   const avgRating = tutor.rating ?? null;
   const reviewsCount = tutor.reviews_count ?? 0;
   const displayRate = tutor.hourly_rate ? `Rs ${tutor.hourly_rate.toLocaleString()}/hr` : 'Negotiable';
-  const isOwner = user && user.id === tutor.id;
 
   // Media is served through /api/media/[tutorId]/[type] proxy — storage paths never exposed to browser
   const getMediaUrl = (type) => `/api/media/${tutor.id}/${type}`;
@@ -1296,17 +1320,37 @@ export default function TutorProfile() {
                     const docs   = tutor.kyc_docs || {};
                     const verif  = tutor.kyc_verifications || {};
 
-                    // Derive per-doc status from kyc_verifications (new),
-                    // with backward compat for old single kyc_status string.
                     const oldApproved = tutor.kyc_status === 'approved';
 
                     const getDocStatus = (docKey, hasDoc) => {
+                      if (docKey === 'cnic') {
+                        const vFront = verif.cnic_front;
+                        const vBack = verif.cnic_back;
+                        if ((vFront && vFront.status === 'rejected') || (vBack && vBack.status === 'rejected')) return 'rejected';
+                        if (vFront && vFront.status === 'approved' && vBack && vBack.status === 'approved') return 'approved';
+                        if (vFront || vBack) return 'pending';
+                        if (oldApproved) return 'approved';
+                        return 'not_submitted';
+                      }
                       const v = verif[docKey];
                       if (v && v.status) return v.status;
-                      // Backward compat
                       if (oldApproved) return 'approved';
                       if (hasDoc) return 'pending';
                       return 'not_submitted';
+                    };
+
+                    const getRejectionReason = (docKey) => {
+                      if (docKey === 'cnic') {
+                        const notes = [];
+                        if (verif.cnic_front?.status === 'rejected' && verif.cnic_front.reason) {
+                          notes.push(`Front: ${verif.cnic_front.reason}`);
+                        }
+                        if (verif.cnic_back?.status === 'rejected' && verif.cnic_back.reason) {
+                          notes.push(`Back: ${verif.cnic_back.reason}`);
+                        }
+                        return notes.join('; ');
+                      }
+                      return verif[docKey]?.reason || '';
                     };
 
                     const hasCnic   = !!(docs.cnic_front || docs.cnic_back);
@@ -1318,7 +1362,7 @@ export default function TutorProfile() {
                       || (oldApproved ? 'approved'
                         : (hasCnic || hasDegree) ? 'pending'
                         : 'not_submitted');
-                    const bgNote = verif.background?.note || '';
+                    const bgNote = verif.background?.reason || '';
 
                     // Background icon/badge
                     const bgIcon = bgStatus === 'approved'
@@ -1337,39 +1381,51 @@ export default function TutorProfile() {
                           ? <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 700, color: '#92400E', backgroundColor: '#FEF3C7', padding: '2px 8px', borderRadius: '999px' }}>PENDING</span>
                           : null;
 
+                    const showCnic   = isOwner || isAdmin || cnicStatus === 'approved';
+                    const showDegree = isOwner || isAdmin || degreeStatus === 'approved';
+                    const showBg     = isOwner || isAdmin || bgStatus === 'approved';
+
                     return (
                       <>
-                        <VerifyRow
-                          label="CNIC / Identity Verified"
-                          status={cnicStatus}
-                          docKey="cnic_front"
-                          helpText="CNIC (front)"
-                          isOwner={isOwner}
-                          onUpload={handleKycUpload}
-                        />
-                        <VerifyRow
-                          label="Degree / Academic Credentials"
-                          status={degreeStatus}
-                          docKey="degree"
-                          helpText="degree certificate"
-                          isOwner={isOwner}
-                          onUpload={handleKycUpload}
-                        />
+                        {showCnic && (
+                          <VerifyRow
+                            label="CNIC / Identity Verified"
+                            status={cnicStatus}
+                            docKey="cnic_front"
+                            helpText="CNIC (front)"
+                            isOwner={isOwner}
+                            onUpload={handleKycUpload}
+                            rejectionNote={getRejectionReason('cnic')}
+                          />
+                        )}
+                        {showDegree && (
+                          <VerifyRow
+                            label="Degree / Academic Credentials"
+                            status={degreeStatus}
+                            docKey="degree"
+                            helpText="degree certificate"
+                            isOwner={isOwner}
+                            onUpload={handleKycUpload}
+                            rejectionNote={getRejectionReason('degree')}
+                          />
+                        )}
 
                         {/* Background Check — driven by kyc_verifications.background */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            {bgIcon}
-                            <span style={{ fontSize: '14px', color: bgStatus !== 'not_submitted' ? 'var(--ink)' : 'var(--stone)', fontWeight: bgStatus !== 'not_submitted' ? 500 : 400 }}>Background Check</span>
-                            {bgBadge}
-                          </div>
-                          {/* Admin rejection note */}
-                          {bgStatus === 'rejected' && bgNote && (
-                            <div style={{ marginLeft: '28px', fontSize: '12px', color: '#991B1B', backgroundColor: '#FEE2E2', padding: '6px 10px', borderRadius: '6px', border: '1px solid #FECACA' }}>
-                              {bgNote}
+                        {showBg && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              {bgIcon}
+                              <span style={{ fontSize: '14px', color: bgStatus !== 'not_submitted' ? 'var(--ink)' : 'var(--stone)', fontWeight: bgStatus !== 'not_submitted' ? 500 : 400 }}>Background Check</span>
+                              {bgBadge}
                             </div>
-                          )}
-                        </div>
+                            {/* Admin rejection note */}
+                            {bgStatus === 'rejected' && bgNote && (
+                              <div style={{ marginLeft: '28px', fontSize: '12px', color: '#991B1B', backgroundColor: '#FEE2E2', padding: '6px 10px', borderRadius: '6px', border: '1px solid #FECACA' }}>
+                                {bgNote}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </>
                     );
                   })()}
