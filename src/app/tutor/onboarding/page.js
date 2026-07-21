@@ -98,7 +98,7 @@ function StepHeader({ step, title, desc }) {
   );
 }
 
-function UploadBox({ label, hint, accept, onChange, value, icon: Icon = Upload }) {
+function UploadBox({ label, hint, accept, onChange, value, icon: Icon = Upload, docKey, kycVerifications, onViewObjections }) {
   const ref = useRef();
 
   const getPreview = () => {
@@ -171,6 +171,36 @@ function UploadBox({ label, hint, accept, onChange, value, icon: Icon = Upload }
         )}
       </div>
       <input ref={ref} type="file" accept={accept} style={{ display: 'none' }} onChange={e => onChange && onChange(e.target.files[0])} />
+      
+      {/* Pinned area objections */}
+      {kycVerifications?.[docKey]?.annotations?.length > 0 && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewObjections && onViewObjections(docKey);
+          }}
+          style={{
+            marginTop: '8px',
+            width: '100%',
+            backgroundColor: '#FEE2E2',
+            border: '1px solid #EF4444',
+            borderRadius: 'var(--rounded-md)',
+            color: '#B91C1C',
+            fontSize: '12px',
+            fontWeight: 600,
+            padding: '8px 12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px'
+          }}
+        >
+          <AlertCircle size={14} color="#EF4444" />
+          View {kycVerifications[docKey].annotations.length} Objection Area{kycVerifications[docKey].annotations.length > 1 ? 's' : ''}
+        </button>
+      )}
     </div>
   );
 }
@@ -361,6 +391,9 @@ function OnboardingContent() {
   const [profileName, setProfileName] = useState('');
   const [profileEmail, setProfileEmail] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
+  const [currentRole, setCurrentRole] = useState('');
+  const [currentCompany, setCurrentCompany] = useState('');
+  const [qualification, setQualification] = useState('');
 
   // Step 2: KYC docs
   const [cnicFront, setCnicFront] = useState(null);
@@ -368,6 +401,7 @@ function OnboardingContent() {
   const [degree, setDegree] = useState(null);
   const [certificates, setCertificates] = useState([]);
   const [hasKycDocs, setHasKycDocs] = useState(false);
+  const [kycObjections, setKycObjections] = useState(null);
 
   // Step 3: Teaching Categories (Accordion checkboxes & checked subjects)
   const [activeLevels, setActiveLevels] = useState({
@@ -387,6 +421,7 @@ function OnboardingContent() {
     'BS/MS': false
   });
   const [selectedSubjectsByLevel, setSelectedSubjectsByLevel] = useState({});
+  const [customSubjectInputs, setCustomSubjectInputs] = useState({});
 
   // Step 4: Languages
   const [selectedLanguages, setSelectedLanguages] = useState([]);
@@ -419,6 +454,10 @@ function OnboardingContent() {
   const [about, setAbout] = useState('');
   const [introVideo, setIntroVideo] = useState(null);
 
+  const [suspended, setSuspended] = useState(false);
+  const [kycVerifications, setKycVerifications] = useState({});
+  const [objectionsModal, setObjectionsModal] = useState({ isOpen: false, url: '', docKey: '' });
+
   useEffect(() => {
     const init = async () => {
       const supabase = createClient();
@@ -428,9 +467,11 @@ function OnboardingContent() {
       // Load existing progress
       const { data: profile } = await supabase.from('tutor_profiles').select('*').eq('id', u.id).single();
       if (profile) {
+        setSuspended(profile.suspended || false);
+        setKycVerifications(profile.kyc_verifications || {});
         // If onboarding already completed and no specific step requested, redirect to profile
         if (profile.onboarding_complete && !stepParam) {
-          router.push(`/tutors/${u.id}`);
+          router.push('/tutor/dashboard');
           return;
         }
         setBio(profile.bio || '');
@@ -444,6 +485,9 @@ function OnboardingContent() {
         setCoverUrl(profile.cover_url || '');
         setProfileName(profile.full_name || u.user_metadata?.full_name || '');
         setProfileEmail(profile.email || u.email || '');
+        setCurrentRole(profile.current_role || '');
+        setCurrentCompany(profile.current_company || '');
+        setQualification(profile.qualification || '');
 
         if (profile.kyc_docs && Object.keys(profile.kyc_docs).length > 0) {
           setHasKycDocs(true);
@@ -451,6 +495,9 @@ function OnboardingContent() {
           if (profile.kyc_docs.cnic_back) setCnicBack(profile.kyc_docs.cnic_back);
           if (profile.kyc_docs.degree) setDegree(profile.kyc_docs.degree);
           if (profile.kyc_docs.certificates) setCertificates(profile.kyc_docs.certificates);
+        }
+        if (profile.kyc_objections) {
+          setKycObjections(profile.kyc_objections);
         }
 
         if (profile.availability_slots && Object.keys(profile.availability_slots).length > 0) {
@@ -523,6 +570,12 @@ function OnboardingContent() {
           if (row.subject) {
             if (!subMap[row.level]) subMap[row.level] = [];
             subMap[row.level].push(row.subject);
+
+            // Auto-check 'Other' if we load a custom subject not in LEVEL_SUBJECTS static list
+            const staticList = LEVEL_SUBJECTS[row.level] || [];
+            if (!staticList.includes(row.subject) && !subMap[row.level].includes('Other')) {
+              subMap[row.level].push('Other');
+            }
           }
         });
         setActiveLevels(activeMap);
@@ -531,6 +584,25 @@ function OnboardingContent() {
     };
     init();
   }, [router, stepParam]);
+
+  const showObjectionsModal = async (docKey) => {
+    const path = docKey === 'cnic_front' ? cnicFront : docKey === 'cnic_back' ? cnicBack : docKey === 'degree' ? degree : '';
+    if (!path) return;
+    
+    if (typeof path !== 'string') {
+      const localUrl = URL.createObjectURL(path);
+      setObjectionsModal({ isOpen: true, url: localUrl, docKey });
+      return;
+    }
+
+    const supabase = createClient();
+    const { data, error } = await supabase.storage.from('teacher-files').createSignedUrl(path, 3600);
+    if (!error && data) {
+      setObjectionsModal({ isOpen: true, url: data.signedUrl, docKey });
+    } else {
+      alert("Could not load document preview.");
+    }
+  };
 
   const uploadFile = async (file, folder) => {
     if (!file || !user) return null;
@@ -600,7 +672,16 @@ function OnboardingContent() {
           }
         }
 
-        updates = { ...updates, bio, full_name: profileName, avatar_url: avatar_path, cover_url: cover_path };
+        updates = { 
+          ...updates, 
+          bio, 
+          full_name: profileName, 
+          avatar_url: avatar_path, 
+          cover_url: cover_path,
+          current_role: currentRole,
+          current_company: currentCompany,
+          qualification: qualification
+        };
       }
 
       if (step === 2) {
@@ -627,7 +708,8 @@ function OnboardingContent() {
           if (activeLevels[levelName]) {
             const hasSubjects = ['Matric', 'Inter', 'BS/MS'].includes(levelName);
             if (hasSubjects) {
-              const subs = selectedSubjectsByLevel[levelName] || [];
+              // Filter out the literal word 'Other' from database rows so it does not pollute the table
+              const subs = (selectedSubjectsByLevel[levelName] || []).filter(s => s !== 'Other');
               if (subs.length > 0) {
                 subs.forEach(subj => {
                   rows.push({
@@ -735,7 +817,7 @@ function OnboardingContent() {
     const ns = step + 1;
     await saveStep(ns);
     if (ns > TOTAL_STEPS) {
-      router.push(`/tutors/${user?.id}`);
+      router.push('/tutor/dashboard');
     } else {
       setStep(ns);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -777,6 +859,23 @@ function OnboardingContent() {
       }
       return { ...prev, [levelName]: newList };
     });
+  };
+
+  const addCustomSubject = (levelName) => {
+    const text = (customSubjectInputs[levelName] || '').trim();
+    if (!text) return;
+    
+    setSelectedSubjectsByLevel(prev => {
+      const currentList = prev[levelName] || [];
+      if (currentList.includes(text)) return prev;
+      
+      const newList = [...currentList, text];
+      // Auto-check parent level
+      setActiveLevels(l => ({ ...l, [levelName]: true }));
+      return { ...prev, [levelName]: newList };
+    });
+
+    setCustomSubjectInputs(prev => ({ ...prev, [levelName]: '' }));
   };
 
   const toggleAccordion = (levelName) => {
@@ -1165,15 +1264,26 @@ function OnboardingContent() {
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <StepHeader step={2} title="Identity & Documents" desc="Uploaded documents are securely stored and only reviewed by our admin team. They are never publicly visible." />
+            
+            {kycObjections && Object.keys(kycObjections).length > 0 && (
+              <div style={{ backgroundColor: '#FFEBEE', border: '1px solid #FFCDD2', borderRadius: 'var(--rounded-md)', padding: '16px', color: '#B71C1C', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                <AlertCircle size={20} color="#B71C1C" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: 600, color: '#B71C1C' }}>Rejection Objections from Administration</h4>
+                  <p style={{ margin: '0 0 4px 0', fontSize: '13px' }}><strong>Flagged Documents:</strong> {kycObjections.flagged_documents?.join(', ')}</p>
+                  <p style={{ margin: 0, fontSize: '13px' }}><strong>Correction Instructions:</strong> {kycObjections.comment}</p>
+                </div>
+              </div>
+            )}
             <div style={{ backgroundColor: '#FFF9E6', border: '1px solid #FFD566', borderRadius: 'var(--rounded-md)', padding: '12px 16px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
               <AlertCircle size={16} color="#B8860B" style={{ flexShrink: 0, marginTop: '2px' }} />
               <p style={{ margin: 0, fontSize: '13px', color: '#7A5C00' }}>All documents are stored in an encrypted, private folder and are never shared or deleted even upon account closure.</p>
             </div>
             <div className="grid-2col" style={{ gap: '16px' }}>
-              <UploadBox label="CNIC / Passport – Front" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicFront} onChange={setCnicFront} />
-              <UploadBox label="CNIC / Passport – Back" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicBack} onChange={setCnicBack} />
+              <UploadBox label="CNIC / Passport – Front" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicFront} onChange={setCnicFront} docKey="cnic_front" kycVerifications={kycVerifications} onViewObjections={showObjectionsModal} />
+              <UploadBox label="CNIC / Passport – Back" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicBack} onChange={setCnicBack} docKey="cnic_back" kycVerifications={kycVerifications} onViewObjections={showObjectionsModal} />
             </div>
-            <UploadBox label="Latest Degree / Transcript" hint="Required for Academic Verified badge" accept="image/*,.pdf" icon={BookOpen} value={degree} onChange={setDegree} />
+            <UploadBox label="Latest Degree / Transcript" hint="Required for Academic Verified badge" accept="image/*,.pdf" icon={BookOpen} value={degree} onChange={setDegree} docKey="degree" kycVerifications={kycVerifications} onViewObjections={showObjectionsModal} />
             <div>
               <label style={{ display: 'block', fontWeight: 600, marginBottom: '10px', fontSize: '14px' }}>Additional Certificates <span style={{ color: 'var(--stone)', fontWeight: 400 }}>(optional)</span></label>
               {certificates.map((cert, i) => (
@@ -1205,8 +1315,13 @@ function OnboardingContent() {
                 const isActive = activeLevels[levelName];
                 const isExpanded = expandedAccordions[levelName];
                 const hasSubjects = ['Matric', 'Inter', 'BS/MS'].includes(levelName);
-                const subjects = LEVEL_SUBJECTS[levelName] || [];
+                const baseSubjects = LEVEL_SUBJECTS[levelName] || [];
                 const selectedSubs = selectedSubjectsByLevel[levelName] || [];
+                const subjects = [
+                  ...baseSubjects.filter(s => s !== 'Other'),
+                  ...selectedSubs.filter(s => !baseSubjects.includes(s) && s !== 'Other'),
+                  ...(baseSubjects.includes('Other') ? ['Other'] : [])
+                ];
 
                 // Format the preview of checked subjects: e.g. " (Maths, Physics)"
                 let previewText = '';
@@ -1286,38 +1401,72 @@ function OnboardingContent() {
                         borderTop: '1px solid var(--hairline)'
                       }}>
                         {hasSubjects ? (
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                            gap: '12px'
-                          }}>
-                            {subjects.map(subj => {
-                              const isChecked = selectedSubs.includes(subj);
-                              return (
-                                <label key={subj} style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '8px',
-                                  cursor: 'pointer',
-                                  fontSize: '14px',
-                                  color: 'var(--ink)',
-                                  padding: '6px 0'
-                                }}>
-                                  <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => toggleLevelSubject(levelName, subj)}
-                                    style={{
-                                      width: '16px',
-                                      height: '16px',
-                                      accentColor: 'var(--brand-green-dark)',
-                                      cursor: 'pointer'
-                                    }}
-                                  />
-                                  {subj}
-                                </label>
-                              );
-                            })}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                              gap: '12px'
+                            }}>
+                              {subjects.map(subj => {
+                                const isChecked = selectedSubs.includes(subj);
+                                return (
+                                  <label key={subj} style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    color: 'var(--ink)',
+                                    padding: '6px 0'
+                                  }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => toggleLevelSubject(levelName, subj)}
+                                      style={{
+                                        width: '16px',
+                                        height: '16px',
+                                        accentColor: 'var(--brand-green-dark)',
+                                        cursor: 'pointer'
+                                      }}
+                                    />
+                                    {subj}
+                                  </label>
+                                );
+                              })}
+                            </div>
+
+                            {selectedSubs.includes('Other') && (
+                              <div style={{
+                                display: 'flex',
+                                gap: '8px',
+                                marginTop: '8px',
+                                borderTop: '1px dashed var(--hairline)',
+                                paddingTop: '12px',
+                                maxWidth: '400px'
+                              }}>
+                                <Input
+                                  placeholder="Add other subject (e.g. Sociology)"
+                                  value={customSubjectInputs[levelName] || ''}
+                                  onChange={e => setCustomSubjectInputs(prev => ({ ...prev, [levelName]: e.target.value }))}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      addCustomSubject(levelName);
+                                    }
+                                  }}
+                                  style={{ height: '36px', fontSize: '13px' }}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() => addCustomSubject(levelName)}
+                                  style={{ height: '36px', padding: '0 16px', fontSize: '13px' }}
+                                >
+                                  Add
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div style={{ fontSize: '13px', color: 'var(--stone)', fontStyle: 'italic' }}>
@@ -1745,10 +1894,40 @@ function OnboardingContent() {
     }
   };
 
+  if (suspended) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', backgroundColor: 'var(--surface)', padding: '24px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <AlertCircle size={32} color="#EF4444" />
+          <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'var(--ink)' }}>Account Suspended</h2>
+        </div>
+        <p style={{ color: 'var(--stone)', fontSize: '15px', maxWidth: '520px', margin: 0, lineHeight: 1.5 }}>
+          Your tutor account has been suspended by the administrator. During suspension, you cannot complete onboarding, edit your profile details, or make updates to your profile. Please get in touch with administrator support to resolve this suspension.
+        </p>
+        <div style={{ marginTop: '12px', display: 'flex', gap: '12px' }}>
+          <a href="mailto:support@tutoronline.pk" style={{ textDecoration: 'none' }}>
+            <Button style={{ backgroundColor: '#EF4444', color: '#fff', border: 'none' }}>Get Admin Support</Button>
+          </a>
+          <button 
+            onClick={async () => {
+              const supabase = createClient();
+              await supabase.auth.signOut();
+              router.push('/login');
+            }}
+            className="admin-btn admin-btn-secondary"
+            style={{ padding: '10px 20px', borderRadius: 'var(--rounded-md)' }}
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--surface)' }}>
       {/* Top progress bar */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 100, backgroundColor: 'var(--canvas)', borderBottom: '1px solid var(--hairline)', padding: '20px 24px 24px 24px' }}>
+      <div style={{ position: 'sticky', top: '64px', zIndex: 10, backgroundColor: 'var(--canvas)', borderBottom: '1px solid var(--hairline)', padding: '20px 24px 24px 24px' }}>
         <div style={{ maxWidth: '1150px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--slate)' }}>Tutor Profile Setup</span>
@@ -1925,6 +2104,131 @@ function OnboardingContent() {
           </Button>
         </div>
       </div>
+
+      {/* Objections Viewer Modal */}
+      {objectionsModal.isOpen && (
+        <>
+          <div 
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 99998 }}
+            onClick={() => setObjectionsModal({ isOpen: false, url: '', docKey: '' })}
+          />
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'var(--canvas)',
+            borderRadius: 'var(--rounded-lg)',
+            border: '1px solid var(--hairline)',
+            boxShadow: 'var(--shadow-xl)',
+            padding: '24px',
+            width: '80vw',
+            height: '80vh',
+            maxWidth: '900px',
+            zIndex: 99999,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, textTransform: 'capitalize' }}>
+                Flagged Objections: {objectionsModal.docKey?.replace('_', ' ')}
+              </h3>
+              <button 
+                onClick={() => setObjectionsModal({ isOpen: false, url: '', docKey: '' })}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: 'var(--steel)' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flex: 1, gap: '20px', overflow: 'hidden' }}>
+              {/* Document Image Viewport */}
+              <div style={{ 
+                flex: 1, 
+                position: 'relative', 
+                backgroundColor: '#04080A', 
+                borderRadius: 'var(--rounded-md)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden'
+              }}>
+                {objectionsModal.url.includes('.pdf') ? (
+                  <iframe src={objectionsModal.url} style={{ width: '100%', height: '100%', border: 'none' }} />
+                ) : (
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <img 
+                      src={objectionsModal.url} 
+                      alt="" 
+                      style={{ maxHeight: '65vh', maxWidth: '100%', objectFit: 'contain' }}
+                    />
+                    {/* Render objection selection area boxes */}
+                    {(kycVerifications?.[objectionsModal.docKey]?.annotations || []).map((ann, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          position: 'absolute',
+                          left: `${ann.x}%`,
+                          top: `${ann.y}%`,
+                          width: `${ann.w}%`,
+                          height: `${ann.h}%`,
+                          border: '2px solid #EF4444',
+                          backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                          pointerEvents: 'none',
+                          zIndex: 10
+                        }}
+                      >
+                        <span style={{
+                          position: 'absolute',
+                          top: '2px',
+                          left: '2px',
+                          backgroundColor: '#EF4444',
+                          color: '#fff',
+                          fontSize: '8px',
+                          fontWeight: 'bold',
+                          padding: '1px 3px',
+                          borderRadius: '2px'
+                        }}>
+                          Area {idx + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Objection list comments right panel */}
+              <div style={{ width: '280px', display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--slate)', textTransform: 'uppercase' }}>
+                  Objection Notes
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(kycVerifications?.[objectionsModal.docKey]?.annotations || []).map((ann, idx) => (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        padding: '12px', 
+                        border: '1px solid #FFCDD2', 
+                        borderRadius: 'var(--rounded-md)', 
+                        backgroundColor: '#FFEBEE',
+                        fontSize: '13px',
+                        color: '#B71C1C'
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, marginBottom: '4px' }}>Area {idx + 1}:</div>
+                      <div style={{ lineHeight: 1.4 }}>{ann.text}</div>
+                    </div>
+                  ))}
+                  {(kycVerifications?.[objectionsModal.docKey]?.annotations || []).length === 0 && (
+                    <p style={{ fontSize: '13px', color: 'var(--stone)' }}>No detailed objection comments pinned.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
