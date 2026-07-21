@@ -98,7 +98,7 @@ function StepHeader({ step, title, desc }) {
   );
 }
 
-function UploadBox({ label, hint, accept, onChange, value, icon: Icon = Upload }) {
+function UploadBox({ label, hint, accept, onChange, value, icon: Icon = Upload, docKey, kycVerifications, onViewObjections }) {
   const ref = useRef();
 
   const getPreview = () => {
@@ -171,6 +171,36 @@ function UploadBox({ label, hint, accept, onChange, value, icon: Icon = Upload }
         )}
       </div>
       <input ref={ref} type="file" accept={accept} style={{ display: 'none' }} onChange={e => onChange && onChange(e.target.files[0])} />
+      
+      {/* Pinned area objections */}
+      {kycVerifications?.[docKey]?.annotations?.length > 0 && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewObjections && onViewObjections(docKey);
+          }}
+          style={{
+            marginTop: '8px',
+            width: '100%',
+            backgroundColor: '#FEE2E2',
+            border: '1px solid #EF4444',
+            borderRadius: 'var(--rounded-md)',
+            color: '#B91C1C',
+            fontSize: '12px',
+            fontWeight: 600,
+            padding: '8px 12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px'
+          }}
+        >
+          <AlertCircle size={14} color="#EF4444" />
+          View {kycVerifications[docKey].annotations.length} Objection Area{kycVerifications[docKey].annotations.length > 1 ? 's' : ''}
+        </button>
+      )}
     </div>
   );
 }
@@ -425,6 +455,8 @@ function OnboardingContent() {
   const [introVideo, setIntroVideo] = useState(null);
 
   const [suspended, setSuspended] = useState(false);
+  const [kycVerifications, setKycVerifications] = useState({});
+  const [objectionsModal, setObjectionsModal] = useState({ isOpen: false, url: '', docKey: '' });
 
   useEffect(() => {
     const init = async () => {
@@ -436,6 +468,7 @@ function OnboardingContent() {
       const { data: profile } = await supabase.from('tutor_profiles').select('*').eq('id', u.id).single();
       if (profile) {
         setSuspended(profile.suspended || false);
+        setKycVerifications(profile.kyc_verifications || {});
         // If onboarding already completed and no specific step requested, redirect to profile
         if (profile.onboarding_complete && !stepParam) {
           router.push('/tutor/dashboard');
@@ -551,6 +584,25 @@ function OnboardingContent() {
     };
     init();
   }, [router, stepParam]);
+
+  const showObjectionsModal = async (docKey) => {
+    const path = docKey === 'cnic_front' ? cnicFront : docKey === 'cnic_back' ? cnicBack : docKey === 'degree' ? degree : '';
+    if (!path) return;
+    
+    if (typeof path !== 'string') {
+      const localUrl = URL.createObjectURL(path);
+      setObjectionsModal({ isOpen: true, url: localUrl, docKey });
+      return;
+    }
+
+    const supabase = createClient();
+    const { data, error } = await supabase.storage.from('teacher-files').createSignedUrl(path, 3600);
+    if (!error && data) {
+      setObjectionsModal({ isOpen: true, url: data.signedUrl, docKey });
+    } else {
+      alert("Could not load document preview.");
+    }
+  };
 
   const uploadFile = async (file, folder) => {
     if (!file || !user) return null;
@@ -1228,10 +1280,10 @@ function OnboardingContent() {
               <p style={{ margin: 0, fontSize: '13px', color: '#7A5C00' }}>All documents are stored in an encrypted, private folder and are never shared or deleted even upon account closure.</p>
             </div>
             <div className="grid-2col" style={{ gap: '16px' }}>
-              <UploadBox label="CNIC / Passport – Front" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicFront} onChange={setCnicFront} />
-              <UploadBox label="CNIC / Passport – Back" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicBack} onChange={setCnicBack} />
+              <UploadBox label="CNIC / Passport – Front" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicFront} onChange={setCnicFront} docKey="cnic_front" kycVerifications={kycVerifications} onViewObjections={showObjectionsModal} />
+              <UploadBox label="CNIC / Passport – Back" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicBack} onChange={setCnicBack} docKey="cnic_back" kycVerifications={kycVerifications} onViewObjections={showObjectionsModal} />
             </div>
-            <UploadBox label="Latest Degree / Transcript" hint="Required for Academic Verified badge" accept="image/*,.pdf" icon={BookOpen} value={degree} onChange={setDegree} />
+            <UploadBox label="Latest Degree / Transcript" hint="Required for Academic Verified badge" accept="image/*,.pdf" icon={BookOpen} value={degree} onChange={setDegree} docKey="degree" kycVerifications={kycVerifications} onViewObjections={showObjectionsModal} />
             <div>
               <label style={{ display: 'block', fontWeight: 600, marginBottom: '10px', fontSize: '14px' }}>Additional Certificates <span style={{ color: 'var(--stone)', fontWeight: 400 }}>(optional)</span></label>
               {certificates.map((cert, i) => (
@@ -2052,6 +2104,131 @@ function OnboardingContent() {
           </Button>
         </div>
       </div>
+
+      {/* Objections Viewer Modal */}
+      {objectionsModal.isOpen && (
+        <>
+          <div 
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 99998 }}
+            onClick={() => setObjectionsModal({ isOpen: false, url: '', docKey: '' })}
+          />
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'var(--canvas)',
+            borderRadius: 'var(--rounded-lg)',
+            border: '1px solid var(--hairline)',
+            boxShadow: 'var(--shadow-xl)',
+            padding: '24px',
+            width: '80vw',
+            height: '80vh',
+            maxWidth: '900px',
+            zIndex: 99999,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, textTransform: 'capitalize' }}>
+                Flagged Objections: {objectionsModal.docKey?.replace('_', ' ')}
+              </h3>
+              <button 
+                onClick={() => setObjectionsModal({ isOpen: false, url: '', docKey: '' })}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: 'var(--steel)' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flex: 1, gap: '20px', overflow: 'hidden' }}>
+              {/* Document Image Viewport */}
+              <div style={{ 
+                flex: 1, 
+                position: 'relative', 
+                backgroundColor: '#04080A', 
+                borderRadius: 'var(--rounded-md)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden'
+              }}>
+                {objectionsModal.url.includes('.pdf') ? (
+                  <iframe src={objectionsModal.url} style={{ width: '100%', height: '100%', border: 'none' }} />
+                ) : (
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <img 
+                      src={objectionsModal.url} 
+                      alt="" 
+                      style={{ maxHeight: '65vh', maxWidth: '100%', objectFit: 'contain' }}
+                    />
+                    {/* Render objection selection area boxes */}
+                    {(kycVerifications?.[objectionsModal.docKey]?.annotations || []).map((ann, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          position: 'absolute',
+                          left: `${ann.x}%`,
+                          top: `${ann.y}%`,
+                          width: `${ann.w}%`,
+                          height: `${ann.h}%`,
+                          border: '2px solid #EF4444',
+                          backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                          pointerEvents: 'none',
+                          zIndex: 10
+                        }}
+                      >
+                        <span style={{
+                          position: 'absolute',
+                          top: '2px',
+                          left: '2px',
+                          backgroundColor: '#EF4444',
+                          color: '#fff',
+                          fontSize: '8px',
+                          fontWeight: 'bold',
+                          padding: '1px 3px',
+                          borderRadius: '2px'
+                        }}>
+                          Area {idx + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Objection list comments right panel */}
+              <div style={{ width: '280px', display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--slate)', textTransform: 'uppercase' }}>
+                  Objection Notes
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(kycVerifications?.[objectionsModal.docKey]?.annotations || []).map((ann, idx) => (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        padding: '12px', 
+                        border: '1px solid #FFCDD2', 
+                        borderRadius: 'var(--rounded-md)', 
+                        backgroundColor: '#FFEBEE',
+                        fontSize: '13px',
+                        color: '#B71C1C'
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, marginBottom: '4px' }}>Area {idx + 1}:</div>
+                      <div style={{ lineHeight: 1.4 }}>{ann.text}</div>
+                    </div>
+                  ))}
+                  {(kycVerifications?.[objectionsModal.docKey]?.annotations || []).length === 0 && (
+                    <p style={{ fontSize: '13px', color: 'var(--stone)' }}>No detailed objection comments pinned.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

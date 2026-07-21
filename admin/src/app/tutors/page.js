@@ -32,9 +32,13 @@ export default function AdminTutors() {
   const [adminUser, setAdminUser] = useState(null);
   const [adminRole, setAdminRole] = useState('super_admin');
 
-  // Filter & Search states
+  // Filter, Search, Pagination
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'pending' | 'verified' | 'suspended'
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(15);
+  const [totalCount, setTotalCount] = useState(0);
+  const [metrics, setMetrics] = useState({ total: 0, pending: 0, verified: 0, suspended: 0 });
 
   // Selected Tutor Drawer state
   const [selectedTutor, setSelectedTutor] = useState(null);
@@ -49,6 +53,40 @@ export default function AdminTutors() {
   const [selectedObjectionDocs, setSelectedObjectionDocs] = useState([]);
   const [objectionComment, setObjectionComment] = useState('');
   const [submittingAction, setSubmittingAction] = useState(false);
+
+  // Custom Toast State
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, 4000);
+  };
+
+  // Custom Consent Modal State
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    danger: false
+  });
+  const requestConsent = (title, message, onConfirm, danger = false) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      },
+      confirmText: 'Confirm',
+      cancelText: 'Cancel',
+      danger
+    });
+  };
 
   // Lightbox Interactive states
   const [zoom, setZoom] = useState(1);
@@ -71,6 +109,83 @@ export default function AdminTutors() {
     setActiveAnnotationText('');
     setAnnMode(false);
   };
+
+  const fetchMetrics = async () => {
+    const supabase = createClient();
+    try {
+      const [
+        { count: total },
+        { count: pending },
+        { count: verified },
+        { count: suspended }
+      ] = await Promise.all([
+        supabase.from('tutor_profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('tutor_profiles').select('*', { count: 'exact', head: true }).eq('kyc_status', 'pending'),
+        supabase.from('tutor_profiles').select('*', { count: 'exact', head: true }).eq('verified', true),
+        supabase.from('tutor_profiles').select('*', { count: 'exact', head: true }).eq('suspended', true)
+      ]);
+      setMetrics({
+        total: total || 0,
+        pending: pending || 0,
+        verified: verified || 0,
+        suspended: suspended || 0
+      });
+    } catch (err) {
+      console.error('Error fetching tutor metrics:', err);
+    }
+  };
+
+  const handleFilterModeChange = (mode) => {
+    setFilterMode(mode);
+    setPage(1);
+  };
+
+  const handleSearchChange = (val) => {
+    setSearchQuery(val);
+    setPage(1);
+  };
+
+  // Fetch tutors when dependencies update
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      const supabase = createClient();
+      try {
+        let query = supabase
+          .from('tutor_profiles')
+          .select('*', { count: 'exact' });
+
+        if (filterMode === 'pending') {
+          query = query.eq('kyc_status', 'pending');
+        } else if (filterMode === 'verified') {
+          query = query.eq('verified', true);
+        } else if (filterMode === 'suspended') {
+          query = query.eq('suspended', true);
+        }
+
+        if (searchQuery.trim() !== '') {
+          query = query.or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+        }
+
+        const { data, error, count } = await query
+          .order('created_at', { ascending: false })
+          .range((page - 1) * pageSize, page * pageSize - 1);
+
+        if (error) throw error;
+        if (active) {
+          setTutors(data || []);
+          setTotalCount(count || 0);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    load();
+    return () => { active = false; };
+  }, [page, filterMode, searchQuery, pageSize]);
 
   const handleSaveAnnotation = () => {
     if (!activeAnnotationText.trim() || !newAnnCoords || !lightbox.docKey) return;
@@ -107,24 +222,6 @@ export default function AdminTutors() {
     setActiveAnnotationText('');
   };
 
-  const fetchTutors = async () => {
-    setLoading(true);
-    const supabase = createClient();
-    try {
-      const { data, error } = await supabase
-        .from('tutor_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      setTutors(data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = createClient();
@@ -136,7 +233,7 @@ export default function AdminTutors() {
       }
       setAdminUser(user);
       setAdminRole(user.user_metadata?.admin_role || 'super_admin');
-      fetchTutors();
+      fetchMetrics();
     };
     checkAuth();
   }, [router]);
@@ -144,10 +241,10 @@ export default function AdminTutors() {
   // Load private signed URLs when a tutor is selected
   useEffect(() => {
     if (!selectedTutor) {
-      setSignedUrls({});
       return;
     }
 
+    let active = true;
     const loadUrls = async () => {
       setLoadingDocs(true);
       const supabase = createClient();
@@ -156,6 +253,7 @@ export default function AdminTutors() {
 
       try {
         for (const key of Object.keys(kycDocs)) {
+          if (!active) return;
           const path = kycDocs[key];
           if (path && typeof path === 'string') {
             const { data, error } = await supabase.storage.from('teacher-files').createSignedUrl(path, 3600);
@@ -165,6 +263,7 @@ export default function AdminTutors() {
           } else if (Array.isArray(path)) {
             const certUrls = [];
             for (const certPath of path) {
+              if (!active) return;
               const { data, error } = await supabase.storage.from('teacher-files').createSignedUrl(certPath, 3600);
               if (!error && data) {
                 certUrls.push(data.signedUrl);
@@ -173,15 +272,20 @@ export default function AdminTutors() {
             urls[key] = certUrls;
           }
         }
-        setSignedUrls(urls);
+        if (active) {
+          setSignedUrls(urls);
+        }
       } catch (err) {
-        console.error(err);
+        console.error('Error signing KYC files:', err);
       } finally {
-        setLoadingDocs(false);
+        if (active) setLoadingDocs(false);
       }
     };
 
     loadUrls();
+    return () => {
+      active = false;
+    };
   }, [selectedTutor]);
 
   // Approve Tutor
@@ -260,114 +364,117 @@ export default function AdminTutors() {
     if (!selectedTutor || adminRole === 'monitor') return;
     const nextSuspendedState = !selectedTutor.suspended;
     
-    setSubmittingAction(true);
-    const supabase = createClient();
-    try {
-      const { error } = await supabase
-        .from('tutor_profiles')
-        .update({ suspended: nextSuspendedState })
-        .eq('id', selectedTutor.id);
+    requestConsent(
+      nextSuspendedState ? 'Suspend Tutor Account' : 'Unsuspend Tutor Account',
+      nextSuspendedState 
+        ? 'Are you sure you want to suspend this tutor account? They will lose access to their tutor dashboard, onboarding, and will be hidden from all public searches.'
+        : 'Are you sure you want to unsuspend this tutor account? This will restore their active portal and onboarding access.',
+      async () => {
+        setSubmittingAction(true);
+        const supabase = createClient();
+        try {
+          const { error } = await supabase
+            .from('tutor_profiles')
+            .update({ suspended: nextSuspendedState })
+            .eq('id', selectedTutor.id);
 
-      if (error) throw error;
+          if (error) throw error;
 
-      // Update state
-      setTutors(prev => prev.map(t => t.id === selectedTutor.id ? { ...t, suspended: nextSuspendedState } : t));
-      setSelectedTutor(prev => ({ ...prev, suspended: nextSuspendedState }));
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSubmittingAction(false);
-    }
+          // Update state
+          setTutors(prev => prev.map(t => t.id === selectedTutor.id ? { ...t, suspended: nextSuspendedState } : t));
+          setSelectedTutor(prev => ({ ...prev, suspended: nextSuspendedState }));
+          showToast(`Account successfully ${nextSuspendedState ? 'suspended' : 'unsuspended'}.`);
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          setSubmittingAction(false);
+        }
+      },
+      nextSuspendedState // danger flag is true when suspending
+    );
   };
 
   // Toggle Verification Badge
   const toggleVerification = async () => {
     if (!selectedTutor || adminRole === 'monitor') return;
-    const nextVerifiedState = !selectedTutor.verified;
-    
-    setSubmittingAction(true);
-    const supabase = createClient();
-    try {
-      const { error } = await supabase
-        .from('tutor_profiles')
-        .update({ verified: nextVerifiedState })
-        .eq('id', selectedTutor.id);
-
-      if (error) throw error;
-
-      // Update state
-      setTutors(prev => prev.map(t => t.id === selectedTutor.id ? { ...t, verified: nextVerifiedState } : t));
-      setSelectedTutor(prev => ({ ...prev, verified: nextVerifiedState }));
-      alert(`Verified badge ${nextVerifiedState ? 'granted' : 'removed'} successfully.`);
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSubmittingAction(false);
+    if (selectedTutor.kyc_status !== 'approved') {
+      showToast("Tutor is not eligible for verified badge until their KYC status is approved.", "error");
+      return;
     }
+    const nextVerifiedState = !selectedTutor.verified;
+    const updatedVerifications = {
+      ...(selectedTutor.kyc_verifications || {}),
+      profile_verified_at: nextVerifiedState ? new Date().toISOString() : null
+    };
+    
+    requestConsent(
+      nextVerifiedState ? 'Grant Verified Premium Badge' : 'Remove Verified Premium Badge',
+      nextVerifiedState
+        ? 'Are you sure you want to grant the Verified Badge (Premium Status) to this tutor?'
+        : 'Are you sure you want to remove the Verified Badge (Premium Status) from this tutor?',
+      async () => {
+        setSubmittingAction(true);
+        const supabase = createClient();
+        try {
+          const { error } = await supabase
+            .from('tutor_profiles')
+            .update({ 
+              verified: nextVerifiedState,
+              kyc_verifications: updatedVerifications
+            })
+            .eq('id', selectedTutor.id);
+
+          if (error) throw error;
+
+          // Update state
+          setTutors(prev => prev.map(t => t.id === selectedTutor.id ? { ...t, verified: nextVerifiedState, kyc_verifications: updatedVerifications } : t));
+          setSelectedTutor(prev => ({ ...prev, verified: nextVerifiedState, kyc_verifications: updatedVerifications }));
+          showToast(`Verified badge ${nextVerifiedState ? 'granted' : 'removed'} successfully.`);
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          setSubmittingAction(false);
+        }
+      }
+    );
   };
 
   // Delete User Account (Super Admin only)
   const handleDeleteAccount = async () => {
     if (!selectedTutor || adminRole !== 'super_admin') return;
-    if (!confirm('CRITICAL ACTION: Are you sure you want to permanently delete this tutor account? This cannot be undone.')) return;
+    
+    requestConsent(
+      'PERMANENT DELETION',
+      'CRITICAL ACTION: Are you sure you want to permanently delete this tutor account? All documents, profiles, and dashboard data will be deleted forever. This cannot be undone.',
+      async () => {
+        setSubmittingAction(true);
+        try {
+          // Call server API route /api/admins to delete auth.user securely
+          const res = await fetch(`/api/admins?id=${selectedTutor.id}`, {
+            method: 'DELETE'
+          });
+          const data = await res.json();
 
-    setSubmittingAction(true);
-    try {
-      // Call server API route /api/admins to delete auth.user securely
-      const res = await fetch(`/api/admins?id=${selectedTutor.id}`, {
-        method: 'DELETE'
-      });
-      const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to delete user');
+          }
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to delete user');
-      }
+          // Also trigger a notification (Mock email notification to user)
+          console.log(`Account deletion notification dispatched to ${selectedTutor.email}`);
 
-      // Also trigger a notification (Mock email notification to user)
-      console.log(`Account deletion notification dispatched to ${selectedTutor.email}`);
-
-      // Update state
-      setTutors(prev => prev.filter(t => t.id !== selectedTutor.id));
-      setSelectedTutor(null);
-      alert('Account permanently deleted.');
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSubmittingAction(false);
-    }
+          // Update state
+          setTutors(prev => prev.filter(t => t.id !== selectedTutor.id));
+          setSelectedTutor(null);
+          showToast('Account permanently deleted.');
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          setSubmittingAction(false);
+        }
+      },
+      true // danger flag
+    );
   };
-
-  // Filtering list locally
-  const getFilteredTutors = () => {
-    let list = tutors;
-
-    if (filterMode === 'pending') {
-      list = list.filter(t => t.kyc_status === 'pending');
-    } else if (filterMode === 'verified') {
-      list = list.filter(t => t.verified);
-    } else if (filterMode === 'suspended') {
-      list = list.filter(t => t.suspended);
-    }
-
-    if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(t => 
-        (t.full_name && t.full_name.toLowerCase().includes(q)) ||
-        (t.email && t.email.toLowerCase().includes(q)) ||
-        (t.phone && t.phone.includes(q))
-      );
-    }
-
-    return list;
-  };
-
-  const filteredTutors = getFilteredTutors();
-
-  // Helper counters
-  const totalTutors = tutors.length;
-  const totalPending = tutors.filter(t => t.kyc_status === 'pending').length;
-  const totalVerified = tutors.filter(t => t.verified).length;
-  const totalSuspended = tutors.filter(t => t.suspended).length;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -379,7 +486,7 @@ export default function AdminTutors() {
             <h1>Tutors Directory</h1>
             <p>Verify qualifications, approve KYC files, suspend accounts, and view profiles.</p>
           </div>
-          <button className="admin-btn admin-btn-secondary" onClick={fetchTutors}>
+          <button className="admin-btn admin-btn-secondary" onClick={() => { fetchMetrics(); }}>
             <RefreshCw size={14} /> Refresh Directory
           </button>
         </div>
@@ -390,7 +497,7 @@ export default function AdminTutors() {
         {/* Metric cards filters */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
           <div 
-            onClick={() => setFilterMode('all')}
+            onClick={() => handleFilterModeChange('all')}
             style={{ 
               backgroundColor: 'var(--canvas)', 
               padding: 'var(--spacing-md)', 
@@ -401,11 +508,11 @@ export default function AdminTutors() {
             }}
           >
             <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--steel)', display: 'block', textTransform: 'uppercase' }}>All Tutors</span>
-            <h2 style={{ margin: '4px 0 0 0' }}>{totalTutors}</h2>
+            <h2 style={{ margin: '4px 0 0 0' }}>{metrics.total}</h2>
           </div>
 
           <div 
-            onClick={() => setFilterMode('pending')}
+            onClick={() => handleFilterModeChange('pending')}
             style={{ 
               backgroundColor: 'var(--canvas)', 
               padding: 'var(--spacing-md)', 
@@ -416,11 +523,11 @@ export default function AdminTutors() {
             }}
           >
             <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--steel)', display: 'block', textTransform: 'uppercase' }}>KYC Pending</span>
-            <h2 style={{ margin: '4px 0 0 0', color: 'var(--accent-orange)' }}>{totalPending}</h2>
+            <h2 style={{ margin: '4px 0 0 0', color: 'var(--accent-orange)' }}>{metrics.pending}</h2>
           </div>
 
           <div 
-            onClick={() => setFilterMode('verified')}
+            onClick={() => handleFilterModeChange('verified')}
             style={{ 
               backgroundColor: 'var(--canvas)', 
               padding: 'var(--spacing-md)', 
@@ -431,11 +538,11 @@ export default function AdminTutors() {
             }}
           >
             <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--steel)', display: 'block', textTransform: 'uppercase' }}>Verified</span>
-            <h2 style={{ margin: '4px 0 0 0', color: 'var(--brand-green)' }}>{totalVerified}</h2>
+            <h2 style={{ margin: '4px 0 0 0', color: 'var(--brand-green)' }}>{metrics.verified}</h2>
           </div>
 
           <div 
-            onClick={() => setFilterMode('suspended')}
+            onClick={() => handleFilterModeChange('suspended')}
             style={{ 
               backgroundColor: 'var(--canvas)', 
               padding: 'var(--spacing-md)', 
@@ -446,7 +553,7 @@ export default function AdminTutors() {
             }}
           >
             <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--steel)', display: 'block', textTransform: 'uppercase' }}>Suspended</span>
-            <h2 style={{ margin: '4px 0 0 0', color: '#FF5252' }}>{totalSuspended}</h2>
+            <h2 style={{ margin: '4px 0 0 0', color: '#FF5252' }}>{metrics.suspended}</h2>
           </div>
         </div>
 
@@ -459,7 +566,7 @@ export default function AdminTutors() {
             style={{ border: 'none', background: 'transparent', color: 'var(--ink)', width: '100%', height: 'auto', padding: 0 }}
             placeholder="Search tutors by name, email or number..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
 
@@ -467,7 +574,7 @@ export default function AdminTutors() {
         <div className="admin-table-container">
           {loading ? (
             <p style={{ textAlign: 'center', padding: '40px' }}>Loading tutors directory...</p>
-          ) : filteredTutors.length === 0 ? (
+          ) : tutors.length === 0 ? (
             <p style={{ textAlign: 'center', padding: '40px' }}>No tutors found matching the criteria.</p>
           ) : (
             <table className="admin-table">
@@ -482,13 +589,13 @@ export default function AdminTutors() {
                 </tr>
               </thead>
               <tbody>
-                {filteredTutors.map((tutor, idx) => (
+                {tutors.map((tutor, idx) => (
                   <tr 
                     key={tutor.id} 
-                    onClick={() => setSelectedTutor(tutor)}
+                    onClick={() => { setSelectedTutor(tutor); setSignedUrls({}); }}
                     style={{ cursor: 'pointer' }}
                   >
-                    <td>{idx + 1}</td>
+                    <td>{(page - 1) * pageSize + idx + 1}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         {tutor.avatar_url ? (
@@ -531,7 +638,7 @@ export default function AdminTutors() {
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <a 
-                        href={`http://localhost:3000/tutors/${tutor.id}`} 
+                        href={`https://tutoronline.pk/tutors/${tutor.id}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="admin-btn admin-btn-secondary"
@@ -545,6 +652,93 @@ export default function AdminTutors() {
               </tbody>
             </table>
           )}
+
+          {/* Pagination Controls */}
+          {totalCount > 0 && (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginTop: '16px', 
+              padding: '12px 16px', 
+              backgroundColor: 'var(--canvas)', 
+              borderRadius: 'var(--rounded-lg)',
+              border: '1px solid var(--hairline)'
+            }}>
+              <span style={{ fontSize: '13px', color: 'var(--steel)' }}>
+                Showing <strong>{totalCount === 0 ? 0 : (page - 1) * pageSize + 1}</strong> to <strong>{Math.min(page * pageSize, totalCount)}</strong> of <strong>{totalCount}</strong> tutors
+              </span>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button 
+                  className="admin-btn admin-btn-secondary"
+                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  Previous
+                </button>
+                {(() => {
+                  const totalPages = Math.ceil(totalCount / pageSize);
+                  const pages = [];
+                  const maxVisible = 5;
+                  let start = Math.max(1, page - Math.floor(maxVisible / 2));
+                  let end = Math.min(totalPages, start + maxVisible - 1);
+                  if (end - start + 1 < maxVisible) {
+                    start = Math.max(1, end - maxVisible + 1);
+                  }
+                  for (let i = start; i <= end; i++) {
+                    pages.push(i);
+                  }
+                  return (
+                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      {start > 1 && (
+                        <>
+                          <button
+                            className={`admin-btn ${page === 1 ? 'admin-btn-primary' : 'admin-btn-secondary'}`}
+                            style={{ padding: '6px 12px', fontSize: '13px', minWidth: '32px' }}
+                            onClick={() => setPage(1)}
+                          >
+                            1
+                          </button>
+                          {start > 2 && <span style={{ padding: '0 4px', color: 'var(--steel)', fontSize: '13px' }}>...</span>}
+                        </>
+                      )}
+                      {pages.map(p => (
+                        <button
+                          key={p}
+                          className={`admin-btn ${page === p ? 'admin-btn-primary' : 'admin-btn-secondary'}`}
+                          style={{ padding: '6px 12px', fontSize: '13px', minWidth: '32px' }}
+                          onClick={() => setPage(p)}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                      {end < totalPages && (
+                        <>
+                          {end < totalPages - 1 && <span style={{ padding: '0 4px', color: 'var(--steel)', fontSize: '13px' }}>...</span>}
+                          <button
+                            className={`admin-btn ${page === totalPages ? 'admin-btn-primary' : 'admin-btn-secondary'}`}
+                            style={{ padding: '6px 12px', fontSize: '13px', minWidth: '32px' }}
+                            onClick={() => setPage(totalPages)}
+                          >
+                            {totalPages}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+                <button 
+                  className="admin-btn admin-btn-secondary"
+                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={page * pageSize >= totalCount}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
@@ -555,7 +749,7 @@ export default function AdminTutors() {
           {/* Overlay to close drawer */}
           <div 
             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 940 }}
-            onClick={() => { setSelectedTutor(null); setShowObjections(false); }}
+            onClick={() => { setSelectedTutor(null); setShowObjections(false); setSignedUrls({}); }}
           />
 
           <div className={`admin-drawer ${selectedTutor ? 'open' : ''}`}>
@@ -567,7 +761,7 @@ export default function AdminTutors() {
                 <span style={{ fontSize: '11px', color: 'var(--steel)' }}>ID: {selectedTutor.id}</span>
               </div>
               <button 
-                onClick={() => { setSelectedTutor(null); setShowObjections(false); }}
+                onClick={() => { setSelectedTutor(null); setShowObjections(false); setSignedUrls({}); }}
                 style={{ color: 'var(--steel)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}
               >
                 ✕
@@ -577,35 +771,114 @@ export default function AdminTutors() {
             {/* Drawer Body Scroll */}
             <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               
-              {/* Profile card summary */}
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', padding: '16px', border: '1px solid var(--hairline)', borderRadius: 'var(--rounded-lg)', backgroundColor: 'var(--surface-soft)' }}>
-                {selectedTutor.avatar_url ? (
-                  <img 
-                    src={selectedTutor.avatar_url.startsWith('http') ? selectedTutor.avatar_url : `https://qlhcavfyllfcwifxbtbu.supabase.co/storage/v1/object/public/teacher-media/${selectedTutor.avatar_url}`}
-                    alt="" 
-                    style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover' }}
-                  />
-                ) : (
-                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'var(--canvas)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '18px', color: 'var(--steel)' }}>
-                    {selectedTutor.full_name?.substring(0, 2).toUpperCase() || 'TR'}
-                  </div>
-                )}
-                <div>
-                  <h4 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>{selectedTutor.full_name}</h4>
-                  <span style={{ fontSize: '12px', color: 'var(--steel)', display: 'block' }}>{selectedTutor.email}</span>
-                  <span style={{ fontSize: '12px', color: 'var(--steel)', display: 'block' }}>{selectedTutor.phone || 'No phone'}</span>
+              {/* KYC Status & Verification Badge Toggle Above Card */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span className={`admin-badge ${
+                    selectedTutor.suspended 
+                      ? 'admin-badge-red' 
+                      : (!selectedTutor.onboarding_complete || !selectedTutor.kyc_docs || Object.keys(selectedTutor.kyc_docs).length === 0)
+                        ? 'admin-badge-grey'
+                        : selectedTutor.kyc_status === 'approved' 
+                          ? 'admin-badge-green' 
+                          : selectedTutor.kyc_status === 'rejected' 
+                            ? 'admin-badge-purple' 
+                            : 'admin-badge-orange'
+                  }`}>
+                    {selectedTutor.suspended 
+                      ? 'Suspended' 
+                      : (!selectedTutor.onboarding_complete || !selectedTutor.kyc_docs || Object.keys(selectedTutor.kyc_docs).length === 0)
+                        ? 'Onboarding Incomplete'
+                        : `KYC status: ${selectedTutor.kyc_status}`}
+                  </span>
+                                   {/* Verified Badge Pill (Informational Only, Hidden when unverified) */}
+                  {selectedTutor.verified && (
+                    <span
+                      style={{
+                        background: 'var(--brand-green-soft)',
+                        border: '1px solid var(--brand-green)',
+                        padding: '4px 10px',
+                        borderRadius: '999px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        cursor: 'help'
+                      }}
+                      title={`Verified on ${(() => {
+                        const verifiedAt = selectedTutor.kyc_verifications?.profile_verified_at || selectedTutor.kyc_verifications?.approved_at || selectedTutor.created_at;
+                        if (!verifiedAt) return 'JUL 2026';
+                        const d = new Date(verifiedAt);
+                        const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+                        const year = d.getFullYear();
+                        return `${month} ${year}`;
+                      })()}`}
+                    >
+                      <img 
+                        src="/shield.svg" 
+                        alt="Verified" 
+                        style={{ 
+                          width: '14px', 
+                          height: '14px' 
+                        }} 
+                      />
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand-green-dark)' }}>
+                        VERIFIED
+                      </span>
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Status Banner */}
-              <div>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--steel)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Verification Status</span>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span className={`admin-badge ${selectedTutor.suspended ? 'admin-badge-red' : selectedTutor.kyc_status === 'approved' ? 'admin-badge-green' : 'admin-badge-orange'}`}>
-                    {selectedTutor.suspended ? 'Suspended' : `KYC status: ${selectedTutor.kyc_status}`}
-                  </span>
-                  {selectedTutor.verified && <img src="/shield.svg" alt="Verified" style={{ width: '15px', height: '15px', verticalAlign: 'middle' }} />}
+              {/* Tutor Profile Summary Card (Name Card) */}
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', padding: '16px', border: '1px solid var(--hairline)', borderRadius: 'var(--rounded-lg)', backgroundColor: 'var(--surface-soft)', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1 }}>
+                  {selectedTutor.avatar_url ? (
+                    <img 
+                      src={selectedTutor.avatar_url.startsWith('http') ? selectedTutor.avatar_url : `https://qlhcavfyllfcwifxbtbu.supabase.co/storage/v1/object/public/teacher-media/${selectedTutor.avatar_url}`}
+                      alt="" 
+                      style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'var(--canvas)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '18px', color: 'var(--steel)' }}>
+                      {selectedTutor.full_name?.substring(0, 2).toUpperCase() || 'TR'}
+                    </div>
+                  )}
+                  <div>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>{selectedTutor.full_name}</h4>
+                    <span style={{ fontSize: '12px', color: 'var(--steel)', display: 'block' }}>{selectedTutor.email}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--steel)', display: 'block' }}>{selectedTutor.phone || 'No phone'}</span>
+                  </div>
                 </div>
+
+                {/* Shield Toggle Icon on the right side of the card */}
+                <button
+                  onClick={toggleVerification}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: selectedTutor.kyc_status === 'approved' ? 'pointer' : 'not-allowed',
+                    padding: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: selectedTutor.kyc_status === 'approved' ? 1 : 0.4,
+                    transition: 'transform 0.2s ease',
+                  }}
+                  title={selectedTutor.kyc_status === 'approved' ? (selectedTutor.verified ? "Remove Verified Badge" : "Give Verified Badge") : "Approve KYC first then verify the profile."}
+                  disabled={submittingAction}
+                  onMouseEnter={(e) => { if (selectedTutor.kyc_status === 'approved') e.currentTarget.style.transform = 'scale(1.1)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                >
+                  <img 
+                    src="/shield.svg" 
+                    alt="Verified Toggle" 
+                    style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      filter: selectedTutor.verified ? 'none' : 'grayscale(100%) opacity(30%)' 
+                    }} 
+                  />
+                </button>
               </div>
 
               {/* Bio & Details */}
@@ -799,41 +1072,39 @@ export default function AdminTutors() {
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    {/* Toggle Verified Badge Button */}
-                    <button 
-                      onClick={toggleVerification} 
-                      className={`admin-btn ${selectedTutor.verified ? 'admin-btn-secondary' : 'admin-btn-primary'}`} 
-                      style={{ flex: 1 }}
-                      disabled={submittingAction}
-                    >
-                      {selectedTutor.verified ? 'Remove Verified' : 'Give Verified Badge'}
-                    </button>
-
-                    {/* Suspend Button */}
-                    <button 
-                      onClick={toggleSuspension} 
-                      className={`admin-btn ${selectedTutor.suspended ? 'admin-btn-primary' : 'admin-btn-secondary'}`} 
-                      style={{ flex: 1 }}
-                      disabled={submittingAction}
-                    >
-                      {selectedTutor.suspended ? <><UserCheck size={14} /> Unsuspend</> : <><UserX size={14} /> Suspend</>}
-                    </button>
-                  </div>
-
-                  {adminRole === 'super_admin' && (
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      {/* Delete Account (Super Admin only) */}
+                  <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                    {selectedTutor.suspended ? (
+                      <>
+                        <button 
+                          onClick={toggleSuspension} 
+                          className="admin-btn" 
+                          style={{ flex: 1, backgroundColor: 'var(--brand-green)', color: '#fff', border: 'none' }}
+                          disabled={submittingAction}
+                        >
+                          <UserCheck size={14} /> Unsuspend
+                        </button>
+                        {adminRole === 'super_admin' && (
+                          <button 
+                            onClick={handleDeleteAccount} 
+                            className="admin-btn admin-btn-danger" 
+                            style={{ flex: 1 }}
+                            disabled={submittingAction}
+                          >
+                            <Trash2 size={14} /> Delete Account
+                          </button>
+                        )}
+                      </>
+                    ) : (
                       <button 
-                        onClick={handleDeleteAccount} 
-                        className="admin-btn admin-btn-danger" 
+                        onClick={toggleSuspension} 
+                        className="admin-btn admin-btn-secondary" 
                         style={{ flex: 1 }}
                         disabled={submittingAction}
                       >
-                        <Trash2 size={14} /> Delete Account
+                        <UserX size={14} /> Suspend Account
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </>
               )}
 
@@ -1148,6 +1419,74 @@ export default function AdminTutors() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast container */}
+      {toast.show && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          backgroundColor: toast.type === 'error' ? '#EF4444' : 'var(--brand-green-dark)',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: 'var(--rounded-md)',
+          boxShadow: 'var(--shadow-lg)',
+          zIndex: 9999,
+          fontWeight: 600,
+          fontSize: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          border: toast.type === 'error' ? '1px solid #F87171' : '1px solid var(--brand-green)'
+        }}>
+          {toast.type === 'error' ? <X size={16} /> : <Check size={16} />}
+          {toast.message}
+        </div>
+      )}
+
+      {/* Consent Modal overlay & dialog */}
+      {confirmModal.isOpen && (
+        <>
+          <div 
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9998 }}
+            onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+          />
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'var(--canvas)',
+            borderRadius: 'var(--rounded-lg)',
+            border: '1px solid var(--hairline)',
+            boxShadow: 'var(--shadow-xl)',
+            padding: '24px',
+            width: '400px',
+            maxWidth: '90%',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+          }}>
+            <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ink)' }}>{confirmModal.title}</h4>
+            <p style={{ margin: 0, fontSize: '14px', color: 'var(--slate)', lineHeight: 1.5 }}>{confirmModal.message}</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+              <button 
+                className="admin-btn admin-btn-secondary" 
+                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+              >
+                {confirmModal.cancelText}
+              </button>
+              <button 
+                className={`admin-btn ${confirmModal.danger ? 'admin-btn-danger' : 'admin-btn-primary'}`}
+                onClick={confirmModal.onConfirm}
+              >
+                {confirmModal.confirmText}
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
     </div>
