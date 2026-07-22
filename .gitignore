@@ -23,6 +23,9 @@ node_modules
 # misc
 .DS_Store
 *.pem
+*.py
+*.tar.gz
+*.sh
 
 # debug
 npm-debug.log*
@@ -40,7 +43,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-#instructions
+# instructions
 design.md
 backend.md
 idea.md
@@ -51,6 +54,10 @@ CLAUDE.md
 PRD.md
 INSTRUCTIONS.md
 .agents 
+
+# separate apps / sub-repositories
+/admin
+/onboarding-tutors
 
 # db backups
 /backups
