@@ -70,7 +70,7 @@ export async function generateMetadata({ params }) {
   const title = `${name} - Tutor in ${city} | TutorOnline.pk`;
   const description = `Rating: ${rating}${expStr} | City: ${city}. ${profile.bio || ''}`.trim();
   
-  let avatarUrl = 'https://tutoronline.pk/default-og.png';
+  let avatarUrl = 'https://tutoronline.pk/featured-image.jpg';
   if (profile.avatar_url) {
     if (profile.avatar_url.startsWith('http')) {
       avatarUrl = profile.avatar_url;
@@ -90,6 +90,7 @@ export async function generateMetadata({ params }) {
       images: [
         {
           url: avatarUrl,
+          secureUrl: avatarUrl,
           width: 800,
           height: 800,
           alt: `${name} - Tutor Profile`,

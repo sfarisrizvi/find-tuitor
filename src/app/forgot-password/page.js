@@ -72,18 +72,23 @@ export default function ForgotPassword() {
       gridTemplateColumns: '1.2fr 1fr',
       fontFamily: 'inherit',
     }} className="grid-2col">
-      <title>Forgot Password | Find Tutor Online</title>
-      <meta name="description" content="Reset your Find Tutor account password securely. Receive verification codes to regain access to your account." />
-      <link rel="canonical" href="https://find-tuitor.com/forgot-password" />
-      <meta property="og:title" content="Forgot Password | Find Tutor Online" />
-      <meta property="og:description" content="Reset your Find Tutor account password securely. Receive verification codes to regain access to your account." />
-      <meta property="og:url" content="https://find-tuitor.com/forgot-password" />
+      <title>Forgot Password | TutorOnline.pk</title>
+      <meta name="description" content="Reset your TutorOnline.pk account password securely. Receive verification codes to regain access to your account." />
+      <link rel="canonical" href="https://tutoronline.pk/forgot-password" />
+      <meta property="og:site_name" content="TutorOnline.pk" />
+      <meta property="og:title" content="Forgot Password | TutorOnline.pk" />
+      <meta property="og:description" content="Reset your TutorOnline.pk account password securely. Receive verification codes to regain access to your account." />
+      <meta property="og:url" content="https://tutoronline.pk/forgot-password" />
       <meta property="og:type" content="website" />
-      <meta property="og:image" content="https://find-tuitor.com/favicon.png" />
+      <meta property="og:image" content="https://tutoronline.pk/featured-image.jpg" />
+      <meta property="og:image:secure_url" content="https://tutoronline.pk/featured-image.jpg" />
+      <meta property="og:image:type" content="image/jpeg" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Forgot Password | Find Tutor Online" />
-      <meta name="twitter:description" content="Reset your Find Tutor account password securely. Receive verification codes to regain access to your account." />
-      <meta name="twitter:image" content="https://find-tuitor.com/favicon.png" />
+      <meta name="twitter:title" content="Forgot Password | TutorOnline.pk" />
+      <meta name="twitter:description" content="Reset your TutorOnline.pk account password securely. Receive verification codes to regain access to your account." />
+      <meta name="twitter:image" content="https://tutoronline.pk/featured-image.jpg" />
 
       
       {/* Left Side: Form */}

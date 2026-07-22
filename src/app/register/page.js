@@ -152,18 +152,23 @@ export default function Register() {
       gridTemplateColumns: '1.2fr 1fr',
       fontFamily: 'inherit',
     }} className="grid-2col">
-      <title>Tutor Registration | Join as an Educator | Find Tutor Online</title>
-      <meta name="description" content="Register as a tutor on Find Tutor Online. Vetted educators earn, set their own rates, teach online, and manage milestones securely." />
-      <link rel="canonical" href="https://find-tuitor.com/register" />
-      <meta property="og:title" content="Tutor Registration | Join as an Educator | Find Tutor Online" />
-      <meta property="og:description" content="Register as a tutor on Find Tutor Online. Vetted educators earn, set their own rates, teach online, and manage milestones securely." />
-      <meta property="og:url" content="https://find-tuitor.com/register" />
+      <title>Tutor Registration | Join as an Educator | TutorOnline.pk</title>
+      <meta name="description" content="Register as a tutor on TutorOnline.pk. Vetted educators earn, set their own rates, teach online, and manage milestones securely." />
+      <link rel="canonical" href="https://tutoronline.pk/register" />
+      <meta property="og:site_name" content="TutorOnline.pk" />
+      <meta property="og:title" content="Tutor Registration | Join as an Educator | TutorOnline.pk" />
+      <meta property="og:description" content="Register as a tutor on TutorOnline.pk. Vetted educators earn, set their own rates, teach online, and manage milestones securely." />
+      <meta property="og:url" content="https://tutoronline.pk/register" />
       <meta property="og:type" content="website" />
-      <meta property="og:image" content="https://find-tuitor.com/favicon.png" />
+      <meta property="og:image" content="https://tutoronline.pk/featured-image.jpg" />
+      <meta property="og:image:secure_url" content="https://tutoronline.pk/featured-image.jpg" />
+      <meta property="og:image:type" content="image/jpeg" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Tutor Registration | Join as an Educator | Find Tutor Online" />
-      <meta name="twitter:description" content="Register as a tutor on Find Tutor Online. Vetted educators earn, set their own rates, teach online, and manage milestones securely." />
-      <meta name="twitter:image" content="https://find-tuitor.com/favicon.png" />
+      <meta name="twitter:title" content="Tutor Registration | Join as an Educator | TutorOnline.pk" />
+      <meta name="twitter:description" content="Register as a tutor on TutorOnline.pk. Vetted educators earn, set their own rates, teach online, and manage milestones securely." />
+      <meta name="twitter:image" content="https://tutoronline.pk/featured-image.jpg" />
 
 
       {/* Left Side: Form */}

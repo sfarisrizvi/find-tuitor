@@ -58,25 +58,23 @@ export default function FindTutorLanding() {
         />
       )}
 
-      <style>{`
-        .dropdown-item:hover {
-          background-color: var(--brand-green-soft) !important;
-          color: var(--brand-green-dark) !important;
-        }
-      `}</style>
-
       <title>Find Tutors Online | Pakistan&apos;s Top Verified Tutors</title>
       <meta name="description" content="Search from our top vetted academic elite tutors for Matric, FSc, O/A Levels, and Entry Tests. Secure milestone escrow protection." />
-      <link rel="canonical" href="https://find-tuitor.com/find-tutor" />
+      <link rel="canonical" href="https://tutoronline.pk/find-tutor" />
+      <meta property="og:site_name" content="TutorOnline.pk" />
       <meta property="og:title" content="Find Tutors Online | Pakistan's Top Verified Tutors" />
       <meta property="og:description" content="Search from our top vetted academic elite tutors for Matric, FSc, O/A Levels, and Entry Tests. Secure milestone escrow protection." />
-      <meta property="og:url" content="https://find-tuitor.com/find-tutor" />
+      <meta property="og:url" content="https://tutoronline.pk/find-tutor" />
       <meta property="og:type" content="website" />
-      <meta property="og:image" content="https://find-tuitor.com/favicon.png" />
+      <meta property="og:image" content="https://tutoronline.pk/featured-image.jpg" />
+      <meta property="og:image:secure_url" content="https://tutoronline.pk/featured-image.jpg" />
+      <meta property="og:image:type" content="image/jpeg" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="Find Tutors Online | Pakistan's Top Verified Tutors" />
       <meta name="twitter:description" content="Search from our top vetted academic elite tutors for Matric, FSc, O/A Levels, and Entry Tests. Secure milestone escrow protection." />
-      <meta name="twitter:image" content="https://find-tuitor.com/favicon.png" />
+      <meta name="twitter:image" content="https://tutoronline.pk/featured-image.jpg" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

@@ -54,18 +54,23 @@ export default function Contact() {
 
   return (
     <div style={{ backgroundColor: 'var(--surface)', minHeight: 'calc(100vh - 64px)', padding: 'var(--spacing-xxl) 0' }}>
-      <title>Contact Us | Tutor Online</title>
-      <meta name="description" content="Get in touch with Tutor Online. Ask questions about billing, security escrow, academic vetting, or support." />
-      <link rel="canonical" href="https://find-tuitor.com/contact" />
-      <meta property="og:title" content="Contact Us | Tutor Online" />
-      <meta property="og:description" content="Get in touch with Tutor Online. Ask questions about billing, security escrow, academic vetting, or support." />
-      <meta property="og:url" content="https://find-tuitor.com/contact" />
+      <title>Contact Us | TutorOnline.pk</title>
+      <meta name="description" content="Get in touch with TutorOnline.pk. Ask questions about billing, security escrow, academic vetting, or support." />
+      <link rel="canonical" href="https://tutoronline.pk/contact" />
+      <meta property="og:site_name" content="TutorOnline.pk" />
+      <meta property="og:title" content="Contact Us | TutorOnline.pk" />
+      <meta property="og:description" content="Get in touch with TutorOnline.pk. Ask questions about billing, security escrow, academic vetting, or support." />
+      <meta property="og:url" content="https://tutoronline.pk/contact" />
       <meta property="og:type" content="website" />
-      <meta property="og:image" content="https://find-tuitor.com/favicon.png" />
+      <meta property="og:image" content="https://tutoronline.pk/featured-image.jpg" />
+      <meta property="og:image:secure_url" content="https://tutoronline.pk/featured-image.jpg" />
+      <meta property="og:image:type" content="image/jpeg" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Contact Us | Tutor Online" />
-      <meta name="twitter:description" content="Get in touch with Tutor Online. Ask questions about billing, security escrow, academic vetting, or support." />
-      <meta name="twitter:image" content="https://find-tuitor.com/favicon.png" />
+      <meta name="twitter:title" content="Contact Us | TutorOnline.pk" />
+      <meta name="twitter:description" content="Get in touch with TutorOnline.pk. Ask questions about billing, security escrow, academic vetting, or support." />
+      <meta name="twitter:image" content="https://tutoronline.pk/featured-image.jpg" />
       <div className="container" style={{ maxWidth: '1000px' }}>
 
         <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-xxl)' }}>
