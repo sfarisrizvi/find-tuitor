@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { sendNotification } from '../../../lib/notifications';
 
 export async function POST(request) {
   try {
@@ -46,6 +47,30 @@ export async function POST(request) {
         { error: 'Failed to submit message to database.' },
         { status: 500 }
       );
+    }
+
+    // Dispatch notification to admins
+    try {
+      const { data: adminUsers } = await supabase
+        .rpc('get_admin_users')
+        .catch(() => ({ data: null }));
+
+      if (adminUsers && Array.isArray(adminUsers)) {
+        for (const admin of adminUsers) {
+          await sendNotification({
+            userId: admin.id,
+            userEmail: admin.email,
+            userName: 'Admin',
+            title: `New Inquiry from ${name.trim()}`,
+            message: message.trim().substring(0, 100) + '...',
+            type: 'contact_inquiry',
+            priority: 'HIGH',
+            actionUrl: '/admin/dashboard',
+          });
+        }
+      }
+    } catch (notifErr) {
+      console.warn('Admin notification warning:', notifErr.message);
     }
 
     return NextResponse.json(
