@@ -59,5 +59,9 @@ INSTRUCTIONS.md
 /admin
 /onboarding-tutors
 
+# secret email docs
+src/emails/*.md
+src/emails/RESEND_TEMPLATES.md
+
 # db backups
 /backups

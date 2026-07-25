@@ -1,24 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Complete Your Tutor Profile</title>
   <style>
-    body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; }
-    .container { max-width: 600px; margin: 30px auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-    .header { padding: 30px; text-align: center; background-color: #001E2B; border-bottom: 1px solid #0f2d3c; }
-    .header img { height: 32px; }
-    .content { padding: 40px 30px; text-align: center; }
-    .badge-icon { font-size: 48px; margin-bottom: 16px; }
-    h1 { margin: 0 0 12px 0; font-size: 24px; font-weight: 700; color: #0f172a; }
-    p { margin: 0 0 24px 0; font-size: 15px; line-height: 1.6; color: #475569; }
-    .highlight-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: left; }
-    .highlight-card h4 { margin: 0 0 8px 0; color: #0f172a; font-size: 15px; }
-    .cta-button { display: inline-block; padding: 14px 32px; background-color: #10B981; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 999px; }
-    .footer { padding: 24px 30px; text-align: center; border-top: 1px solid #f1f5f9; font-size: 12px; color: #94a3b8; background-color: #f8fafc; }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f1f5f9;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #1e293b;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 30px auto;
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    .header {
+      padding: 30px;
+      text-align: center;
+      background-color: #001E2B;
+      border-bottom: 1px solid #0f2d3c;
+    }
+
+    .header img {
+      height: 32px;
+    }
+
+    .content {
+      padding: 40px 30px;
+      text-align: center;
+    }
+
+    .badge-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 12px 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    p {
+      margin: 0 0 24px 0;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #475569;
+    }
+
+    .highlight-card {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    .highlight-card h4 {
+      margin: 0 0 8px 0;
+      color: #0f172a;
+      font-size: 15px;
+    }
+
+    .cta-button {
+      display: inline-block;
+      padding: 14px 32px;
+      background-color: #10B981;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 15px;
+      border-radius: 999px;
+    }
+
+    .footer {
+      padding: 24px 30px;
+      text-align: center;
+      border-top: 1px solid #f1f5f9;
+      font-size: 12px;
+      color: #94a3b8;
+      background-color: #f8fafc;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="header">
@@ -26,9 +103,10 @@
     </div>
     <div class="content">
       <div class="badge-icon">📚</div>
-      <h1>Parents are searching for tutors in {{CITY}}!</h1>
-      <p>Hello {{USER_NAME}}, you started registering on TutorOnline.pk but your tutor profile is still incomplete. Complete your profile today to start receiving student leads!</p>
-      
+      <h1>Parents are searching for tutors like you!</h1>
+      <p>Hello {{USER_NAME}}, you started registering on TutorOnline.pk but your tutor profile is still incomplete.
+        Complete your profile today to start receiving student leads!</p>
+
       <div class="highlight-card">
         <h4>Why complete your profile?</h4>
         <span style="color: #475569; font-size: 14px; line-height: 1.8;">
@@ -38,11 +116,12 @@
         </span>
       </div>
 
-      <a href="{{ACTION_URL}}" class="cta-button">Complete Profile Now</a>
+      <a href="{{ONBOARDING_URL}}" class="cta-button">Complete Profile Now</a>
     </div>
     <div class="footer">
       &copy; 2026 TutorOnline.pk — Tutor Engagement Team.
     </div>
   </div>
 </body>
+
 </html>

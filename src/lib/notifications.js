@@ -49,9 +49,12 @@ export async function sendNotification({
           let htmlContent = fs.readFileSync(templatePath, 'utf8');
 
           // Merge placeholders
+          const fullActionUrl = actionUrl ? `https://tutoronline.pk${actionUrl}` : 'https://tutoronline.pk';
           const mergeData = {
             USER_NAME: userName,
-            ACTION_URL: actionUrl ? `https://tutoronline.pk${actionUrl}` : 'https://tutoronline.pk',
+            ACTION_URL: fullActionUrl,
+            PROFILE_URL: templateData.PROFILE_URL || (userId ? `https://tutoronline.pk/tutors/${userId}` : fullActionUrl),
+            ONBOARDING_URL: templateData.ONBOARDING_URL || 'https://tutoronline.pk/tutor/onboarding',
             TITLE: title,
             MESSAGE: message,
             ...templateData,
