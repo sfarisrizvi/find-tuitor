@@ -4,7 +4,6 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Mail, Phone, MapPin, Globe } from 'lucide-react';
-import { createClient } from '../../utils/supabase/client';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -24,22 +23,22 @@ export default function Contact() {
     e.preventDefault();
     setStatus('Submitting...');
 
-    const supabase = createClient();
     try {
-      const { error } = await supabase
-        .from('contact_queries')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          role: formData.role,
-          message: formData.message,
-          status: 'pending'
-        });
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-      if (error) throw error;
+      const data = await res.json();
 
-      setStatus('Message sent successfully! We will get back to you shortly.');
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to submit form.');
+      }
+
+      setStatus(data.message || 'Message sent successfully! We will get back to you shortly.');
       setFormData({
         name: '',
         email: '',
