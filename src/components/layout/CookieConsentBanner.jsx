@@ -1,7 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { createClient } from '../../utils/supabase/client';
 
 export function CookieConsentBanner() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showBanner, setShowBanner] = useState(() => {
     if (typeof window !== 'undefined') {
       return !localStorage.getItem('cookie_consent_choice');
@@ -21,12 +23,33 @@ export function CookieConsentBanner() {
   };
 
   useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setIsLoggedIn(true);
+        updateConsent(true);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setIsLoggedIn(true);
+        updateConsent(true);
+      } else {
+        setIsLoggedIn(false);
+      }
+    });
+
     if (typeof window !== 'undefined') {
       const savedChoice = localStorage.getItem('cookie_consent_choice');
       if (savedChoice === 'all') {
         updateConsent(true);
       }
     }
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const handleAcceptAll = () => {
@@ -41,7 +64,7 @@ export function CookieConsentBanner() {
     setShowBanner(false);
   };
 
-  if (!showBanner) return null;
+  if (isLoggedIn || !showBanner) return null;
 
   return (
     <div style={{
