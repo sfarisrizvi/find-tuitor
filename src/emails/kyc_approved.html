@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Profile is Verified!</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #001219; font-family: 'Segoe UI', Arial, sans-serif; color: #f8fafc; }
+    .container { max-width: 600px; margin: 30px auto; background-color: #001E2B; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; overflow: hidden; }
+    .header { padding: 30px; text-align: center; background: linear-gradient(135deg, #001E2B, #023E3A); border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .header img { height: 32px; }
+    .content { padding: 40px 30px; text-align: center; }
+    .badge-icon { font-size: 48px; margin-bottom: 16px; }
+    h1 { margin: 0 0 12px 0; font-size: 24px; font-weight: 700; color: #ffffff; }
+    p { margin: 0 0 24px 0; font-size: 15px; line-height: 1.6; color: #94a3b8; }
+    .cta-button { display: inline-block; padding: 14px 32px; background-color: #10B981; color: #001E2B; text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 999px; transition: all 0.2s ease; }
+    .footer { padding: 24px 30px; text-align: center; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://tutoronline.pk/dark%20logo.svg" alt="TutorOnline.pk">
+    </div>
+    <div class="content">
+      <div class="badge-icon">🎉 ✅</div>
+      <h1>Congratulations, {{USER_NAME}}!</h1>
+      <p>Your document verification was successful. Your tutor profile has been awarded the official <strong>Verified Tutor Badge</strong>, boosting your visibility across Pakistan by <strong>3x</strong>!</p>
+      <a href="{{ACTION_URL}}" class="cta-button">View Your Verified Profile</a>
+    </div>
+    <div class="footer">
+      &copy; 2026 TutorOnline.pk — Connecting families with Pakistan's best verified educators.
+    </div>
+  </div>
+</body>
+</html>

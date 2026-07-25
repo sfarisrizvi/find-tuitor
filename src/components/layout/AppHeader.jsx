@@ -6,6 +6,7 @@ import { Button } from '../ui/Button';
 import { Menu, X, User } from 'lucide-react';
 import { createClient } from '../../utils/supabase/client';
 import { NAV_LINKS } from './navbar.config';
+import { HeaderNotificationBell } from './HeaderNotificationBell';
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -228,7 +229,8 @@ export function AppHeader() {
           {!initialized ? (
             <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'var(--hairline-strong)', animation: 'pulse 1.5s infinite ease-in-out' }} />
           ) : user ? (
-            <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+              <HeaderNotificationBell user={user} profile={profile} />
               <button
                 id="header-avatar-btn"
                 onClick={() => setShowDropdown(!showDropdown)}
