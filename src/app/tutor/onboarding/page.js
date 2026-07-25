@@ -1942,7 +1942,9 @@ function OnboardingContent() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '0 10px'
+            padding: '0 10px',
+            overflowX: 'auto',
+            minWidth: '100%'
           }}>
             {/* Background connecting line */}
             <div style={{

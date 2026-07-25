@@ -61,11 +61,49 @@ export async function sendNotification({
         if (fs.existsSync(templatePath)) {
           let htmlContent = fs.readFileSync(templatePath, 'utf8');
 
+          // Fetch avatar URL from Database by userId or email if not explicitly provided
+          let dbAvatarUrl = templateData.USER_AVATAR;
+          if (!dbAvatarUrl) {
+            if (userId) {
+              const { data: tutorProf } = await supabase
+                .from('tutor_profiles')
+                .select('avatar_url')
+                .eq('id', userId)
+                .maybeSingle();
+              if (tutorProf?.avatar_url) dbAvatarUrl = tutorProf.avatar_url;
+
+              if (!dbAvatarUrl) {
+                const { data: clientProf } = await supabase
+                  .from('client_profiles')
+                  .select('avatar_url')
+                  .eq('id', userId)
+                  .maybeSingle();
+                if (clientProf?.avatar_url) dbAvatarUrl = clientProf.avatar_url;
+              }
+            } else if (userEmail) {
+              const { data: tutorProf } = await supabase
+                .from('tutor_profiles')
+                .select('avatar_url')
+                .eq('email', userEmail)
+                .maybeSingle();
+              if (tutorProf?.avatar_url) dbAvatarUrl = tutorProf.avatar_url;
+            }
+          }
+
+          let resolvedAvatar = 'https://tutoronline.pk/verified-user.svg';
+          if (dbAvatarUrl && typeof dbAvatarUrl === 'string' && dbAvatarUrl.trim()) {
+            if (dbAvatarUrl.startsWith('http://') || dbAvatarUrl.startsWith('https://')) {
+              resolvedAvatar = dbAvatarUrl;
+            } else {
+              resolvedAvatar = `https://tutoronline.pk${dbAvatarUrl.startsWith('/') ? '' : '/'}${dbAvatarUrl}`;
+            }
+          }
+
           // Merge placeholders
           const fullActionUrl = actionUrl ? `https://tutoronline.pk${actionUrl}` : 'https://tutoronline.pk';
           const mergeData = {
             USER_NAME: userName,
-            USER_AVATAR: templateData.USER_AVATAR || 'https://tutoronline.pk/verified-user.svg',
+            USER_AVATAR: resolvedAvatar,
             ACTION_URL: fullActionUrl,
             PROFILE_URL: templateData.PROFILE_URL || (userId ? `https://tutoronline.pk/tutors/${userId}` : fullActionUrl),
             ONBOARDING_URL: templateData.ONBOARDING_URL || 'https://tutoronline.pk/tutor/onboarding',
@@ -75,7 +113,7 @@ export async function sendNotification({
           };
 
           Object.keys(mergeData).forEach((key) => {
-            const regex = new RegExp(`{{${key}}}`, 'g');
+            const regex = new RegExp(`{1,3}${key}}{1,3}`, 'g');
             htmlContent = htmlContent.replace(regex, mergeData[key] || '');
           });
 

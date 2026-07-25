@@ -8,7 +8,7 @@ import { Select } from '../../../components/ui/Select';
 import {
   Star, MapPin, ShieldCheck, Lock, Phone, Mail, Award,
   CheckCircle2, BookOpen, Globe, Clock, Briefcase, GraduationCap,
-  ChevronRight, Users, Calendar, Pencil, Camera, X
+  ChevronRight, Users, Calendar, Pencil, Camera, X, ShieldAlert
 } from 'lucide-react';
 import Link from 'next/link';
 import { ImageCropModal } from '../../../components/ui/ImageCropModal';
@@ -696,6 +696,41 @@ export default function TutorProfile() {
           onCropComplete={handleCropComplete} 
           onCancel={() => setCropConfig(null)} 
         />
+      )}
+
+      {/* Profile Owner KYC Banner */}
+      {isOwner && (
+        <div className="profile-container" style={{ marginBottom: '24px' }}>
+          {tutor?.kyc_status === 'rejected' ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', backgroundColor: '#FEE2E2', border: '1px solid #EF4444', borderRadius: 'var(--rounded-lg)', padding: '16px 20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <ShieldAlert size={22} color="#EF4444" />
+                <span style={{ fontWeight: 700, color: '#991B1B', fontSize: '15px' }}>
+                  Action Required: Document Verification Update
+                </span>
+              </div>
+              <Link href="/tutor/fix-documents" style={{ textDecoration: 'none' }}>
+                <Button variant="primary" style={{ backgroundColor: '#EF4444', color: '#fff', border: 'none', fontSize: '13px', height: '36px' }}>
+                  See why & fix documents →
+                </Button>
+              </Link>
+            </div>
+          ) : tutor?.kyc_status === 'pending' || (!tutor?.kyc_status && tutor?.kyc_docs) ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#FFF9E6', border: '1px solid #FFD566', borderRadius: 'var(--rounded-lg)', padding: '14px 20px' }}>
+              <Clock size={20} color="#B45309" />
+              <span style={{ fontWeight: 600, color: '#78350F', fontSize: '14px' }}>
+                Verification Pending: Your documents are currently under review by our moderation team.
+              </span>
+            </div>
+          ) : tutor?.kyc_status === 'approved' ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-lg)', padding: '14px 20px' }}>
+              <CheckCircle2 size={20} color="var(--brand-green-dark)" />
+              <span style={{ fontWeight: 600, color: 'var(--brand-green-dark)', fontSize: '14px' }}>
+                Your profile is complete and live!
+              </span>
+            </div>
+          ) : null}
+        </div>
       )}
       {isEditingCategories && (
         <CategoryEditModal 
@@ -1424,6 +1459,16 @@ export default function TutorProfile() {
                                 {bgNote}
                               </div>
                             )}
+                          </div>
+                        )}
+                        {/* Fix Documents Button for Profile Owner */}
+                        {isOwner && (cnicStatus === 'rejected' || degreeStatus === 'rejected' || tutor.kyc_status === 'rejected') && (
+                          <div style={{ marginTop: '12px', borderTop: '1px solid var(--hairline)', paddingTop: '12px' }}>
+                            <Link href="/tutor/fix-documents" style={{ textDecoration: 'none' }}>
+                              <Button variant="primary" style={{ backgroundColor: '#EF4444', color: '#fff', border: 'none', width: '100%', fontSize: '13px', height: '36px' }}>
+                                Fix Flagged Documents →
+                              </Button>
+                            </Link>
                           </div>
                         )}
                       </>

@@ -107,46 +107,28 @@ export default function ClientOnboarding() {
 
   const saveProgress = async (nextStep) => {
     setSaving(true);
-    const supabase = createClient();
     try {
-      // 1. Update basic client profile details
-      const updatePayload = {
-        full_name: fullName,
-        phone,
-        city,
-        address,
-        client_type: clientType,
-        onboarding_step: nextStep
-      };
+      const res = await fetch('/api/client/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'SAVE_STEP',
+          nextStep: nextStep,
+          clientType,
+          fullName,
+          phone,
+          city,
+          address,
+          studentGrade,
+          studentSchool,
+          studentSubjects,
+          childrenData
+        })
+      });
 
-      if (clientType === 'student') {
-        updatePayload.grade = studentGrade;
-        updatePayload.school_college = studentSchool;
-        updatePayload.subjects = studentSubjects;
-      }
-
-      await supabase
-        .from('client_profiles')
-        .update(updatePayload)
-        .eq('id', user.id);
-
-      // 2. If parent and moving past details/children setup, sync children
-      if (clientType === 'parent' && step === 3) {
-        // Delete old children records
-        await supabase.from('children').delete().eq('client_id', user.id);
-        
-        // Insert new ones
-        const inserts = childrenData.map(c => ({
-          client_id: user.id,
-          name: c.name,
-          academic_route: c.grade, // fallback/legacy mapping
-          grade: c.grade,
-          school_college: c.school_college,
-          subjects: c.subjects
-        }));
-        if (inserts.length > 0) {
-          await supabase.from('children').insert(inserts);
-        }
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error?.message || 'Failed to save onboarding step');
       }
 
       setStep(nextStep);
@@ -159,16 +141,19 @@ export default function ClientOnboarding() {
 
   const handleComplete = async () => {
     setSaving(true);
-    const supabase = createClient();
     try {
-      // Mark onboarding as complete
-      await supabase
-        .from('client_profiles')
-        .update({
-          onboarding_complete: true,
-          onboarding_step: 4
+      const res = await fetch('/api/client/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'COMPLETE'
         })
-        .eq('id', user.id);
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error?.message || 'Failed to complete onboarding');
+      }
 
       setStep(4);
     } catch (err) {

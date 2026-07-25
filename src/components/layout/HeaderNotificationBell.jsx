@@ -12,14 +12,11 @@ export function HeaderNotificationBell({ user, profile }) {
   const [loading, setLoading] = useState(false);
   const popoverRef = useRef(null);
 
-  // Gate Check: Show bell ONLY when logged in AND onboarding is completed
-  const isProfileComplete = Boolean(
-    profile?.onboarding_completed ||
-    (profile?.full_name && (profile?.hourly_rate || profile?.role === 'client'))
-  );
+  // Gate Check: Show bell for any authenticated user
+  const isUserAuthenticated = Boolean(user?.id);
 
   useEffect(() => {
-    if (!user?.id || !isProfileComplete) return;
+    if (!user?.id) return;
 
     const supabase = createClient();
     let cancelled = false;
@@ -72,7 +69,7 @@ export function HeaderNotificationBell({ user, profile }) {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [user?.id, isProfileComplete]);
+  }, [user?.id]);
 
   // Click outside listener to close dropdown
   useEffect(() => {
@@ -86,7 +83,7 @@ export function HeaderNotificationBell({ user, profile }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  if (!user || !isProfileComplete) return null;
+  if (!user) return null;
 
   const handleMarkAllAsRead = async () => {
     try {

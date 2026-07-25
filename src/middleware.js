@@ -48,7 +48,7 @@ export async function middleware(request) {
   // Refresh session if expired
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (user && (url.pathname === '/login' || url.pathname === '/signup' || url.pathname === '/register')) {
+  if (user && (url.pathname === '/' || url.pathname === '/login' || url.pathname === '/signup' || url.pathname === '/register')) {
     const role = user.user_metadata?.role;
     if (role === 'tutor') {
       url.pathname = '/tutor/dashboard';

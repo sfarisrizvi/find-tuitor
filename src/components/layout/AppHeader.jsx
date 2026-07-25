@@ -225,7 +225,7 @@ export function AppHeader() {
         </div>
 
         {/* Header Right Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', position: 'relative' }} className="nav-links">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', position: 'relative' }} className="nav-actions">
           {!initialized ? (
             <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'var(--hairline-strong)', animation: 'pulse 1.5s infinite ease-in-out' }} />
           ) : user ? (
@@ -285,13 +285,28 @@ export function AppHeader() {
         </button>
       </div>
 
-      {/* Mobile Drawer Overlay */}
       <div className={`nav-mobile-overlay ${isOpen ? 'open' : ''}`}>
         {links.map((link) => (
           <Link key={link.href} href={link.href} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>
             {link.label}
           </Link>
         ))}
+        {initialized && user && (
+          <>
+            <Link href={profileHref} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>
+              Profile
+            </Link>
+            <Link href={settingsHref} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>
+              Settings
+            </Link>
+            <button 
+              onClick={() => { setIsOpen(false); handleSignOut(); }} 
+              style={{ ...mobileLinkStyle, border: 'none', backgroundColor: 'transparent', textAlign: 'left', color: '#EF4444', cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Sign Out
+            </button>
+          </>
+        )}
         {initialized && !user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '20px' }}>
             <a href="/login" onClick={(e) => { setIsOpen(false); handleSignInClick(e); }} style={{ color: 'var(--ink)', fontSize: '16px', fontWeight: 600, textDecoration: 'none', textAlign: 'center', padding: '10px 0' }}>
