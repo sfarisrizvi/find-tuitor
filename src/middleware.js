@@ -48,7 +48,7 @@ export async function middleware(request) {
   // Refresh session if expired
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (user && (url.pathname === '/' || url.pathname === '/login' || url.pathname === '/signup' || url.pathname === '/register')) {
+  if (user && (url.pathname === '/login' || url.pathname === '/signup' || url.pathname === '/register')) {
     const role = user.user_metadata?.role;
     if (role === 'tutor') {
       url.pathname = '/tutor/dashboard';
@@ -56,26 +56,22 @@ export async function middleware(request) {
     } else if (role === 'client') {
       url.pathname = '/client/dashboard';
       return redirect(url);
-    } else if (role === 'admin') {
-      url.pathname = '/admin/dashboard';
-      return redirect(url);
     }
   }
 
-  const isPublicRoute = url.pathname === '/' || 
-                        url.pathname === '/login' || 
-                        url.pathname === '/register' || 
-                        url.pathname === '/signup' || 
-                        url.pathname === '/contact' || 
-                        url.pathname === '/find-tutor' || 
-                        url.pathname.startsWith('/find-tutor/') || 
-                        url.pathname.startsWith('/tutor/jobs') || 
-                        url.pathname.startsWith('/tutors/');
+  const isPublicRoute = url.pathname === '/' ||
+    url.pathname === '/login' ||
+    url.pathname === '/register' ||
+    url.pathname === '/signup' ||
+    url.pathname === '/contact' ||
+    url.pathname === '/find-tutor' ||
+    url.pathname.startsWith('/find-tutor/') ||
+    url.pathname.startsWith('/tutor/jobs') ||
+    url.pathname.startsWith('/tutors/');
 
-  const isProtectedRoute = (url.pathname.startsWith('/client') || 
-                            url.pathname.startsWith('/tutor') || 
-                            url.pathname.startsWith('/admin')) && 
-                           !isPublicRoute;
+  const isProtectedRoute = (url.pathname.startsWith('/client') ||
+    url.pathname.startsWith('/tutor')) &&
+    !isPublicRoute;
 
   if (isProtectedRoute) {
     if (!user) {
@@ -91,10 +87,6 @@ export async function middleware(request) {
       }
       if (url.pathname.startsWith('/client') && role !== 'client') {
         url.pathname = role === 'tutor' ? '/tutor/dashboard' : '/login'
-        return redirect(url)
-      }
-      if (url.pathname.startsWith('/admin') && role !== 'admin') {
-        url.pathname = '/login'
         return redirect(url)
       }
     }

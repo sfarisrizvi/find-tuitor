@@ -101,7 +101,6 @@ function SearchContent() {
 
   const [page, setPage] = useState(1);
   const [pageSize] = useState(12);
-  const [hasMore, setHasMore] = useState(true);
 
   // Helper to dynamically get subjects by level
   const getSubjectOptions = (level) => {
@@ -109,7 +108,7 @@ function SearchContent() {
     return LEVEL_SUBJECTS[level] || [];
   };
 
-  const fetchTutors = async (currentFilters = filters, pageNum = 1) => {
+  const fetchTutors = async (currentFilters = filters) => {
     try {
       setLoading(true);
       const supabase = createClient();
@@ -128,9 +127,7 @@ function SearchContent() {
         p_min_price: currentFilters.min_price ? parseFloat(currentFilters.min_price) : null,
         p_max_price: currentFilters.max_price ? parseFloat(currentFilters.max_price) : null,
         p_min_experience: resolvedMinExp,
-        p_modes: currentFilters.modes.length > 0 ? currentFilters.modes : null,
-        p_limit: pageSize,
-        p_offset: (pageNum - 1) * pageSize
+        p_modes: currentFilters.modes.length > 0 ? currentFilters.modes : null
       };
 
       console.log('[DEBUG] Calling search_tutors RPC with params:', rpcParams);
@@ -138,19 +135,14 @@ function SearchContent() {
       
       if (error) {
         console.error("Error fetching tutors:", error);
-        if (pageNum === 1) setTutors([]);
+        setTutors([]);
       } else {
         console.log('[DEBUG] Search results loaded:', data?.length);
-        if (pageNum === 1) {
-          setTutors(data || []);
-        } else {
-          setTutors(prev => [...prev, ...(data || [])]);
-        }
-        setHasMore((data || []).length === pageSize);
+        setTutors(data || []);
       }
     } catch (err) {
       console.error("Exception in fetchTutors:", err);
-      if (pageNum === 1) setTutors([]);
+      setTutors([]);
     } finally {
       setLoading(false);
     }
@@ -161,7 +153,7 @@ function SearchContent() {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-      fetchTutors(filters, 1);
+      fetchTutors(filters);
     };
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -171,7 +163,7 @@ function SearchContent() {
     let newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     setPage(1);
-    fetchTutors(newFilters, 1);
+    fetchTutors(newFilters);
   };
 
   const toggleExperience = (val) => {
@@ -215,7 +207,7 @@ function SearchContent() {
     
     setFilters(newFilters);
     setPage(1);
-    fetchTutors(newFilters, 1);
+    fetchTutors(newFilters);
   };
 
   const toggleSubjectFilter = (subj) => {
@@ -233,7 +225,7 @@ function SearchContent() {
     
     setFilters(newFilters);
     setPage(1);
-    fetchTutors(newFilters, 1);
+    fetchTutors(newFilters);
   };
 
   const toggleMode = (modeId) => {
@@ -323,7 +315,9 @@ function SearchContent() {
     return 0; // Default RPC sort order
   });
 
-  const displayedTutors = session ? sortedTutors : sortedTutors.slice(0, 4);
+  const paginatedTutors = sortedTutors.slice(0, page * pageSize);
+  const displayedTutors = session ? paginatedTutors : paginatedTutors.slice(0, 4);
+  const hasMore = session && paginatedTutors.length < sortedTutors.length;
   const showAuthOverlay = !session && filteredTutors.length > 3;
 
   // Count active filters for the badge
@@ -1217,9 +1211,10 @@ function SearchContent() {
           )}
 
           {/* Load More Button */}
-          {session && hasMore && !loading && tutors.length > 0 && (
+          {hasMore && !loading && sortedTutors.length > 0 && (
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px', paddingBottom: '40px' }}>
               <Button
+                type="button"
                 variant="outline"
                 style={{ 
                   height: '48px', 
@@ -1229,12 +1224,12 @@ function SearchContent() {
                   fontWeight: 600, 
                   border: '1.5px solid var(--brand-green-dark)',
                   color: 'var(--brand-green-dark)',
-                  backgroundColor: 'transparent'
+                  backgroundColor: 'transparent',
+                  cursor: 'pointer'
                 }}
-                onClick={() => {
-                  const nextPage = page + 1;
-                  setPage(nextPage);
-                  fetchTutors(filters, nextPage);
+                onClick={(e) => {
+                  e.preventDefault();
+                  setPage(prevPage => prevPage + 1);
                 }}
               >
                 Load More Tutors

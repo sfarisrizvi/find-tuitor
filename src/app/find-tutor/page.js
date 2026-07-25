@@ -49,7 +49,7 @@ export default function FindTutorLanding() {
 
   return (
     <div style={{ backgroundColor: 'var(--surface)', minHeight: '100vh', overflowX: 'hidden' }}>
-      
+
       {/* Click-away overlay to dismiss dropdowns */}
       {showCityDropdown && (
         <div
@@ -100,78 +100,108 @@ export default function FindTutorLanding() {
           {/* Search bar inside Hero */}
           <div style={{
             backgroundColor: 'var(--canvas)',
-            padding: '12px 24px',
-            borderRadius: '999px',
+            padding: '16px 20px',
+            borderRadius: '24px',
             boxShadow: 'var(--shadow-card)',
             display: 'flex',
+            flexDirection: 'column',
             gap: '12px',
-            flexWrap: 'wrap',
-            alignItems: 'center'
+            maxWidth: '640px',
+            margin: '0 auto'
           }}>
-            <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
-              <Search size={20} style={{ position: 'absolute', left: '16px', top: '12px', color: 'var(--stone)' }} />
-              <Input
-                placeholder="Search by name, subject, keywords..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                style={{ paddingLeft: '48px', border: '1px solid var(--hairline-strong)', color: 'var(--ink)', borderRadius: '999px' }}
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              />
-            </div>
-
-            <div style={{ width: '160px', minWidth: '140px', position: 'relative' }}>
-              <button
-                onClick={() => setShowCityDropdown(!showCityDropdown)}
-                style={{
-                  width: '100%', height: '44px', padding: '0 16px', borderRadius: '999px',
-                  border: '1px solid var(--hairline-strong)', backgroundColor: 'var(--canvas)', fontSize: '15px', color: 'var(--ink)',
-                  cursor: 'pointer', outline: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  position: 'relative', textAlign: 'left', fontWeight: 500
-                }}
-              >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '8px' }}>
-                  {selectedCity || 'All Cities'}
-                </span>
-                <ChevronDown size={14} style={{ color: 'var(--stone)', transform: showCityDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease', flexShrink: 0 }} />
-              </button>
-              {showCityDropdown && (
-                <div style={{
-                  position: 'absolute', left: 0, top: '50px', width: '200px', maxHeight: '250px', overflowY: 'auto',
-                  backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--hairline-strong)',
-                  boxShadow: 'var(--shadow-lg)', padding: '6px 0', zIndex: 50
-                }}>
-                  <div
-                    onClick={() => { setSelectedCity(''); setShowCityDropdown(false); }}
-                    style={{
-                      padding: '8px 16px', fontSize: '14px', cursor: 'pointer',
-                      color: !selectedCity ? 'var(--brand-green-dark)' : 'var(--slate)',
-                      backgroundColor: !selectedCity ? 'var(--brand-green-soft)' : 'transparent',
-                      fontWeight: !selectedCity ? 600 : 500
-                    }}
-                    className="dropdown-item"
-                  >
-                    All Cities
-                  </div>
-                  {['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Attock'].map(c => (
+            {/* Row 1: City Dropdown (Left 30%) + Search Input (Right 70%) */}
+            <div style={{ display: 'flex', gap: '10px', width: '100%', alignItems: 'center' }}>
+              {/* City Dropdown on Left (30%) */}
+              <div style={{ flex: '0 0 calc(25% - 5px)', position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowCityDropdown(!showCityDropdown)}
+                  style={{
+                    width: '100%', height: '46px', padding: '0 14px', borderRadius: '999px',
+                    border: '1px solid var(--hairline-strong)', backgroundColor: 'var(--canvas)', fontSize: '14px', color: 'var(--ink)',
+                    cursor: 'pointer', outline: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    textAlign: 'left', fontWeight: 500
+                  }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '4px' }}>
+                    {selectedCity || 'City'}
+                  </span>
+                  <ChevronDown size={14} style={{ color: 'var(--stone)', transform: showCityDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease', flexShrink: 0 }} />
+                </button>
+                {showCityDropdown && (
+                  <div style={{
+                    position: 'absolute', left: 0, top: '52px', width: '100%', minWidth: '190px', maxHeight: '250px', overflowY: 'auto',
+                    backgroundColor: '#fff', borderRadius: '16px', border: '1px solid var(--hairline-strong)',
+                    boxShadow: 'var(--shadow-lg)', padding: '6px 0', zIndex: 50
+                  }}>
                     <div
-                      key={c}
-                      onClick={() => { setSelectedCity(c); setShowCityDropdown(false); }}
+                      onClick={() => { setSelectedCity(''); setShowCityDropdown(false); }}
                       style={{
-                        padding: '8px 16px', fontSize: '14px', cursor: 'pointer',
-                        color: selectedCity === c ? 'var(--brand-green-dark)' : 'var(--slate)',
-                        backgroundColor: selectedCity === c ? 'var(--brand-green-soft)' : 'transparent',
-                        fontWeight: selectedCity === c ? 600 : 500
+                        padding: '10px 16px', fontSize: '14px', cursor: 'pointer',
+                        color: !selectedCity ? 'var(--brand-green-dark)' : 'var(--slate)',
+                        backgroundColor: !selectedCity ? 'var(--brand-green-soft)' : 'transparent',
+                        fontWeight: !selectedCity ? 600 : 500
                       }}
-                      className="dropdown-item"
                     >
-                      {c}
+                      All Cities
                     </div>
-                  ))}
-                </div>
-              )}
+                    {['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Attock'].map(c => (
+                      <div
+                        key={c}
+                        onClick={() => { setSelectedCity(c); setShowCityDropdown(false); }}
+                        style={{
+                          padding: '10px 16px', fontSize: '14px', cursor: 'pointer',
+                          color: selectedCity === c ? 'var(--brand-green-dark)' : 'var(--slate)',
+                          backgroundColor: selectedCity === c ? 'var(--brand-green-soft)' : 'transparent',
+                          fontWeight: selectedCity === c ? 600 : 500
+                        }}
+                      >
+                        {c}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Search Bar Input on Right (70%) */}
+              <div style={{ flex: '0 0 calc(70% - 5px)', position: 'relative' }}>
+                <Search size={18} style={{ position: 'absolute', left: '16px', top: '14px', color: 'var(--stone)', pointerEvents: 'none' }} />
+                <Input
+                  placeholder="Search by name, subject, keywords..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{
+                    height: '46px',
+                    paddingLeft: '44px',
+                    paddingRight: '16px',
+                    border: '1px solid var(--hairline-strong)',
+                    color: 'var(--ink)',
+                    borderRadius: '999px',
+                    fontSize: '14px',
+                    width: '100%'
+                  }}
+                  onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                />
+              </div>
             </div>
 
-            <Button variant="primary" onClick={handleSearch} style={{ height: '44px', padding: '0 24px', fontWeight: 600, borderRadius: '999px' }}>
+            {/* Row 2: Full-width Search Button */}
+            <Button
+              variant="primary"
+              onClick={handleSearch}
+              style={{
+                width: '100%',
+                height: '46px',
+                fontWeight: 600,
+                fontSize: '15px',
+                borderRadius: '999px',
+                backgroundColor: 'var(--brand-green)',
+                color: 'var(--on-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
               Search Tutors
             </Button>
           </div>

@@ -33,7 +33,9 @@ CREATE OR REPLACE FUNCTION public.search_tutors(
   p_modes text[] default null,       -- array of teaching modes e.g., ['online', 'home']
   p_languages text[] default null,   -- array of languages e.g., ['English', 'Urdu']
   p_subjects text[] default null,    -- array of subject names
-  p_levels text[] default null       -- array of levels e.g., ['O Levels', 'Class 10']
+  p_levels text[] default null,       -- array of levels e.g., ['O Levels', 'Class 10']
+  p_limit integer default null,
+  p_offset integer default null
 )
 RETURNS TABLE (
   id uuid,

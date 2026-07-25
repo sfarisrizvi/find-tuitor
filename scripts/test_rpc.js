@@ -25,12 +25,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const rpcParams = {
-  p_city: '',
+  p_city: null,
   p_subjects: null,
   p_levels: null,
-  p_gender: '',
-  p_verified: false,
-  p_immediate_hiring: false,
+  p_gender: null,
+  p_verified: null,
+  p_immediate_hiring: null,
   p_min_price: null,
   p_max_price: null,
   p_min_experience: null,
