@@ -280,9 +280,30 @@ export function HeaderNotificationBell({ user, profile }) {
                 Loading notifications...
               </div>
             ) : notifications.length === 0 ? (
-              <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--ink-soft)' }}>
-                <span style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }}>🔔</span>
-                <p style={{ margin: 0, fontSize: '13px' }}>No notifications yet</p>
+              <div
+                style={{
+                  padding: '40px 16px',
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: 0.45,
+                }}
+              >
+                <img
+                  src="/sleep.svg"
+                  alt="All quiet"
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    marginBottom: '12px',
+                    filter: 'grayscale(100%)',
+                  }}
+                />
+                <p style={{ margin: 0, fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>
+                  No notifications right now
+                </p>
               </div>
             ) : (
               notifications.map((notif) => {
