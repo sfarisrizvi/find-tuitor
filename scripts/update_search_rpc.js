@@ -57,7 +57,9 @@ RETURNS TABLE (
   categories jsonb, -- aggregated subjects and levels
   "current_role" text,
   current_company text,
-  qualification text
+  qualification text,
+  availability_days text[],
+  availability_slots jsonb
 ) 
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -100,7 +102,9 @@ BEGIN
     coalesce(tc.categories_json, '[]'::jsonb) as categories,
     coalesce(exp.role, p."current_role") as "current_role",
     coalesce(exp.institution, p.current_company) as current_company,
-    p.qualification
+    p.qualification,
+    p.availability_days,
+    p.availability_slots
   FROM public.tutor_profiles p
   LEFT JOIN tutor_cats tc ON tc.tutor_id = p.id
   LEFT JOIN (

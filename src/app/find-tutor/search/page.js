@@ -305,6 +305,67 @@ function SearchContent() {
     return true;
   });
 
+  const calculateRelevanceScore = (tutor) => {
+    const cleanQuery = (debouncedQuery || '').trim().toLowerCase();
+    
+    // 1. Keyword Relevancy (40% Weightage)
+    let keywordScore = 100;
+    if (cleanQuery.length > 0) {
+      const tokens = cleanQuery.split(/\s+/).filter(Boolean);
+      const fullName = (tutor.full_name || '').toLowerCase();
+      const qual = (tutor.qualification || '').toLowerCase();
+      const role = (tutor.current_role || '').toLowerCase();
+      const company = (tutor.current_company || '').toLowerCase();
+      const bio = (tutor.bio || '').toLowerCase();
+      const about = (tutor.about || '').toLowerCase();
+      const subjects = (tutor.categories || [])
+        .map(c => `${c.subject || ''} ${c.level || ''}`.toLowerCase())
+        .join(' ');
+
+      if (fullName === cleanQuery) {
+        keywordScore = 100;
+      } else if (fullName.includes(cleanQuery)) {
+        keywordScore = 95;
+      } else {
+        let matchedScores = [];
+        for (const token of tokens) {
+          if (fullName.includes(token)) matchedScores.push(90);
+          else if (qual.includes(token)) matchedScores.push(85);
+          else if (role.includes(token) || company.includes(token)) matchedScores.push(80);
+          else if (subjects.includes(token)) matchedScores.push(80);
+          else if (bio.includes(token) || about.includes(token)) matchedScores.push(65);
+          else matchedScores.push(20);
+        }
+        const sum = matchedScores.reduce((acc, val) => acc + val, 0);
+        keywordScore = Math.min(100, sum / tokens.length);
+      }
+    }
+
+    // 2. Rating Weightage (25% Weightage)
+    let ratingScore = 75; // Baseline score for new/unrated tutors
+    const numRating = tutor.rating != null ? parseFloat(tutor.rating) : 0;
+    const numReviews = tutor.reviews_count || 0;
+    if (numReviews > 0 && numRating > 0) {
+      const baseVal = (numRating / 5.0) * 80;
+      const reviewBonus = Math.min(numReviews * 2, 20);
+      ratingScore = Math.min(100, baseVal + reviewBonus);
+    }
+
+    // 3. Verified Status (20% Weightage)
+    const verifiedScore = tutor.verified ? 100 : 0;
+
+    // 4. Availability (15% Weightage)
+    const daysArr = tutor.availability_days;
+    const daysCount = Array.isArray(daysArr) ? daysArr.length : 5;
+    const daysRatio = Math.min(daysCount / 5, 1);
+    const daysScore = daysRatio * 70;
+    const hiringBonus = tutor.immediate_hiring ? 30 : 0;
+    const availabilityScore = Math.min(100, daysScore + hiringBonus);
+
+    // Composite Weighted Sum
+    return (keywordScore * 0.40) + (ratingScore * 0.25) + (verifiedScore * 0.20) + (availabilityScore * 0.15);
+  };
+
   const sortedTutors = [...filteredTutors].sort((a, b) => {
     if (sortBy === 'price_asc') {
       return (a.hourly_rate || 0) - (b.hourly_rate || 0);
@@ -312,7 +373,8 @@ function SearchContent() {
     if (sortBy === 'price_desc') {
       return (b.hourly_rate || 0) - (a.hourly_rate || 0);
     }
-    return 0; // Default RPC sort order
+    // Default: Sort by composite relevancy score
+    return calculateRelevanceScore(b) - calculateRelevanceScore(a);
   });
 
   const paginatedTutors = sortedTutors.slice(0, page * pageSize);
