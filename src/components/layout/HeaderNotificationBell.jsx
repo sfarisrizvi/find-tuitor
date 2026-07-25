@@ -302,7 +302,7 @@ export function HeaderNotificationBell({ user, profile }) {
                   }}
                 />
                 <p style={{ margin: 0, fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>
-                  No notifications right now
+                  Chill ScenezZz
                 </p>
               </div>
             ) : (
