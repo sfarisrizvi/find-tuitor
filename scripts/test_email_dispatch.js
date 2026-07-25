@@ -31,7 +31,7 @@ if (!apiKey) {
 
 const resend = new Resend(apiKey);
 
-const sampleAvatar = 'https://tutoronline.pk/tutors-images/avatar-placeholder.png';
+const sampleAvatar = 'https://tutoronline.pk/verified-user.svg';
 
 const sampleData = {
   welcome_tutor: {

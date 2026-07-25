@@ -65,6 +65,7 @@ export async function sendNotification({
           const fullActionUrl = actionUrl ? `https://tutoronline.pk${actionUrl}` : 'https://tutoronline.pk';
           const mergeData = {
             USER_NAME: userName,
+            USER_AVATAR: templateData.USER_AVATAR || 'https://tutoronline.pk/verified-user.svg',
             ACTION_URL: fullActionUrl,
             PROFILE_URL: templateData.PROFILE_URL || (userId ? `https://tutoronline.pk/tutors/${userId}` : fullActionUrl),
             ONBOARDING_URL: templateData.ONBOARDING_URL || 'https://tutoronline.pk/tutor/onboarding',
