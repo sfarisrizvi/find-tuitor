@@ -62,14 +62,20 @@ export async function sendNotification({
             htmlContent = htmlContent.replace(regex, mergeData[key] || '');
           });
 
-          const fromEmail = process.env.RESEND_FROM_EMAIL || 'TutorOnline <onboarding@resend.dev>';
+          // Determine Sender Email based on template category
+          const isSupportCategory = ['kyc_approved', 'kyc_rejected', 'account_notice'].includes(templateName);
+          const defaultFrom = isSupportCategory
+            ? 'TutorOnline Support <support@tutoronline.pk>'
+            : 'TutorOnline <parhlo@tutoronline.pk>';
+          const fromEmail = process.env.RESEND_FROM_EMAIL || defaultFrom;
+
           await resend.emails.send({
             from: fromEmail,
             to: [userEmail],
             subject: title,
             html: htmlContent,
           });
-          console.log(`Successfully dispatched email [${templateName}] to ${userEmail} via Resend`);
+          console.log(`Successfully dispatched email [${templateName}] from ${fromEmail} to ${userEmail} via Resend`);
         }
       } catch (emailErr) {
         console.error('Error sending email notification via Resend:', emailErr);
