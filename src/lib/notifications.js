@@ -44,7 +44,20 @@ export async function sendNotification({
     if (resendApiKey && userEmail && templateName) {
       try {
         const resend = new Resend(resendApiKey);
-        const templatePath = path.join(process.cwd(), 'src', 'emails', `${templateName}.html`);
+        // Normalize template key to matching file name in src/emails/
+        const templateAliases = {
+          'verified-profile': 'verified_profile',
+          'kyc-approved': 'kyc_approved',
+          'kyc-rejected': 'kyc_rejected',
+          'onboarding-drip-24hrs': 'onboarding_drip_24h',
+          'drip-72hrs': 'onboarding_drip_72h',
+          'account-notice': 'account_notice',
+          'demo-requested': 'demo_requested',
+          'welcome-tutor': 'welcome_tutor',
+          'welcome-client': 'welcome_client',
+        };
+        const resolvedFileKey = templateAliases[templateName] || templateName;
+        const templatePath = path.join(process.cwd(), 'src', 'emails', `${resolvedFileKey}.html`);
         if (fs.existsSync(templatePath)) {
           let htmlContent = fs.readFileSync(templatePath, 'utf8');
 

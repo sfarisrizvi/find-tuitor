@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '../../../../utils/supabase/server'
+import { sendNotification } from '../../../../lib/notifications'
 
 export async function POST(request) {
   try {
@@ -57,6 +58,23 @@ export async function POST(request) {
       // We don't fail the request completely since the user is created,
       // but ideally we'd want this to succeed.
     }
+
+    // Trigger Welcome Email & In-App Notification for new Tutor
+    await sendNotification({
+      userId: user.id,
+      userEmail: email,
+      userName: fullName,
+      title: 'Welcome to TutorOnline.pk! Start Building Your Profile 🎓',
+      message: `Hello ${fullName}, welcome to Pakistan's premier tutor network! Complete your onboarding steps to get verified.`,
+      type: 'welcome',
+      priority: 'HIGH',
+      actionUrl: '/tutor/onboarding',
+      templateName: 'welcome_tutor',
+      templateData: {
+        USER_NAME: fullName,
+        ONBOARDING_URL: 'https://tutoronline.pk/tutor/onboarding',
+      },
+    }).catch(err => console.warn('Welcome notification error:', err));
 
     // 3. Log the user in to establish a session with cookies using SSR client
     const supabaseServer = await createServerClient()

@@ -70,7 +70,7 @@ export default function Signup() {
     const clientType = roleSelection; // parent or student
 
     const supabase = createClient();
-    const { error: signupError } = await supabase.auth.signUp({
+    const { data: authData, error: signupError } = await supabase.auth.signUp({
       email, password,
       options: { data: { full_name: fullName, role: 'client', client_type: clientType } }
     });
@@ -79,6 +79,20 @@ export default function Signup() {
       setLoading(false);
       setError(signupError.message);
       return;
+    }
+
+    // Trigger Welcome Email & In-App Notification
+    if (authData?.user) {
+      await fetch('/api/welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: authData.user.id,
+          userEmail: email,
+          userName: fullName,
+          role: 'client',
+        }),
+      }).catch(err => console.warn('Welcome email error:', err));
     }
 
     setLoading(false);

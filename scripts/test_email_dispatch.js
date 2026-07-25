@@ -19,7 +19,7 @@ const specificTemplate = process.argv[3];
 
 if (!targetEmail) {
   console.log('Usage: node scripts/test_email_dispatch.js <target_email> [template_name]');
-  console.log('Example: node scripts/test_email_dispatch.js test@example.com verified_profile');
+  console.log('Example: node scripts/test_email_dispatch.js test@example.com welcome_tutor');
   process.exit(1);
 }
 
@@ -34,6 +34,28 @@ const resend = new Resend(apiKey);
 const sampleAvatar = 'https://tutoronline.pk/tutors-images/avatar-placeholder.png';
 
 const sampleData = {
+  welcome_tutor: {
+    title: 'Welcome to TutorOnline.pk! Start Building Your Profile 🎓',
+    userName: 'Faris Rizvi',
+    templateName: 'welcome_tutor',
+    from: 'TutorOnline <parhlo@tutoronline.pk>',
+    mergeData: {
+      USER_NAME: 'Faris Rizvi',
+      USER_AVATAR: sampleAvatar,
+      ONBOARDING_URL: 'https://tutoronline.pk/tutor/onboarding',
+    },
+  },
+  welcome_client: {
+    title: 'Welcome to TutorOnline.pk! Find Your Ideal Home & Online Tutor 🌟',
+    userName: 'Faris Rizvi',
+    templateName: 'welcome_client',
+    from: 'TutorOnline <parhlo@tutoronline.pk>',
+    mergeData: {
+      USER_NAME: 'Faris Rizvi',
+      USER_AVATAR: sampleAvatar,
+      ACTION_URL: 'https://tutoronline.pk/find-tutor/search',
+    },
+  },
   verified_profile: {
     title: 'Verified Profile Status Awarded! 🎉',
     userName: 'Faris Rizvi',

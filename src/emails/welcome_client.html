@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to TutorOnline.pk!</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; }
+    .container { max-width: 600px; margin: 30px auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+    .header { padding: 30px; text-align: center; background-color: #001E2B; border-bottom: 1px solid #0f2d3c; }
+    .header img { width: 315px; height: 75px; margin: 20px auto; display: block; object-fit: contain; }
+    .content { padding: 40px 30px; text-align: center; }
+    
+    .avatar-wrapper { position: relative; width: 84px; height: 84px; margin: 20px auto; }
+    .avatar-img { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid #0284c7; background-color: #e2e8f0; }
+    .welcome-badge { position: absolute; bottom: -2px; right: 20px; width: 30px; height: 30px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15)); }
+    
+    h1 { margin: 20px 0; font-size: 24px; font-weight: 700; color: #0f172a; }
+    p { margin: 20px 0; font-size: 15px; line-height: 1.6; color: #475569; }
+    
+    .feature-card { background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: left; color: #0369a1; font-size: 14px; line-height: 1.8; }
+    .cta-button { display: inline-block; padding: 14px 32px; margin: 20px 0; background-color: #0284C7; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 999px; }
+    .footer { padding: 24px 30px; margin-top: 20px; text-align: center; border-top: 1px solid #f1f5f9; font-size: 12px; color: #94a3b8; background-color: #f8fafc; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://tutoronline.pk/light%20logo.svg" alt="TutorOnline.pk">
+    </div>
+    <div class="content">
+      
+      <!-- Circled Profile Avatar -->
+      <div class="avatar-wrapper">
+        <img class="avatar-img" src="{{USER_AVATAR}}" onerror="this.onerror=null;this.src='https://tutoronline.pk/public/verified-user.svg';" alt="{{USER_NAME}}">
+        <img class="welcome-badge" style="width: 20px;" src="https://tutoronline.pk/shield.svg" alt="Welcome">
+      </div>
+
+      <h1>Welcome to TutorOnline.pk! 🌟</h1>
+      <p>Hello <strong>{{USER_NAME}}</strong>, welcome to Pakistan's trusted platform for finding expert home & online tutors for O/A-Levels, Matric, FSc, and test prep.</p>
+      
+      <div class="feature-card">
+        <strong>What you can do on TutorOnline.pk:</strong><br>
+        • Search & filter verified tutors by city, subject, and rate<br>
+        • Request a free trial demo class before committing<br>
+        • Direct chat with verified tutors with zero placement fees
+      </div>
+
+      <a href="{{ACTION_URL}}" class="cta-button">Find Your Ideal Tutor Now</a>
+    </div>
+    <div class="footer">
+      &copy; 2026 TutorOnline.pk — Family & Student Support Team.
+    </div>
+  </div>
+</body>
+</html>
