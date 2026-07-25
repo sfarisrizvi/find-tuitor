@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Action Required: Document Verification Update</title>
+  <title>Your Profile is Verified!</title>
   <style>
     body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; }
     .container { max-width: 600px; margin: 30px auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
@@ -12,14 +12,14 @@
     .content { padding: 40px 30px; text-align: center; }
     
     .avatar-wrapper { position: relative; width: 84px; height: 84px; margin: 20px auto; }
-    .avatar-img { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid #ef4444; background-color: #e2e8f0; }
-    .status-badge { position: absolute; bottom: 0; right: 0; width: 26px; height: 26px; background-color: #ef4444; color: #ffffff; border-radius: 50%; border: 2px solid #ffffff; font-size: 14px; font-weight: bold; line-height: 24px; text-align: center; }
+    .avatar-img { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid #10B981; background-color: #e2e8f0; }
+    .verified-badge { position: absolute; bottom: 0; right: 0; width: 26px; height: 26px; background-color: #10B981; color: #ffffff; border-radius: 50%; border: 2px solid #ffffff; font-size: 14px; font-weight: bold; line-height: 24px; text-align: center; }
     
     h1 { margin: 20px 0; font-size: 24px; font-weight: 700; color: #0f172a; }
     p { margin: 20px 0; font-size: 15px; line-height: 1.6; color: #475569; }
     
-    .reason-box { background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 20px; margin: 20px 0; font-size: 14px; color: #991b1b; text-align: left; line-height: 1.5; }
-    .cta-button { display: inline-block; padding: 14px 32px; margin: 20px 0; background-color: #EF4444; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 999px; }
+    .highlight-card { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: left; color: #166534; font-size: 14px; line-height: 1.6; }
+    .cta-button { display: inline-block; padding: 14px 32px; margin: 20px 0; background-color: #10B981; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 999px; }
     .footer { padding: 24px 30px; margin-top: 20px; text-align: center; border-top: 1px solid #f1f5f9; font-size: 12px; color: #94a3b8; background-color: #f8fafc; }
   </style>
 </head>
@@ -30,24 +30,26 @@
     </div>
     <div class="content">
       
-      <!-- Circled Profile Avatar with Rejection Warning Badge -->
+      <!-- Circled Profile Avatar with Verified Badge -->
       <div class="avatar-wrapper">
         <img class="avatar-img" src="{{USER_AVATAR}}" onerror="this.onerror=null;this.src='https://tutoronline.pk/tutors-images/avatar-placeholder.png';" alt="{{USER_NAME}}">
-        <div class="status-badge">!</div>
+        <div class="verified-badge">✓</div>
       </div>
 
-      <h1>Action Required: Document Verification</h1>
-      <p>Hello <strong>{{USER_NAME}}</strong>, our moderation team reviewed your submitted documents but requires an update before approving your verification status.</p>
+      <h1>Verified Profile Status Awarded!</h1>
+      <p>Hello <strong>{{USER_NAME}}</strong>, your profile on TutorOnline.pk has been awarded the official <strong>Verified Badge</strong>. Your listing is now highlighted across student search results in Pakistan!</p>
       
-      <div class="reason-box">
-        <strong style="color: #7f1d1d;">Reason for rejection:</strong><br>
-        {{REASON}}
+      <div class="highlight-card">
+        <strong>Verified Badge Benefits:</strong><br>
+        • Highlighted verified card in parent search results<br>
+        • 3x higher profile clicks & direct lead conversions<br>
+        • Verified Shield trust indicator on public profile
       </div>
 
-      <a href="{{ONBOARDING_URL}}" class="cta-button">Re-upload Documents</a>
+      <a href="{{PROFILE_URL}}" class="cta-button">View Your Public Profile</a>
     </div>
     <div class="footer">
-      &copy; 2026 TutorOnline.pk — Verification & Support Team.
+      &copy; 2026 TutorOnline.pk — Verified Educator Network.
     </div>
   </div>
 </body>

@@ -19,7 +19,7 @@ const specificTemplate = process.argv[3];
 
 if (!targetEmail) {
   console.log('Usage: node scripts/test_email_dispatch.js <target_email> [template_name]');
-  console.log('Example: node scripts/test_email_dispatch.js test@example.com kyc_approved');
+  console.log('Example: node scripts/test_email_dispatch.js test@example.com verified_profile');
   process.exit(1);
 }
 
@@ -31,24 +31,39 @@ if (!apiKey) {
 
 const resend = new Resend(apiKey);
 
+const sampleAvatar = 'https://tutoronline.pk/tutors-images/avatar-placeholder.png';
+
 const sampleData = {
+  verified_profile: {
+    title: 'Verified Profile Status Awarded! 🎉',
+    userName: 'Faris Rizvi',
+    templateName: 'verified_profile',
+    from: 'TutorOnline Support <support@tutoronline.pk>',
+    mergeData: {
+      USER_NAME: 'Faris Rizvi',
+      USER_AVATAR: sampleAvatar,
+      PROFILE_URL: 'https://tutoronline.pk/tutors/sample-id-123',
+    },
+  },
   kyc_approved: {
-    title: 'Congratulations! Your Profile is Officially Verified 🎉',
+    title: 'Documents Verified & Approved! ✓',
     userName: 'Faris Rizvi',
     templateName: 'kyc_approved',
     from: 'TutorOnline Support <support@tutoronline.pk>',
     mergeData: {
       USER_NAME: 'Faris Rizvi',
-      PROFILE_URL: 'https://tutoronline.pk/tutors/sample-id-123',
+      USER_AVATAR: sampleAvatar,
+      ONBOARDING_URL: 'https://tutoronline.pk/tutor/onboarding?step=kyc',
     },
   },
   kyc_rejected: {
-    title: 'Action Required: Update Your Verification Documents ⚠️',
+    title: 'Action Required: Document Verification Update ⚠️',
     userName: 'Faris Rizvi',
     templateName: 'kyc_rejected',
     from: 'TutorOnline Support <support@tutoronline.pk>',
     mergeData: {
       USER_NAME: 'Faris Rizvi',
+      USER_AVATAR: sampleAvatar,
       REASON: 'CNIC front image is blurry. Please upload a clear photo.',
       ONBOARDING_URL: 'https://tutoronline.pk/tutor/onboarding?step=kyc',
     },
@@ -60,6 +75,7 @@ const sampleData = {
     from: 'TutorOnline <parhlo@tutoronline.pk>',
     mergeData: {
       USER_NAME: 'Faris Rizvi',
+      USER_AVATAR: sampleAvatar,
       CITY: 'Lahore',
       ONBOARDING_URL: 'https://tutoronline.pk/tutor/onboarding?step=profile',
     },
@@ -71,6 +87,7 @@ const sampleData = {
     from: 'TutorOnline <parhlo@tutoronline.pk>',
     mergeData: {
       USER_NAME: 'Faris Rizvi',
+      USER_AVATAR: sampleAvatar,
       ONBOARDING_URL: 'https://tutoronline.pk/tutor/onboarding?step=verification',
     },
   },
@@ -81,6 +98,7 @@ const sampleData = {
     from: 'TutorOnline <parhlo@tutoronline.pk>',
     mergeData: {
       USER_NAME: 'Faris Rizvi',
+      USER_AVATAR: sampleAvatar,
       SUBJECT: 'O-Level Physics',
       PARENT_NAME: 'Mrs. Ahmed',
       CITY: 'Karachi',
@@ -94,6 +112,7 @@ const sampleData = {
     from: 'TutorOnline Support <support@tutoronline.pk>',
     mergeData: {
       USER_NAME: 'Faris Rizvi',
+      USER_AVATAR: sampleAvatar,
       MESSAGE: 'Your profile has been temporarily unlisted pending phone verification.',
       ACTION_URL: 'https://tutoronline.pk/tutor/dashboard',
     },
