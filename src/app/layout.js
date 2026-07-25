@@ -1,6 +1,7 @@
 import "./globals.css";
 import { AppHeader } from "../components/layout/AppHeader";
 import { Footer } from "../components/layout/Footer";
+import { CookieConsentBanner } from "../components/layout/CookieConsentBanner";
 import Script from "next/script";
 import { PostHogProvider } from "./providers";
 
@@ -55,6 +56,24 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" prefix="og: http://ogp.me/ns#">
       <head>
+        {/* Google Consent Mode v2 Defaults */}
+        <Script
+          id="google-consent-default"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('consent', 'default', {
+                'ad_storage': 'denied',
+                'analytics_storage': 'denied',
+                'ad_user_data': 'denied',
+                'ad_personalization': 'denied',
+                'wait_for_update': 500
+              });
+            `,
+          }}
+        />
         <meta property="og:site_name" content="TutorOnline.pk" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Find Tutor Online | Pakistan's Top Tutors" />
@@ -75,6 +94,25 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
+        {/* GA4 Direct Integration G-1Z577KGRGN */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-1Z577KGRGN"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="ga4-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-1Z577KGRGN');
+            `,
+          }}
+        />
+
+        {/* Google Tag Manager GTM-5TNV3VNK */}
         <Script
           id="gtm-script"
           strategy="afterInteractive"
@@ -94,6 +132,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
+
+        {/* Microsoft Clarity xs2md764oi */}
         <Script
           id="clarity-script"
           strategy="afterInteractive"
@@ -105,6 +145,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     })(window, document, "clarity", "script", "xs2md764oi");`,
           }}
         />
+
         <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <AppHeader />
         <PostHogProvider>
@@ -113,6 +154,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           </main>
         </PostHogProvider>
         <Footer />
+        <CookieConsentBanner />
       </body>
     </html>
   );
