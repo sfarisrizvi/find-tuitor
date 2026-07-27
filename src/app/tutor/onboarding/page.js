@@ -806,8 +806,9 @@ function OnboardingContent() {
       setSaveMsg('Saved!');
       setTimeout(() => setSaveMsg(''), 2000);
     } catch (err) {
-      setSaveMsg('Error saving. Try again.');
-      console.error(err);
+      const errMsg = err?.message || err?.details || err?.hint || (typeof err === 'object' && Object.keys(err).length > 0 ? JSON.stringify(err) : String(err));
+      console.error('Tutor Onboarding Save Error:', errMsg, err);
+      setSaveMsg(errMsg ? `Error: ${errMsg}` : 'Error saving. Try again.');
     } finally {
       setSaving(false);
     }
