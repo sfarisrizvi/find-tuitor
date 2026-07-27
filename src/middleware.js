@@ -1,1 +1,7 @@
-export { proxy as middleware, proxy, config } from './proxy';
+export { proxy as middleware, proxy } from './proxy';
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+};
