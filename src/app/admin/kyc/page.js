@@ -1,42 +1,85 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
+import { FileText, ExternalLink } from 'lucide-react';
 
 export default function AdminKYC() {
-  const [filter, setFilter] = useState('Pending');
+  const [filter, setFilter] = useState('pending');
+  const [tutors, setTutors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
 
-  const kycRequests = [
-    { id: 1, name: 'Usman Tariq', status: 'Pending', uploadedAt: '2 hours ago', docs: ['CNIC Front', 'CNIC Back', 'BSc Degree'] },
-    { id: 2, name: 'Fatima Noor', status: 'Pending', uploadedAt: '5 hours ago', docs: ['CNIC Front', 'CNIC Back', 'MSc Transcript'] },
-    { id: 3, name: 'Ali Khan', status: 'Approved', uploadedAt: '1 day ago', docs: ['CNIC Front', 'CNIC Back'] },
-    { id: 4, name: 'Ayesha Raza', status: 'Rejected', uploadedAt: '2 days ago', docs: ['CNIC Front'] },
-  ];
+  const fetchTutors = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/kyc');
+      const data = await res.json();
+      if (res.ok && data.requests) {
+        setTutors(data.requests);
+      }
+    } catch (err) {
+      console.error('Error fetching admin KYC data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const filteredData = kycRequests.filter(req => req.status === filter);
+  useEffect(() => {
+    fetchTutors();
+  }, []);
+
+  const handleAction = async (tutorId, action) => {
+    setActionLoading(tutorId);
+    try {
+      const res = await fetch('/api/admin/kyc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tutorId, action })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTutors(prev => prev.map(t => t.id === tutorId ? { ...t, kyc_status: action === 'approve' ? 'approved' : 'rejected', verified: action === 'approve' } : t));
+      } else {
+        alert(data.error || 'Failed to update status');
+      }
+    } catch (err) {
+      console.error('Action error:', err);
+      alert('Error updating status');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const pendingCount = tutors.filter(t => (t.kyc_status || 'pending') === 'pending').length;
+  const approvedCount = tutors.filter(t => t.kyc_status === 'approved').length;
+  const rejectedCount = tutors.filter(t => t.kyc_status === 'rejected').length;
+
+  const filteredData = tutors.filter(t => (t.kyc_status || 'pending') === filter);
 
   const filterCards = [
-    { label: 'Pending', count: 2, color: 'var(--accent-orange)' },
-    { label: 'Approved', count: 1, color: 'var(--brand-green-dark)' },
-    { label: 'Rejected', count: 1, color: 'var(--steel)' },
+    { label: 'pending', display: 'Pending', count: pendingCount, color: 'var(--accent-orange)' },
+    { label: 'approved', display: 'Approved', count: approvedCount, color: 'var(--brand-green-dark)' },
+    { label: 'rejected', display: 'Rejected', count: rejectedCount, color: '#EF4444' },
   ];
 
   return (
-    <div className="container">
+    <div className="container" style={{ paddingBottom: '60px' }}>
       <div style={{ marginBottom: 'var(--spacing-xl)' }}>
         <h2>KYC Document Verification</h2>
-        <p>Review and verify identity and academic documents uploaded by tutors.</p>
+        <p style={{ color: 'var(--steel)' }}>Review and verify identity and academic documents uploaded by tutors.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-xl)' }}>
+      {/* Filter Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-xl)' }}>
         {filterCards.map(c => (
           <div 
             key={c.label} 
             onClick={() => setFilter(c.label)}
             style={{ 
               backgroundColor: 'var(--canvas)', 
-              padding: 'var(--spacing-md)', 
+              padding: '16px 20px', 
               borderRadius: 'var(--rounded-md)',
               border: filter === c.label ? `2px solid ${c.color}` : '1px solid var(--hairline)',
               cursor: 'pointer',
@@ -45,49 +88,109 @@ export default function AdminKYC() {
               alignItems: 'center'
             }}
           >
-            <span style={{ fontWeight: 500 }}>{c.label} Requests</span>
-            <span style={{ backgroundColor: c.color, color: 'var(--on-dark)', padding: '4px 12px', borderRadius: 'var(--rounded-full)', fontWeight: 600 }}>{c.count}</span>
+            <span style={{ fontWeight: 600, fontSize: '15px' }}>{c.display} Requests</span>
+            <span style={{ backgroundColor: c.color, color: '#fff', padding: '4px 12px', borderRadius: 'var(--rounded-full)', fontWeight: 700, fontSize: '13px' }}>
+              {c.count}
+            </span>
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-        {filteredData.length === 0 ? (
-          <Card style={{ textAlign: 'center', color: 'var(--steel)' }}>No requests found for this filter.</Card>
-        ) : filteredData.map(req => (
-          <Card key={req.id}>
-            <div style={{ display: 'flex', gap: 'var(--spacing-xl)' }}>
-              {/* Left Details */}
-              <div style={{ width: '300px', flexShrink: 0 }}>
-                <h3 style={{ marginBottom: '8px' }}>{req.name}</h3>
-                <Badge variant={req.status === 'Pending' ? 'orange' : req.status === 'Approved' ? 'green' : 'popular'} style={{ marginBottom: '16px' }}>{req.status}</Badge>
-                <p style={{ fontSize: '14px', color: 'var(--steel)' }}>Uploaded {req.uploadedAt}</p>
-                
-                <div style={{ marginTop: 'var(--spacing-md)', display: 'flex', gap: '8px' }}>
-                  {req.status === 'Pending' && (
-                    <>
-                      <Button variant="primary" style={{ flex: 1 }}>Approve</Button>
-                      <Button variant="secondary" style={{ flex: 1 }}>Reject</Button>
-                    </>
-                  )}
-                </div>
-              </div>
+      {/* Tutors List */}
+      {loading ? (
+        <p style={{ color: 'var(--steel)' }}>Loading verification requests...</p>
+      ) : filteredData.length === 0 ? (
+        <Card style={{ textAlign: 'center', padding: '40px', color: 'var(--steel)' }}>
+          No {filter} KYC verification requests found.
+        </Card>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+          {filteredData.map(req => {
+            const kycDocs = req.kyc_docs || {};
+            const docEntries = Object.entries(kycDocs).filter(([k, v]) => !!v);
 
-              {/* Right Documents Preview */}
-              <div style={{ flex: 1, backgroundColor: 'var(--surface-soft)', borderRadius: 'var(--rounded-md)', padding: 'var(--spacing-md)' }}>
-                <h4 style={{ marginBottom: '16px' }}>Uploaded Documents</h4>
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  {req.docs.map((doc, idx) => (
-                    <div key={idx} style={{ width: '120px', height: '80px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--on-dark)' }}>
-                      {doc} IMG
+            return (
+              <Card key={req.id}>
+                <div style={{ display: 'flex', gap: 'var(--spacing-xl)', flexWrap: 'wrap' }}>
+                  {/* Left Details */}
+                  <div style={{ width: '280px', flexShrink: 0 }}>
+                    <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>{req.full_name || 'Anonymous Tutor'}</h3>
+                    <div style={{ marginBottom: '12px' }}>
+                      <Badge variant={(req.kyc_status || 'pending') === 'pending' ? 'orange' : req.kyc_status === 'approved' ? 'green-soft' : 'popular'}>
+                        {req.kyc_status ? req.kyc_status.toUpperCase() : 'PENDING'}
+                      </Badge>
                     </div>
-                  ))}
+                    <p style={{ fontSize: '13px', color: 'var(--steel)', margin: '0 0 16px 0' }}>
+                      City: <strong>{req.city || 'Not specified'}</strong>
+                    </p>
+                    
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Button 
+                        variant="primary" 
+                        disabled={actionLoading === req.id || req.kyc_status === 'approved'}
+                        onClick={() => handleAction(req.id, 'approve')}
+                        style={{ flex: 1, backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', fontSize: '13px' }}
+                      >
+                        {actionLoading === req.id ? 'Saving...' : 'Approve'}
+                      </Button>
+                      <Button 
+                        variant="secondary" 
+                        disabled={actionLoading === req.id || req.kyc_status === 'rejected'}
+                        onClick={() => handleAction(req.id, 'reject')}
+                        style={{ flex: 1, color: '#EF4444', borderColor: '#FCA5A5', fontSize: '13px' }}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Right Documents Preview */}
+                  <div style={{ flex: 1, backgroundColor: 'var(--surface-soft)', borderRadius: 'var(--rounded-md)', padding: '16px', border: '1px solid var(--hairline)' }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600 }}>Uploaded Documents ({docEntries.length})</h4>
+                    {docEntries.length === 0 ? (
+                      <p style={{ fontSize: '13px', color: 'var(--stone)', margin: 0 }}>No documents uploaded yet.</p>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        {docEntries.map(([docName, docPath]) => {
+                          const fileUrl = typeof docPath === 'string' && docPath.startsWith('http')
+                            ? docPath
+                            : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/teacher-files/${docPath}`;
+
+                          return (
+                            <a 
+                              key={docName} 
+                              href={fileUrl} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              style={{ 
+                                textDecoration: 'none', 
+                                backgroundColor: 'var(--canvas)', 
+                                border: '1px solid var(--hairline-strong)', 
+                                borderRadius: '8px', 
+                                padding: '10px 14px', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                fontSize: '13px', 
+                                color: 'var(--ink)',
+                                fontWeight: 500
+                              }}
+                            >
+                              <FileText size={16} color="var(--brand-green-dark)" />
+                              <span style={{ textTransform: 'capitalize' }}>{docName.replace('_', ' ')}</span>
+                              <ExternalLink size={12} color="var(--stone)" />
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

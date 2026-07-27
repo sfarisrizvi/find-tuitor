@@ -797,7 +797,8 @@ function OnboardingContent() {
         if (introVideo) intro_video_url = await uploadFile(introVideo, 'profile');
         updates = { ...updates, about, ...(intro_video_url && { intro_video_url }) };
         // Mark onboarding complete on last step
-        if (nextStep > TOTAL_STEPS) updates.onboarding_complete = true;
+        // Mark onboarding complete on last step ONLY if all steps are valid
+        if (nextStep > TOTAL_STEPS && isAllStepsCompleted) updates.onboarding_complete = true;
       }
 
       const { error: updateErr } = await supabase.from('tutor_profiles').update(updates).eq('id', user.id);
@@ -815,14 +816,20 @@ function OnboardingContent() {
   };
 
   const next = async () => {
+    if (step === TOTAL_STEPS) {
+      if (!isAllStepsCompleted) {
+        alert(`Cannot complete onboarding. You have ${incompleteSteps.length} incomplete step(s): ${incompleteSteps.map(s => `Step ${s} (${STEP_LABELS[s - 1]})`).join(', ')}`);
+        return;
+      }
+      await saveStep(TOTAL_STEPS + 1);
+      router.push('/tutor/dashboard');
+      return;
+    }
+
     const ns = step + 1;
     await saveStep(ns);
-    if (ns > TOTAL_STEPS) {
-      router.push('/tutor/dashboard');
-    } else {
-      setStep(ns);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    setStep(ns);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const back = () => {
@@ -832,8 +839,17 @@ function OnboardingContent() {
 
   const skip = () => {
     const ns = step + 1;
-    if (ns > TOTAL_STEPS) router.push('/tutor/dashboard');
-    else { setStep(ns); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    if (ns > TOTAL_STEPS) {
+      if (!isAllStepsCompleted) {
+        alert(`Cannot complete onboarding. You have ${incompleteSteps.length} incomplete step(s): ${incompleteSteps.map(s => `Step ${s} (${STEP_LABELS[s - 1]})`).join(', ')}`);
+        return;
+      }
+      saveStep(TOTAL_STEPS + 1);
+      router.push('/tutor/dashboard');
+    } else {
+      setStep(ns);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const toggleLevelActive = (levelName) => {
@@ -988,6 +1004,32 @@ function OnboardingContent() {
 
   const forbiddenMatches = getForbiddenMatches(about);
   const hasForbiddenContent = forbiddenMatches.length > 0;
+
+  const isStepValid = (s) => {
+    switch (s) {
+      case 1:
+        return (!!avatarFile || (!!avatarUrl && !avatarDeleted)) && profileName.trim().length > 0 && bio.trim().length >= 10;
+      case 2:
+        return !!cnicFront || !!cnicBack || !!degree || hasKycDocs;
+      case 3:
+        return Object.values(activeLevels).some(v => v);
+      case 4:
+        return selectedLanguages.length > 0;
+      case 5:
+        return experiences.some(e => e.institution?.trim() && e.role?.trim() && e.year_from);
+      case 6:
+        return Object.values(teachingModes).some(v => v);
+      case 7:
+        return !!hourlyRate && parseFloat(hourlyRate) > 0 && Object.values(availSlots).some(v => v && v.active);
+      case 8:
+        return about.trim().length >= 20 && !hasForbiddenContent;
+      default:
+        return false;
+    }
+  };
+
+  const incompleteSteps = [1, 2, 3, 4, 5, 6, 7, 8].filter(s => !isStepValid(s));
+  const isAllStepsCompleted = incompleteSteps.length === 0;
 
   const getHighlightedHtml = (text) => {
     if (!text) return '';
@@ -1972,53 +2014,77 @@ function OnboardingContent() {
 
             {/* Stepper Steps */}
             {STEP_LABELS.map((labelText, i) => {
-              const done = step > i + 1;
-              const current = step === i + 1;
-              const isUpcoming = step < i + 1;
+              const stepNum = i + 1;
+              const valid = isStepValid(stepNum);
+              const current = step === stepNum;
+              const isPast = step > stepNum;
+              const isSkippedOrInvalid = !valid && (isPast || step === TOTAL_STEPS);
+
+              let circleBg = '#fff';
+              let circleBorder = '2px solid var(--hairline-strong)';
+              let textColor = 'var(--stone)';
+              let icon = <span style={{ color: current ? '#B45309' : 'var(--stone)', fontWeight: 700, fontSize: '13px' }}>{stepNum}</span>;
+
+              if (isSkippedOrInvalid) {
+                circleBg = '#FEF2F2';
+                circleBorder = '2px solid #EF4444';
+                textColor = '#EF4444';
+                icon = <AlertCircle size={18} color="#EF4444" />;
+              } else if (valid && (isPast || (current && valid))) {
+                circleBg = '#41B01B';
+                circleBorder = 'none';
+                textColor = '#fff';
+                icon = <Check size={16} color="#fff" strokeWidth={3} />;
+              } else if (current) {
+                circleBg = '#FFFBEB';
+                circleBorder = '2px solid #F59E0B';
+                textColor = '#B45309';
+              }
 
               return (
-                <div key={i} className="step-container" style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  zIndex: 3,
-                  width: '90px'
-                }}>
+                <div 
+                  key={i} 
+                  className="step-container" 
+                  onClick={() => { setStep(stepNum); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    zIndex: 3,
+                    width: '90px',
+                    cursor: 'pointer'
+                  }}
+                  title={isSkippedOrInvalid ? `Step ${stepNum} (${labelText}) is incomplete! Click to fix.` : `Step ${stepNum}: ${labelText}`}
+                >
                   {/* Circle */}
                   <div style={{
                     width: '36px',
                     height: '36px',
                     borderRadius: '50%',
-                    backgroundColor: done ? '#41B01B' : '#fff',
-                    border: done ? 'none' : current ? '2px solid #41B01B' : '2px solid var(--hairline-strong)',
+                    backgroundColor: circleBg,
+                    border: circleBorder,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     transition: 'all 0.3s ease',
-                    boxShadow: current ? '0 0 0 4px rgba(65, 176, 27, 0.1)' : 'none'
+                    boxShadow: current 
+                      ? '0 0 0 4px rgba(245, 158, 11, 0.2)' 
+                      : isSkippedOrInvalid 
+                        ? '0 0 0 4px rgba(239, 68, 68, 0.2)' 
+                        : 'none'
                   }}>
-                    {done ? (
-                      <Check size={16} color="#fff" strokeWidth={3} />
-                    ) : (
-                      <span style={{
-                        color: current ? '#41B01B' : 'var(--stone)',
-                        fontWeight: 700,
-                        fontSize: '13px'
-                      }}>
-                        {i + 1}
-                      </span>
-                    )}
+                    {icon}
                   </div>
                   {/* Label */}
                   <span className="step-label" style={{
                     marginTop: '8px',
                     fontSize: '11px',
                     fontWeight: 600,
-                    color: isUpcoming ? 'var(--stone)' : current ? '#41B01B' : 'var(--ink)',
+                    color: isSkippedOrInvalid ? '#EF4444' : current ? '#B45309' : valid ? '#41B01B' : 'var(--stone)',
                     textAlign: 'center',
                     whiteSpace: 'nowrap'
                   }}>
-                    {labelText}
+                    {labelText} {isSkippedOrInvalid && '⚠️'}
                   </span>
                 </div>
               );
@@ -2093,6 +2159,53 @@ function OnboardingContent() {
         </div>
       </div>
 
+      {/* Incomplete Steps Banner (Step 8 / Completion) */}
+      {step === TOTAL_STEPS && !isAllStepsCompleted && (
+        <div style={{
+          position: 'fixed',
+          bottom: '76px',
+          left: 0,
+          right: 0,
+          backgroundColor: '#FEF2F2',
+          borderTop: '1px solid #FCA5A5',
+          borderBottom: '1px solid #FCA5A5',
+          padding: '12px 24px',
+          zIndex: 89,
+          boxShadow: '0 -4px 12px rgba(0,0,0,0.05)'
+        }}>
+          <div style={{ maxWidth: '1150px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#991B1B', fontWeight: 700, fontSize: '13px' }}>
+              <AlertCircle size={18} color="#EF4444" style={{ flexShrink: 0 }} />
+              <span>Cannot complete profile: {incompleteSteps.length} incomplete step(s) remaining</span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+              <span style={{ fontSize: '12px', color: '#7F1D1D', marginRight: '4px' }}>Click to fix:</span>
+              {incompleteSteps.map(sNum => (
+                <button
+                  key={sNum}
+                  onClick={() => { setStep(sNum); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  style={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #EF4444',
+                    color: '#B91C1C',
+                    borderRadius: '999px',
+                    padding: '3px 10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  Step {sNum}: {STEP_LABELS[sNum - 1]} ➔
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom Nav */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: 'var(--canvas)', borderTop: '1px solid var(--hairline)', padding: '16px 24px', zIndex: 90 }}>
         <div style={{ maxWidth: '1150px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2102,7 +2215,18 @@ function OnboardingContent() {
           <div style={{ fontSize: '13px', color: saveMsg === 'Saved!' ? 'var(--brand-green-dark)' : 'var(--accent-orange)', fontWeight: 500, minWidth: '80px', textAlign: 'center' }}>
             {saving ? 'Saving…' : saveMsg}
           </div>
-          <Button onClick={next} variant="primary" disabled={saving || (step === 8 && hasForbiddenContent)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Button 
+            onClick={next} 
+            variant="primary" 
+            disabled={saving || (step === TOTAL_STEPS && (!isAllStepsCompleted || hasForbiddenContent))} 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              opacity: step === TOTAL_STEPS && !isAllStepsCompleted ? 0.6 : 1,
+              cursor: step === TOTAL_STEPS && !isAllStepsCompleted ? 'not-allowed' : 'pointer'
+            }}
+          >
             {step === TOTAL_STEPS ? '🎉 Complete Profile' : <>Save & Continue <ChevronRight size={16} /></>}
           </Button>
         </div>
