@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 
-export async function middleware(request) {
+export async function proxy(request) {
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -19,6 +19,11 @@ export async function middleware(request) {
         expires: c.expires,
       })
     })
+    
+    // Clean up RSC headers to prevent Next.js from caching HTML responses as JSON payloads
+    res.headers.delete('x-middleware-prefetch')
+    res.headers.delete('rsc')
+    
     return res
   }
 
