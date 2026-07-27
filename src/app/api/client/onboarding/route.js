@@ -98,15 +98,39 @@ export async function POST(request) {
     } 
     
     else if (action === 'COMPLETE') {
+      const updatePayload = {
+        onboarding_complete: true,
+        onboarding_step: 4
+      };
+
+      if (clientType === 'student') {
+        updatePayload.grade = studentGrade;
+        updatePayload.school_college = studentSchool;
+        updatePayload.subjects = studentSubjects;
+      }
+
       const { error: completeError } = await supabaseAdmin
         .from('client_profiles')
-        .update({
-          onboarding_complete: true,
-          onboarding_step: 4
-        })
+        .update(updatePayload)
         .eq('id', user.id);
 
       if (completeError) throw completeError;
+
+      if (clientType === 'parent') {
+        await supabaseAdmin.from('children').delete().eq('client_id', user.id);
+        if (childrenData && childrenData.length > 0) {
+          const inserts = childrenData.map(c => ({
+            client_id: user.id,
+            name: c.name,
+            academic_route: c.grade,
+            grade: c.grade,
+            school_college: c.school_college,
+            subjects: c.subjects
+          }));
+          const { error: childError } = await supabaseAdmin.from('children').insert(inserts);
+          if (childError) throw childError;
+        }
+      }
 
       return respondWithSuccess({ status: 'success' }, 200, headers);
     } 
