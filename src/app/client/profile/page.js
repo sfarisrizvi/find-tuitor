@@ -146,38 +146,26 @@ export default function ClientProfile() {
   // Save single child details
   const handleSaveSingleChild = async (childId, editData) => {
     setSaving(true);
-    const supabase = createClient();
     try {
       const isNew = childId.startsWith('temp-');
-      const payload = {
-        client_id: user.id,
-        name: editData.name,
-        academic_route: editData.grade,
-        grade: editData.grade,
-        school_college: editData.school_college,
-        subjects: editData.subjects
-      };
+      const method = isNew ? 'POST' : 'PUT';
+      const bodyPayload = isNew
+        ? { name: editData.name, grade: editData.grade, school_college: editData.school_college, subjects: editData.subjects }
+        : { id: childId, name: editData.name, grade: editData.grade, school_college: editData.school_college, subjects: editData.subjects };
 
-      if (isNew) {
-        const { data, error } = await supabase
-          .from('children')
-          .insert(payload)
-          .select()
-          .single();
-        if (error) throw error;
-        setChildren(prev => prev.map(c => c.id === childId ? data : c));
-      } else {
-        const { data, error } = await supabase
-          .from('children')
-          .update(payload)
-          .eq('id', childId)
-          .select()
-          .single();
-        if (error) throw error;
-        setChildren(prev => prev.map(c => c.id === childId ? data : c));
-      }
+      const res = await fetch('/api/client/children', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyPayload)
+      });
+
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Failed to save child profile');
+
+      setChildren(prev => prev.map(c => c.id === childId ? resData.child : c));
     } catch (err) {
-      console.error('Error saving child details:', err);
+      console.error('Error saving child details:', err.message || err);
+      alert(err.message || 'Failed to save child profile');
     } finally {
       setSaving(false);
     }
@@ -191,17 +179,20 @@ export default function ClientProfile() {
       return;
     }
 
+    if (!confirm('Are you sure you want to delete this child profile?')) return;
+
     setSaving(true);
-    const supabase = createClient();
     try {
-      const { error } = await supabase
-        .from('children')
-        .delete()
-        .eq('id', childId);
-      if (error) throw error;
+      const res = await fetch(`/api/client/children?id=${childId}`, {
+        method: 'DELETE'
+      });
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Failed to delete child profile');
+
       setChildren(prev => prev.filter(c => c.id !== childId));
     } catch (err) {
-      console.error('Error deleting child:', err);
+      console.error('Error deleting child:', err.message || err);
+      alert(err.message || 'Failed to delete child profile');
     } finally {
       setSaving(false);
     }
