@@ -78,7 +78,7 @@ export default function Register() {
               setLoading(false);
             } else {
               setLoading(false);
-              router.push('/tutor/onboarding');
+              window.location.href = '/tutor/onboarding';
             }
           }
         });
@@ -129,7 +129,7 @@ export default function Register() {
       }
 
       // Successful registration and login
-      router.push('/tutor/onboarding');
+      window.location.href = '/tutor/onboarding';
 
     } catch (error) {
       console.error('Signup error:', error);

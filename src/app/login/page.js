@@ -59,7 +59,7 @@ function LoginForm() {
       const role = data.user.user_metadata?.role;
       setLoading(false);
       const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/')));
-      router.push(targetUrl);
+      window.location.href = targetUrl;
     }
   };
 
@@ -95,7 +95,7 @@ function LoginForm() {
               const role = data.user?.user_metadata?.role;
               setLoading(false);
               const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/')));
-              router.push(targetUrl);
+              window.location.href = targetUrl;
             }
           }
         });

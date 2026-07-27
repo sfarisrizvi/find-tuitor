@@ -96,7 +96,7 @@ export default function Signup() {
     }
 
     setLoading(false);
-    router.push('/client/onboarding');
+    window.location.href = '/client/onboarding';
   };
 
   const triggerToast = (msg) => {
@@ -135,7 +135,7 @@ export default function Signup() {
               setLoading(false);
             } else {
               setLoading(false);
-              router.push('/client/onboarding');
+              window.location.href = '/client/onboarding';
             }
           }
         });
