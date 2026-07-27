@@ -61,6 +61,9 @@ export async function proxy(request) {
     } else if (role === 'client') {
       url.pathname = '/client/dashboard';
       return redirect(url);
+    } else if (role === 'admin') {
+      url.pathname = '/admin/dashboard';
+      return redirect(url);
     }
   }
 
