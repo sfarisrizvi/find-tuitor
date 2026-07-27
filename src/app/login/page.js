@@ -30,7 +30,26 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const nextParam = searchParams.get('next');
 
-  // Middleware already redirects logged-in users away from /login
+  useEffect(() => {
+    const checkUser = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        let role = session.user.user_metadata?.role;
+        if (!role) {
+          const { data: clientProf } = await supabase.from('client_profiles').select('id').eq('id', session.user.id).maybeSingle();
+          if (clientProf) {
+            role = 'client';
+          } else {
+            role = 'tutor';
+          }
+        }
+        const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/client/dashboard')));
+        window.location.href = targetUrl;
+      }
+    };
+    checkUser();
+  }, [nextParam]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

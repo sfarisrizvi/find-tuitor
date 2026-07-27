@@ -54,7 +54,20 @@ export async function proxy(request) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user && (url.pathname === '/' || url.pathname === '/login' || url.pathname === '/signup' || url.pathname === '/register')) {
-    const role = user.user_metadata?.role;
+    let role = user.user_metadata?.role;
+
+    if (!role) {
+      const { data: clientProf } = await supabase.from('client_profiles').select('id').eq('id', user.id).maybeSingle();
+      if (clientProf) {
+        role = 'client';
+      } else {
+        const { data: tutorProf } = await supabase.from('tutor_profiles').select('id').eq('id', user.id).maybeSingle();
+        if (tutorProf) {
+          role = 'tutor';
+        }
+      }
+    }
+
     if (role === 'tutor') {
       url.pathname = '/tutor/dashboard';
       return redirect(url);
@@ -63,6 +76,9 @@ export async function proxy(request) {
       return redirect(url);
     } else if (role === 'admin') {
       url.pathname = '/admin/dashboard';
+      return redirect(url);
+    } else {
+      url.pathname = '/client/dashboard';
       return redirect(url);
     }
   }
