@@ -1,9 +1,9 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Mail, Phone, MapPin, Globe } from 'lucide-react';
+import { Mail, Phone, ChevronDown, ShieldCheck } from 'lucide-react';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -13,7 +13,25 @@ export default function Contact() {
     role: 'parent_student',
     message: ''
   });
+
+  // Custom Dropdown State
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const roleLabels = {
+    parent_student: 'Parent or Student',
+    tutor: 'Tutor / Teacher'
+  };
+
+  // Anti-Bot Security Verification Challenge State
+  const [captchaNums, setCaptchaNums] = useState({ num1: 7, num2: 4 });
+  const [captchaInput, setCaptchaInput] = useState('');
   const [status, setStatus] = useState('');
+
+  // Generate random captcha challenge on client load
+  useEffect(() => {
+    const n1 = Math.floor(Math.random() * 8) + 2;
+    const n2 = Math.floor(Math.random() * 8) + 1;
+    setCaptchaNums({ num1: n1, num2: n2 });
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -21,6 +39,14 @@ export default function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Verify Captcha Security Answer
+    const expectedSum = captchaNums.num1 + captchaNums.num2;
+    if (parseInt(captchaInput) !== expectedSum) {
+      setStatus('Security Check failed: Please answer the math verification question correctly.');
+      return;
+    }
+
     setStatus('Submitting...');
 
     try {
@@ -29,7 +55,11 @@ export default function Contact() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          captchaInput: captchaInput,
+          captchaExpected: expectedSum
+        }),
       });
 
       const data = await res.json();
@@ -46,6 +76,12 @@ export default function Contact() {
         role: 'parent_student',
         message: ''
       });
+      setCaptchaInput('');
+      
+      // Refresh Captcha
+      const n1 = Math.floor(Math.random() * 8) + 2;
+      const n2 = Math.floor(Math.random() * 8) + 1;
+      setCaptchaNums({ num1: n1, num2: n2 });
     } catch (err) {
       setStatus(`Submission failed: ${err.message}`);
     }
@@ -70,6 +106,7 @@ export default function Contact() {
       <meta name="twitter:title" content="Contact Us | TutorOnline.pk" />
       <meta name="twitter:description" content="Get in touch with TutorOnline.pk. Ask questions about billing, security escrow, academic vetting, or support." />
       <meta name="twitter:image" content="https://tutoronline.pk/featured-image.jpg" />
+      
       <div className="container" style={{ maxWidth: '1000px' }}>
 
         <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-xxl)' }}>
@@ -114,43 +151,90 @@ export default function Contact() {
 
             <div>
               <h4 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>Follow Our Community</h4>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              
+              {/* Branded Social Icons Only (No Names, Brand Green Colors) */}
+              <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                {/* Facebook Icon */}
                 <a 
                   href="https://www.facebook.com/mytutoronline" 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: 'var(--rounded-full)', backgroundColor: '#1877F2', color: '#ffffff', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}
+                  title="Facebook"
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--brand-green-soft)',
+                    border: '1px solid var(--hairline-strong)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--brand-green-dark)',
+                    transition: 'transform 0.2s ease, border-color 0.2s ease',
+                    textDecoration: 'none'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.borderColor = 'var(--brand-green-dark)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.borderColor = 'var(--hairline-strong)'; }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                   </svg>
-                  Facebook
                 </a>
 
+                {/* Instagram Icon */}
                 <a 
                   href="https://www.instagram.com/tutoronline.pk_/" 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: 'var(--rounded-full)', background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', color: '#ffffff', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}
+                  title="Instagram"
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--brand-green-soft)',
+                    border: '1px solid var(--hairline-strong)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--brand-green-dark)',
+                    transition: 'transform 0.2s ease, border-color 0.2s ease',
+                    textDecoration: 'none'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.borderColor = 'var(--brand-green-dark)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.borderColor = 'var(--hairline-strong)'; }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
                     <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
                   </svg>
-                  Instagram
                 </a>
 
+                {/* WhatsApp Icon */}
                 <a 
                   href="https://wa.me/923455235079" 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: 'var(--rounded-full)', backgroundColor: '#25D366', color: '#ffffff', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}
+                  title="WhatsApp"
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--brand-green-soft)',
+                    border: '1px solid var(--hairline-strong)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--brand-green-dark)',
+                    transition: 'transform 0.2s ease, border-color 0.2s ease',
+                    textDecoration: 'none'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.borderColor = 'var(--brand-green-dark)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.borderColor = 'var(--hairline-strong)'; }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                   </svg>
-                  WhatsApp
                 </a>
               </div>
             </div>
@@ -213,26 +297,75 @@ export default function Contact() {
                 />
               </div>
 
+              {/* Custom Branded Dropdown UI Component */}
               <div>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '6px' }}>I am a...</label>
-                <select 
-                  name="role" 
-                  value={formData.role} 
-                  onChange={handleChange}
-                  className="input-field"
-                  style={{
-                    width: '100%',
-                    height: '44px',
-                    padding: '0 20px',
-                    borderRadius: 'var(--rounded-full)',
-                    border: '1px solid var(--hairline-strong)',
-                    backgroundColor: 'var(--canvas)',
-                    fontSize: '15px'
-                  }}
-                >
-                  <option value="parent_student">Parent or Student</option>
-                  <option value="tutor">Tutor / Teacher</option>
-                </select>
+                <div style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    style={{
+                      width: '100%',
+                      height: '44px',
+                      padding: '0 20px',
+                      borderRadius: 'var(--rounded-full)',
+                      border: '1px solid var(--hairline-strong)',
+                      backgroundColor: 'var(--canvas)',
+                      color: 'var(--ink)',
+                      fontSize: '15px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <span>{roleLabels[formData.role]}</span>
+                    <ChevronDown size={18} color="var(--brand-green-dark)" style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+                  </button>
+
+                  {dropdownOpen && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '50px',
+                      left: 0,
+                      right: 0,
+                      backgroundColor: 'var(--canvas)',
+                      border: '1px solid var(--hairline-strong)',
+                      borderRadius: 'var(--rounded-lg)',
+                      boxShadow: 'var(--shadow-card)',
+                      zIndex: 50,
+                      overflow: 'hidden'
+                    }}>
+                      <div
+                        onClick={() => { setFormData({ ...formData, role: 'parent_student' }); setDropdownOpen(false); }}
+                        style={{
+                          padding: '12px 20px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          color: formData.role === 'parent_student' ? 'var(--brand-green-dark)' : 'var(--charcoal)',
+                          backgroundColor: formData.role === 'parent_student' ? 'var(--brand-green-soft)' : 'transparent'
+                        }}
+                      >
+                        Parent or Student
+                      </div>
+                      <div
+                        onClick={() => { setFormData({ ...formData, role: 'tutor' }); setDropdownOpen(false); }}
+                        style={{
+                          padding: '12px 20px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          color: formData.role === 'tutor' ? 'var(--brand-green-dark)' : 'var(--charcoal)',
+                          backgroundColor: formData.role === 'tutor' ? 'var(--brand-green-soft)' : 'transparent'
+                        }}
+                      >
+                        Tutor / Teacher
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -253,6 +386,22 @@ export default function Contact() {
                     fontSize: '15px',
                     resize: 'none'
                   }}
+                />
+              </div>
+
+              {/* Bot Prevention / Anti-Spam Security Verification Challenge */}
+              <div style={{ backgroundColor: 'var(--surface-soft)', padding: '14px 18px', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--hairline-strong)' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: 'var(--charcoal)' }}>
+                  <ShieldCheck size={16} color="var(--brand-green-dark)" />
+                  Security Check: What is {captchaNums.num1} + {captchaNums.num2}?
+                </label>
+                <Input
+                  type="number"
+                  placeholder={`Enter sum (${captchaNums.num1 + captchaNums.num2})`}
+                  value={captchaInput}
+                  onChange={(e) => setCaptchaInput(e.target.value)}
+                  required
+                  style={{ borderRadius: 'var(--rounded-full)', padding: '0 20px', backgroundColor: 'var(--canvas)', height: '40px', fontSize: '14px' }}
                 />
               </div>
 

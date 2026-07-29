@@ -5,7 +5,15 @@ import { sendNotification } from '../../../lib/notifications';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { name, email, phone, role, message } = body || {};
+    const { name, email, phone, role, message, captchaInput, captchaExpected } = body || {};
+
+    // Bot Prevention / Captcha Validation
+    if (captchaInput === undefined || captchaExpected === undefined || parseInt(captchaInput) !== parseInt(captchaExpected)) {
+      return NextResponse.json(
+        { error: 'Security Check failed. Please answer the math verification question correctly.' },
+        { status: 400 }
+      );
+    }
 
     // Validation
     if (!name || !email || !message) {
