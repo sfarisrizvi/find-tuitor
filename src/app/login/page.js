@@ -44,7 +44,7 @@ function LoginForm() {
             role = 'tutor';
           }
         }
-        const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/client/dashboard')));
+        const targetUrl = nextParam || (role === 'tutor' ? '/tutor/dashboard' : '/client/dashboard');
         window.location.href = targetUrl;
       }
     };
@@ -77,7 +77,7 @@ function LoginForm() {
       }
       const role = data.user.user_metadata?.role;
       setLoading(false);
-      const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/')));
+      const targetUrl = nextParam || (role === 'tutor' ? '/tutor/dashboard' : '/client/dashboard');
       window.location.href = targetUrl;
     }
   };

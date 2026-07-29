@@ -16,10 +16,5 @@ export const NAV_LINKS = {
     { href: '/client/jobs', label: 'Post a Job' },
     { href: '/find-tutor', label: 'Find a Tutor' },
     { href: '/client/messages', label: 'Messages' }
-  ],
-  admin: [
-    { href: '/admin/dashboard', label: 'Overview' },
-    { href: '/admin/users', label: 'Users' },
-    { href: '/admin/kyc', label: 'KYC Checks' }
   ]
 };

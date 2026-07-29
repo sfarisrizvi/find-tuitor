@@ -3,13 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '../../utils/supabase/client';
 
 export function CookieConsentBanner() {
+  const [mounted, setMounted] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showBanner, setShowBanner] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return !localStorage.getItem('cookie_consent_choice');
-    }
-    return false;
-  });
+  const [showBanner, setShowBanner] = useState(false);
 
   const updateConsent = (granted) => {
     if (typeof window !== 'undefined' && window.gtag) {
@@ -23,6 +19,14 @@ export function CookieConsentBanner() {
   };
 
   useEffect(() => {
+    setMounted(true);
+    const savedChoice = localStorage.getItem('cookie_consent_choice');
+    if (!savedChoice) {
+      setShowBanner(true);
+    } else if (savedChoice === 'all') {
+      updateConsent(true);
+    }
+
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
@@ -39,13 +43,6 @@ export function CookieConsentBanner() {
         setIsLoggedIn(false);
       }
     });
-
-    if (typeof window !== 'undefined') {
-      const savedChoice = localStorage.getItem('cookie_consent_choice');
-      if (savedChoice === 'all') {
-        updateConsent(true);
-      }
-    }
 
     return () => {
       subscription?.unsubscribe();
@@ -64,7 +61,7 @@ export function CookieConsentBanner() {
     setShowBanner(false);
   };
 
-  if (isLoggedIn || !showBanner) return null;
+  if (!mounted || isLoggedIn || !showBanner) return null;
 
   return (
     <div style={{

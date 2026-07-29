@@ -453,6 +453,7 @@ function OnboardingContent() {
   // Step 8: About
   const [about, setAbout] = useState('');
   const [introVideo, setIntroVideo] = useState(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [suspended, setSuspended] = useState(false);
   const [kycVerifications, setKycVerifications] = useState({});
@@ -1926,6 +1927,44 @@ function OnboardingContent() {
               )}
             </div>
             <UploadBox label="Short Intro Video (optional)" hint="Max 60 seconds · MP4 or MOV · Max 50MB" accept="video/*" icon={Video} value={introVideo} onChange={setIntroVideo} />
+
+            {/* Terms & Privacy Acceptance Checkbox */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              backgroundColor: acceptedTerms ? 'rgba(16, 185, 129, 0.08)' : 'var(--canvas)',
+              border: acceptedTerms ? '1px solid var(--brand-green)' : '1px solid var(--hairline-strong)',
+              borderRadius: 'var(--rounded-md)',
+              padding: '16px',
+              transition: 'all 0.2s ease'
+            }}>
+              <input
+                type="checkbox"
+                id="accept-terms-checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  marginTop: '2px',
+                  accentColor: 'var(--brand-green)',
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
+              />
+              <label htmlFor="accept-terms-checkbox" style={{ fontSize: '14px', color: 'var(--ink)', lineHeight: '1.5', cursor: 'pointer', userSelect: 'none' }}>
+                I have read and agree to TutorOnline.pk&apos;s{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand-teal-mid)', textDecoration: 'underline', fontWeight: 600 }}>
+                  Terms &amp; Conditions
+                </a>{' '}
+                and{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand-teal-mid)', textDecoration: 'underline', fontWeight: 600 }}>
+                  Privacy Policy
+                </a>.
+              </label>
+            </div>
+
             <div style={{ backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-md)', padding: '16px', fontSize: '14px', color: 'var(--brand-green-dark)', fontWeight: 500 }}>
               🎉 You&apos;re almost done! After submitting, your profile will be reviewed by our admin team. You&apos;ll be notified when you are approved.
             </div>
@@ -2218,13 +2257,13 @@ function OnboardingContent() {
           <Button 
             onClick={next} 
             variant="primary" 
-            disabled={saving || (step === TOTAL_STEPS && (!isAllStepsCompleted || hasForbiddenContent))} 
+            disabled={saving || (step === TOTAL_STEPS && (!isAllStepsCompleted || hasForbiddenContent || !acceptedTerms))} 
             style={{ 
               display: 'flex', 
               alignItems: 'center', 
               gap: '6px',
-              opacity: step === TOTAL_STEPS && !isAllStepsCompleted ? 0.6 : 1,
-              cursor: step === TOTAL_STEPS && !isAllStepsCompleted ? 'not-allowed' : 'pointer'
+              opacity: (step === TOTAL_STEPS && (!isAllStepsCompleted || hasForbiddenContent || !acceptedTerms)) ? 0.5 : 1,
+              cursor: (step === TOTAL_STEPS && (!isAllStepsCompleted || hasForbiddenContent || !acceptedTerms)) ? 'not-allowed' : 'pointer'
             }}
           >
             {step === TOTAL_STEPS ? '🎉 Complete Profile' : <>Save & Continue <ChevronRight size={16} /></>}

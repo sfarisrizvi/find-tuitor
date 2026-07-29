@@ -12,9 +12,6 @@ export function HeaderNotificationBell({ user, profile }) {
   const [loading, setLoading] = useState(false);
   const popoverRef = useRef(null);
 
-  // Gate Check: Show bell for any authenticated user
-  const isUserAuthenticated = Boolean(user?.id);
-
   useEffect(() => {
     if (!user?.id) return;
 
@@ -45,9 +42,12 @@ export function HeaderNotificationBell({ user, profile }) {
 
     fetchNotifications();
 
-    // Subscribe to Supabase Realtime for instant notification pushes
+    // Unique channel per component instance to prevent duplicate subscribe error
+    const instanceId = Math.random().toString(36).substring(2, 9);
+    const channelName = `notifications_${user.id}_${instanceId}`;
+
     const channel = supabase
-      .channel(`public:notifications:user_id=eq.${user.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -150,7 +150,6 @@ export function HeaderNotificationBell({ user, profile }) {
     <div style={{ position: 'relative' }} ref={popoverRef}>
       {/* Bell Button */}
       <button
-        id="header-notification-btn"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Notifications"
         style={{

@@ -53,7 +53,7 @@ export async function proxy(request) {
   // Refresh session if expired
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (user && (url.pathname === '/' || url.pathname === '/login' || url.pathname === '/signup' || url.pathname === '/register')) {
+  if (user && (url.pathname === '/login' || url.pathname === '/signup' || url.pathname === '/register')) {
     let role = user.user_metadata?.role;
 
     if (!role) {
@@ -70,12 +70,6 @@ export async function proxy(request) {
 
     if (role === 'tutor') {
       url.pathname = '/tutor/dashboard';
-      return redirect(url);
-    } else if (role === 'client') {
-      url.pathname = '/client/dashboard';
-      return redirect(url);
-    } else if (role === 'admin') {
-      url.pathname = '/admin/dashboard';
       return redirect(url);
     } else {
       url.pathname = '/client/dashboard';
@@ -104,13 +98,13 @@ export async function proxy(request) {
     }
 
     const role = user.user_metadata?.role
-    if (role) {
+    if (role && role !== 'admin') {
       if (url.pathname.startsWith('/tutor') && role !== 'tutor') {
-        url.pathname = role === 'client' ? '/client/dashboard' : '/login'
+        url.pathname = '/client/dashboard'
         return redirect(url)
       }
       if (url.pathname.startsWith('/client') && role !== 'client') {
-        url.pathname = role === 'tutor' ? '/tutor/dashboard' : '/login'
+        url.pathname = '/tutor/dashboard'
         return redirect(url)
       }
     }

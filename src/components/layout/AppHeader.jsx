@@ -24,8 +24,6 @@ export function AppHeader() {
     staticRole = 'tutor';
   } else if (pathname?.startsWith('/client/')) {
     staticRole = 'client';
-  } else if (pathname?.startsWith('/admin/')) {
-    staticRole = 'admin';
   }
 
   useEffect(() => {
@@ -165,7 +163,6 @@ export function AppHeader() {
   let logoHref = '/';
   if (activeRole === 'tutor') logoHref = '/tutor/dashboard';
   else if (activeRole === 'client') logoHref = '/client/dashboard';
-  else if (activeRole === 'admin') logoHref = '/admin/dashboard';
 
   // Determine settings path
   const settingsHref = activeRole === 'tutor' ? '/tutor/onboarding' : '/client/profile';
@@ -224,8 +221,8 @@ export function AppHeader() {
           </div>
         </div>
 
-        {/* Header Right Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', position: 'relative' }} className="nav-actions">
+        {/* Desktop Header Right Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', position: 'relative' }} className="nav-actions-desktop">
           {!initialized ? (
             <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'var(--hairline-strong)', animation: 'pulse 1.5s infinite ease-in-out' }} />
           ) : user ? (
@@ -279,46 +276,163 @@ export function AppHeader() {
           )}
         </div>
 
-        {/* Mobile Menu Button */}
-        <button className="nav-mobile-btn" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Mobile Header Right Actions */}
+        <div className="nav-actions-mobile" style={{ alignItems: 'center', gap: '12px' }}>
+          {initialized && user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {/* Notification icon on left side of PFP */}
+              <HeaderNotificationBell user={user} profile={profile} />
+              
+              {/* Profile Avatar Icon replaces Hamburger Menu button when logged in */}
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                aria-label="Toggle profile menu"
+                style={{
+                  width: '38px', height: '38px', borderRadius: '50%',
+                  backgroundColor: 'var(--brand-green-dark)',
+                  border: isOpen ? '2px solid var(--brand-green-dark)' : '2px solid var(--hairline-strong)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden',
+                  background: profile?.avatar_url ? `url("${getAvatarUrl(profile.avatar_url)}") center/cover` : 'linear-gradient(135deg, var(--brand-green-dark), var(--brand-teal-mid))'
+                }}
+              >
+                {!profile?.avatar_url && (isOpen ? <X size={20} color="#fff" /> : <User size={18} color="#fff" />)}
+              </button>
+            </div>
+          ) : (
+            /* Logged-Out / Guest State: Hamburger Icon ONLY */
+            <button 
+              onClick={() => setIsOpen(!isOpen)} 
+              aria-label="Toggle menu"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--ink)',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* Mobile Drawer Backdrop */}
+      <div className={`nav-mobile-backdrop ${isOpen ? 'open' : ''}`} onClick={() => setIsOpen(false)} />
+
+      {/* Mobile Drawer Overlay */}
       <div className={`nav-mobile-overlay ${isOpen ? 'open' : ''}`}>
-        {links.map((link) => (
-          <Link key={link.href} href={link.href} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>
-            {link.label}
-          </Link>
-        ))}
+        
+        {/* User Info Card inside drawer when logged in */}
         {initialized && user && (
-          <>
-            <Link href={profileHref} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>
-              Profile
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '16px', borderBottom: '1px solid var(--hairline-strong)', marginBottom: '8px' }}>
+            <div style={{
+              width: '42px', height: '42px', borderRadius: '50%',
+              backgroundColor: 'var(--brand-green-dark)', border: '1px solid var(--hairline-strong)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+              background: profile?.avatar_url ? `url("${getAvatarUrl(profile.avatar_url)}") center/cover` : 'linear-gradient(135deg, var(--brand-green-dark), var(--brand-teal-mid))'
+            }}>
+              {!profile?.avatar_url && <User size={20} color="#fff" />}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ink)' }}>
+                {profile?.full_name || user?.user_metadata?.full_name || 'My Account'}
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--stone)', textTransform: 'capitalize' }}>
+                {activeRole} Account
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Top/Middle Navigation Links */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+          {links.map((link) => (
+            <Link key={link.href} href={link.href} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>
+              {link.label}
             </Link>
-            <Link href={settingsHref} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>
-              Settings
-            </Link>
+          ))}
+
+          {initialized && user && (
+            <>
+              <Link href={profileHref} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>
+                My Profile
+              </Link>
+              <Link href={settingsHref} style={mobileLinkStyle} onClick={() => setIsOpen(false)}>
+                Settings
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Bottom Action Section inside Drawer */}
+        <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--hairline-strong)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {initialized && user ? (
+            /* Logged-In State: Red Sign Out Button at Bottom */
             <button 
               onClick={() => { setIsOpen(false); handleSignOut(); }} 
-              style={{ ...mobileLinkStyle, border: 'none', backgroundColor: 'transparent', textAlign: 'left', color: '#EF4444', cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ 
+                width: '100%',
+                height: '44px',
+                borderRadius: 'var(--rounded-full)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#EF4444',
+                fontSize: '15px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'inherit'
+              }}
             >
               Sign Out
             </button>
-          </>
-        )}
-        {initialized && !user && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '20px' }}>
-            <a href="/login" onClick={(e) => { setIsOpen(false); handleSignInClick(e); }} style={{ color: 'var(--ink)', fontSize: '16px', fontWeight: 600, textDecoration: 'none', textAlign: 'center', padding: '10px 0' }}>
-              Log in
-            </a>
-            <Link href="/register" onClick={() => setIsOpen(false)} style={{ display: 'block', width: '100%' }}>
-              <Button variant="primary" style={{ width: '100%', height: '44px', fontSize: '15px', fontWeight: 600 }}>
-                Become a Tutor
-              </Button>
-            </Link>
-          </div>
-        )}
+          ) : (
+            /* Guest State: Outlined Login + Fill Accent Join as Tutor Button at Bottom */
+            <>
+              <a 
+                href="/login" 
+                onClick={(e) => { setIsOpen(false); handleSignInClick(e); }} 
+                style={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '44px',
+                  borderRadius: 'var(--rounded-full)',
+                  border: '1px solid var(--hairline-strong)',
+                  color: 'var(--ink)',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  backgroundColor: 'var(--canvas)'
+                }}
+              >
+                Log in
+              </a>
+
+              <Link href="/register" onClick={() => setIsOpen(false)} style={{ display: 'block', width: '100%', textDecoration: 'none' }}>
+                <Button 
+                  variant="primary" 
+                  style={{ 
+                    width: '100%', 
+                    height: '44px', 
+                    fontSize: '15px', 
+                    fontWeight: 600,
+                    borderRadius: 'var(--rounded-full)'
+                  }}
+                >
+                  Join as Tutor
+                </Button>
+              </Link>
+            </>
+          )}
+        </div>
+
       </div>
     </nav>
   );

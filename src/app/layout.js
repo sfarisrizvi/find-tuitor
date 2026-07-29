@@ -55,11 +55,11 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en" prefix="og: http://ogp.me/ns#">
-      <head>
+      <body>
         {/* Google Consent Mode v2 Defaults */}
         <Script
           id="google-consent-default"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
@@ -74,26 +74,15 @@ export default function RootLayout({ children }) {
             `,
           }}
         />
-        <meta property="og:site_name" content="TutorOnline.pk" />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="Find Tutor Online | Pakistan's Top Tutors" />
-        <meta property="og:description" content="Connecting students with Pakistan's best verified educators." />
-        <meta property="og:image" content="https://tutoronline.pk/featured-image.jpg" />
-        <meta property="og:image:secure_url" content="https://tutoronline.pk/featured-image.jpg" />
-        <meta property="og:image:type" content="image/jpeg" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="TutorOnline.pk - Pakistan's Top Tutors" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Find Tutor Online | Pakistan's Top Tutors" />
-        <meta name="twitter:description" content="Connecting students with Pakistan's best verified educators." />
-        <meta name="twitter:image" content="https://tutoronline.pk/featured-image.jpg" />
-        <script
+
+        {/* Structured Data JSON-LD */}
+        <Script
+          id="json-ld-org"
           type="application/ld+json"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-      </head>
-      <body>
+
         {/* GA4 Direct Integration G-1Z577KGRGN */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-1Z577KGRGN"
@@ -147,6 +136,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
 
         <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
+
         <AppHeader />
         <PostHogProvider>
           <main style={{ minHeight: 'calc(100vh - 64px - 300px)' }}>
@@ -159,4 +149,3 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </html>
   );
 }
-

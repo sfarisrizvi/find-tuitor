@@ -3,7 +3,14 @@ export default function robots() {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/client/", "/tutor/dashboard", "/admin/"],
+      disallow: [
+        "/client/",
+        "/tutor/dashboard",
+        "/tutor/contracts",
+        "/tutor/messages",
+        "/tutor/onboarding",
+        "/api/"
+      ],
     },
     sitemap: "https://tutoronline.pk/sitemap.xml",
   };

@@ -196,37 +196,70 @@ button {
   align-items: center;
 }
 
-.nav-mobile-btn {
-  display: none;
-  cursor: pointer;
-  background: none;
-  border: none;
-  color: var(--ink);
+.nav-actions-desktop {
+  display: flex;
+  align-items: center;
 }
 
-.nav-mobile-overlay {
+.nav-actions-mobile {
   display: none;
+}
+
+/* Mobile Drawer Backdrop & Slide Transition */
+.nav-mobile-backdrop {
   position: fixed;
   top: 64px;
   left: 0;
   right: 0;
   bottom: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.nav-mobile-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nav-mobile-overlay {
+  position: fixed;
+  top: 64px;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 380px;
   background-color: var(--canvas);
+  border-left: 1px solid var(--hairline-strong);
   z-index: 999;
   padding: 24px;
+  display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  border-top: 1px solid var(--hairline);
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.nav-mobile-overlay.open {
+  transform: translateX(0);
+  box-shadow: none;
+  pointer-events: auto;
+  visibility: visible;
 }
 
 @media (max-width: 768px) {
   .nav-links {
     display: none !important;
   }
-  .nav-mobile-btn {
-    display: block !important;
+  .nav-actions-desktop {
+    display: none !important;
   }
-  .nav-mobile-overlay.open {
+  .nav-actions-mobile {
     display: flex !important;
   }
 }

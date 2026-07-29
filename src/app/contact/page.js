@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Mail, Phone, ChevronDown, ShieldCheck, Check, ArrowRight, Lock } from 'lucide-react';
+import { Mail, Phone, ChevronDown, ShieldCheck, Check, ArrowRight } from 'lucide-react';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -28,31 +28,35 @@ export default function Contact() {
   // Anti-Bot Security Layer 2: Invisible Honeypot Trap (Bots fill this, humans never see it)
   const [honeypot, setHoneypot] = useState('');
 
-  // Anti-Bot Security Layer 3: Interactive Slide-to-Verify Gesture Bar
-  const [slideProgress, setSlideProgress] = useState(0); // 0 to 100
+  // Anti-Bot Security Layer 3: Interactive Slide-to-Verify Gesture Bar (Pixel Transform Drag)
+  const [dragX, setDragX] = useState(0); // translateX in px (0 to maxDragX)
   const [isVerified, setIsVerified] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const sliderTrackRef = useRef(null);
+  const startXRef = useRef(0);
+  const startDragXRef = useRef(0);
 
   const [status, setStatus] = useState('');
 
-  const handleDragStart = () => {
+  const handleDragStart = (e) => {
     if (isVerified) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    startXRef.current = clientX;
+    startDragXRef.current = dragX;
     setIsDragging(true);
   };
 
   const handleDragMove = React.useCallback((clientX) => {
     if (!isDragging || isVerified || !sliderTrackRef.current) return;
 
-    const rect = sliderTrackRef.current.getBoundingClientRect();
-    const offsetX = clientX - rect.left;
-    const trackWidth = rect.width - 44; // minus slider handle width
+    const trackWidth = sliderTrackRef.current.clientWidth - 46; // track width minus knob diameter (40px + padding)
+    const deltaX = clientX - startXRef.current;
+    let newX = Math.max(0, Math.min(trackWidth, startDragXRef.current + deltaX));
 
-    let percentage = Math.max(0, Math.min(100, (offsetX / trackWidth) * 100));
-    setSlideProgress(percentage);
+    setDragX(newX);
 
-    if (percentage >= 90) {
-      setSlideProgress(100);
+    if (newX >= trackWidth - 4) {
+      setDragX(trackWidth);
       setIsVerified(true);
       setIsDragging(false);
     }
@@ -61,10 +65,12 @@ export default function Contact() {
   const handleDragEnd = React.useCallback(() => {
     if (isVerified) return;
     setIsDragging(false);
-    if (slideProgress < 90) {
-      setSlideProgress(0); // reset if user lets go before completing
+
+    const trackWidth = sliderTrackRef.current ? sliderTrackRef.current.clientWidth - 46 : 300;
+    if (dragX < trackWidth - 10) {
+      setDragX(0); // reset back to initial left position
     }
-  }, [isVerified, slideProgress]);
+  }, [isVerified, dragX]);
 
   // Global mouse / touch move listeners while dragging
   useEffect(() => {
@@ -150,7 +156,7 @@ export default function Contact() {
         message: ''
       });
       setIsVerified(false);
-      setSlideProgress(0);
+      setDragX(0);
     } catch (err) {
       setStatus(`Submission failed: ${err.message}`);
     }
@@ -492,20 +498,18 @@ export default function Contact() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    cursor: isVerified ? 'default' : 'pointer',
                     transition: 'border-color 0.2s ease, background-color 0.2s ease'
                   }}
                 >
-                  {/* Filled Progress Bar */}
+                  {/* Filled Progress Track */}
                   <div 
                     style={{
                       position: 'absolute',
                       left: 0,
                       top: 0,
                       bottom: 0,
-                      width: `${slideProgress}%`,
+                      width: `calc(${dragX}px + 44px)`,
                       backgroundColor: 'var(--brand-green-soft)',
-                      opacity: 0.8,
                       borderRadius: 'var(--rounded-full)',
                       transition: isDragging ? 'none' : 'width 0.3s ease-out'
                     }}
@@ -523,27 +527,28 @@ export default function Contact() {
                     {isVerified ? '✓ Verified Human' : 'Slide to verify human →'}
                   </span>
 
-                  {/* Slider Draggable Handle / Knob */}
+                  {/* Slider Draggable Handle Knob - Starts at left (0px) and moves cleanly with cursor */}
                   <div
                     onMouseDown={handleDragStart}
                     onTouchStart={handleDragStart}
                     style={{
                       position: 'absolute',
-                      left: `calc(${slideProgress}% * (100% - 44px) / 100)`,
-                      top: '2px',
-                      width: '42px',
-                      height: '42px',
+                      left: '3px',
+                      top: '3px',
+                      transform: `translateX(${dragX}px)`,
+                      width: '40px',
+                      height: '40px',
                       borderRadius: '50%',
                       backgroundColor: isVerified ? 'var(--brand-green-dark)' : 'var(--canvas)',
                       color: isVerified ? '#ffffff' : 'var(--brand-green-dark)',
                       border: '1px solid var(--hairline-strong)',
-                      boxShadow: 'var(--shadow-subtle)',
+                      boxShadow: '0 2px 5px rgba(0, 0, 0, 0.15)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      cursor: isVerified ? 'default' : 'grab',
+                      cursor: isVerified ? 'default' : (isDragging ? 'grabbing' : 'grab'),
                       zIndex: 3,
-                      transition: isDragging ? 'none' : 'left 0.3s ease-out, background-color 0.2s'
+                      transition: isDragging ? 'none' : 'transform 0.3s ease-out, background-color 0.2s'
                     }}
                   >
                     {isVerified ? (

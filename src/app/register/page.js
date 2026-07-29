@@ -33,8 +33,6 @@ export default function Register() {
           router.replace('/client/dashboard');
         } else if (role === 'tutor') {
           router.replace('/tutor/dashboard');
-        } else if (role === 'admin') {
-          router.replace('/admin/dashboard');
         } else {
           const { data: clientProf } = await supabase.from('client_profiles').select('id').eq('id', session.user.id).maybeSingle();
           if (clientProf) {

@@ -41,6 +41,16 @@ function SearchContent() {
   const initialCity = searchParams.get('city') || '';
   const initialQuery = searchParams.get('query') || '';
 
+  const parseLevelsFromParam = (param) => {
+    if (!param) return [];
+    if (param === 'University' || param === 'BS/MS') return ['BS/MS'];
+    if (param.includes('Inter') || param.includes('O\'Levels')) return ['Inter'];
+    return [param];
+  };
+
+  const initialLevelParam = searchParams.get('level') || searchParams.get('levels') || '';
+  const initialLevels = parseLevelsFromParam(initialLevelParam);
+
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
@@ -60,7 +70,7 @@ function SearchContent() {
     city: initialCity,
     subjects: [], // Array for multiple subjects selection
     custom_subject: '',
-    levels: [], // Array for multiple levels selection
+    levels: initialLevels, // Array for multiple levels selection
     min_price: '',
     max_price: '',
     gender: '',
@@ -153,11 +163,26 @@ function SearchContent() {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-      fetchTutors(filters);
+
+      const rawLevel = searchParams.get('level') || searchParams.get('levels') || '';
+      const city = searchParams.get('city') || '';
+      const query = searchParams.get('query') || '';
+
+      const parsedLevels = parseLevelsFromParam(rawLevel);
+
+      const currentFilters = {
+        ...filters,
+        city: city || filters.city,
+        levels: parsedLevels.length > 0 ? parsedLevels : filters.levels,
+      };
+
+      setFilters(currentFilters);
+      if (query) setSearchQuery(query);
+      fetchTutors(currentFilters);
     };
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   const handleFilterChange = (key, value) => {
     let newFilters = { ...filters, [key]: value };

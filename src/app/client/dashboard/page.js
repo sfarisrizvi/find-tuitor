@@ -116,14 +116,14 @@ export default function ParentDashboard() {
           <p style={{ color: 'var(--steel)', fontSize: '14px', maxWidth: '440px', margin: '0 auto 24px', lineHeight: '1.5' }}>
             You don&apos;t have any ongoing tuitions right now. Post a tuition requirement or search for verified tutors to start learning!
           </p>
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/client/jobs/new">
-              <Button variant="primary" style={{ backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', borderRadius: '999px', padding: '0 24px', height: '42px', fontWeight: 700 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '420px', margin: '0 auto' }}>
+            <Link href="/client/jobs/new" style={{ width: '100%', textDecoration: 'none' }}>
+              <Button variant="primary" style={{ width: '100%', backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', borderRadius: '999px', height: '46px', fontWeight: 700, fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 Post a Tuition Requirement
               </Button>
             </Link>
-            <Link href="/find-tutor/search">
-              <Button variant="secondary" style={{ borderRadius: '999px', padding: '0 24px', height: '42px', fontWeight: 600 }}>
+            <Link href="/find-tutor/search" style={{ width: '100%', textDecoration: 'none' }}>
+              <Button variant="secondary" style={{ width: '100%', borderRadius: '999px', height: '46px', fontWeight: 600, fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 Explore Verified Tutors
               </Button>
             </Link>
