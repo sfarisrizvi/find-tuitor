@@ -101,8 +101,10 @@ export default function Contact() {
                     <Phone size={18} color="var(--brand-green-dark)" />
                   </div>
                   <div>
-                    <span style={{ fontSize: '12px', color: 'var(--stone)', display: 'block' }}>CALL US</span>
-                    <strong style={{ fontSize: '15px', color: 'var(--charcoal)' }}>+92 (300) 123-4567</strong>
+                    <span style={{ fontSize: '12px', color: 'var(--stone)', display: 'block' }}>CALL / WHATSAPP</span>
+                    <a href="https://wa.me/923455235079" target="_blank" rel="noopener noreferrer" style={{ fontSize: '15px', color: 'var(--charcoal)', fontWeight: 600, textDecoration: 'none' }}>
+                      +92 345 5235079
+                    </a>
                   </div>
                 </div>
 
@@ -122,15 +124,30 @@ export default function Contact() {
 
             <div>
               <h4 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>Follow Our Community</h4>
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <a href="#" style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--surface-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-green-dark)', fontWeight: 'bold', fontSize: '12px' }}>
-                  TW
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <a 
+                  href="https://www.facebook.com/mytutoronline" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: 'var(--rounded-full)', backgroundColor: '#1877F2', color: '#ffffff', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}
+                >
+                  Facebook
                 </a>
-                <a href="#" style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--surface-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-green-dark)', fontWeight: 'bold', fontSize: '12px' }}>
-                  IN
+                <a 
+                  href="https://www.instagram.com/tutoronline.pk_/" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: 'var(--rounded-full)', background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', color: '#ffffff', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}
+                >
+                  Instagram
                 </a>
-                <a href="#" style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--surface-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-green-dark)', fontWeight: 'bold', fontSize: '12px' }}>
-                  FB
+                <a 
+                  href="https://wa.me/923455235079" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: 'var(--rounded-full)', backgroundColor: '#25D366', color: '#ffffff', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}
+                >
+                  WhatsApp
                 </a>
               </div>
             </div>

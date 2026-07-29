@@ -65,10 +65,17 @@ export function Footer() {
         </div>
 
         <div>
-          <h4 style={headerStyle}>Company</h4>
-          <Link href="#" style={linkStyle}>About Our Team</Link>
-          <Link href="#" style={linkStyle}>Trust & Safety Protocols</Link>
-          <Link href="#" style={linkStyle}>Contact Customer Support</Link>
+          <h4 style={headerStyle}>Connect & Support</h4>
+          <Link href="/contact" style={linkStyle}>Contact Support</Link>
+          <a href="https://wa.me/923455235079" target="_blank" rel="noopener noreferrer" style={{ ...linkStyle, color: '#00ED64' }}>
+            WhatsApp: +92 345 5235079
+          </a>
+          <a href="https://www.facebook.com/mytutoronline" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+            Facebook
+          </a>
+          <a href="https://www.instagram.com/tutoronline.pk_/" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+            Instagram
+          </a>
         </div>
       </div>
       
