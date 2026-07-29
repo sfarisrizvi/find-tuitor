@@ -1,9 +1,10 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Mail, Phone, ChevronDown, ShieldCheck } from 'lucide-react';
+import { Mail, Phone, ChevronDown, ShieldCheck, Check, ArrowRight, Lock } from 'lucide-react';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -21,17 +22,75 @@ export default function Contact() {
     tutor: 'Tutor / Teacher'
   };
 
-  // Anti-Bot Security Verification Challenge State
-  const [captchaNums, setCaptchaNums] = useState({ num1: 7, num2: 4 });
-  const [captchaInput, setCaptchaInput] = useState('');
+  // Anti-Bot Security Layer 1: Time-on-page tracking
+  const [pageLoadTime] = useState(() => Date.now());
+  
+  // Anti-Bot Security Layer 2: Invisible Honeypot Trap (Bots fill this, humans never see it)
+  const [honeypot, setHoneypot] = useState('');
+
+  // Anti-Bot Security Layer 3: Interactive Slide-to-Verify Gesture Bar
+  const [slideProgress, setSlideProgress] = useState(0); // 0 to 100
+  const [isVerified, setIsVerified] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const sliderTrackRef = useRef(null);
+
   const [status, setStatus] = useState('');
 
-  // Generate random captcha challenge on client load
+  const handleDragStart = () => {
+    if (isVerified) return;
+    setIsDragging(true);
+  };
+
+  const handleDragMove = React.useCallback((clientX) => {
+    if (!isDragging || isVerified || !sliderTrackRef.current) return;
+
+    const rect = sliderTrackRef.current.getBoundingClientRect();
+    const offsetX = clientX - rect.left;
+    const trackWidth = rect.width - 44; // minus slider handle width
+
+    let percentage = Math.max(0, Math.min(100, (offsetX / trackWidth) * 100));
+    setSlideProgress(percentage);
+
+    if (percentage >= 90) {
+      setSlideProgress(100);
+      setIsVerified(true);
+      setIsDragging(false);
+    }
+  }, [isDragging, isVerified]);
+
+  const handleDragEnd = React.useCallback(() => {
+    if (isVerified) return;
+    setIsDragging(false);
+    if (slideProgress < 90) {
+      setSlideProgress(0); // reset if user lets go before completing
+    }
+  }, [isVerified, slideProgress]);
+
+  // Global mouse / touch move listeners while dragging
   useEffect(() => {
-    const n1 = Math.floor(Math.random() * 8) + 2;
-    const n2 = Math.floor(Math.random() * 8) + 1;
-    setCaptchaNums({ num1: n1, num2: n2 });
-  }, []);
+    const onMouseMove = (e) => handleDragMove(e.clientX);
+    const onMouseUp = () => handleDragEnd();
+    const onTouchMove = (e) => {
+      if (e.touches && e.touches[0]) {
+        handleDragMove(e.touches[0].clientX);
+      }
+    };
+    const onTouchEnd = () => handleDragEnd();
+
+    if (isDragging) {
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      window.addEventListener('touchmove', onTouchMove);
+      window.addEventListener('touchend', onTouchEnd);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [isDragging, handleDragMove, handleDragEnd]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,10 +99,23 @@ export default function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Verify Captcha Security Answer
-    const expectedSum = captchaNums.num1 + captchaNums.num2;
-    if (parseInt(captchaInput) !== expectedSum) {
-      setStatus('Security Check failed: Please answer the math verification question correctly.');
+    // Anti-Bot Defense Check 1: Invisible Honeypot Trap
+    if (honeypot.trim() !== '') {
+      console.warn('Bot detected via honeypot trap.');
+      setStatus('Message sent successfully!'); // silent drop for bots
+      return;
+    }
+
+    // Anti-Bot Defense Check 2: Minimum Time Threshold (2.5s)
+    const timeSpentMs = Date.now() - pageLoadTime;
+    if (timeSpentMs < 2500) {
+      setStatus('Security Warning: Submission too fast. Please review your message.');
+      return;
+    }
+
+    // Anti-Bot Defense Check 3: Slide to Verify Gesture Requirement
+    if (!isVerified) {
+      setStatus('Please slide the security verification bar to confirm you are human.');
       return;
     }
 
@@ -57,8 +129,9 @@ export default function Contact() {
         },
         body: JSON.stringify({
           ...formData,
-          captchaInput: captchaInput,
-          captchaExpected: expectedSum
+          isVerified: true,
+          timeSpentMs: timeSpentMs,
+          honeypot: honeypot
         }),
       });
 
@@ -76,12 +149,8 @@ export default function Contact() {
         role: 'parent_student',
         message: ''
       });
-      setCaptchaInput('');
-      
-      // Refresh Captcha
-      const n1 = Math.floor(Math.random() * 8) + 2;
-      const n2 = Math.floor(Math.random() * 8) + 1;
-      setCaptchaNums({ num1: n1, num2: n2 });
+      setIsVerified(false);
+      setSlideProgress(0);
     } catch (err) {
       setStatus(`Submission failed: ${err.message}`);
     }
@@ -152,7 +221,7 @@ export default function Contact() {
             <div>
               <h4 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>Follow Our Community</h4>
               
-              {/* Branded Social Icons Only (No Names, Brand Green Colors) */}
+              {/* Branded Social Icons Only (No Names, Site Brand Green Styling) */}
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
                 {/* Facebook Icon */}
                 <a 
@@ -259,6 +328,18 @@ export default function Contact() {
             )}
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              
+              {/* Invisible Honeypot Trap (Hidden from humans, filled by bots) */}
+              <input
+                type="text"
+                name="b_fax_verification"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                style={{ position: 'absolute', opacity: 0, top: '-9999px', left: '-9999px', pointerEvents: 'none' }}
+              />
+
               <div>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '6px' }}>Name</label>
                 <Input 
@@ -389,23 +470,104 @@ export default function Contact() {
                 />
               </div>
 
-              {/* Bot Prevention / Anti-Spam Security Verification Challenge */}
-              <div style={{ backgroundColor: 'var(--surface-soft)', padding: '14px 18px', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--hairline-strong)' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: 'var(--charcoal)' }}>
+              {/* ANTI-BOT SECURITY VERIFICATION: Interactive "Slide to Verify" Gesture Bar */}
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: 'var(--charcoal)' }}>
                   <ShieldCheck size={16} color="var(--brand-green-dark)" />
-                  Security Check: What is {captchaNums.num1} + {captchaNums.num2}?
+                  Security Verification
                 </label>
-                <Input
-                  type="number"
-                  placeholder={`Enter sum (${captchaNums.num1 + captchaNums.num2})`}
-                  value={captchaInput}
-                  onChange={(e) => setCaptchaInput(e.target.value)}
-                  required
-                  style={{ borderRadius: 'var(--rounded-full)', padding: '0 20px', backgroundColor: 'var(--canvas)', height: '40px', fontSize: '14px' }}
-                />
+
+                <div 
+                  ref={sliderTrackRef}
+                  style={{
+                    position: 'relative',
+                    height: '48px',
+                    width: '100%',
+                    borderRadius: 'var(--rounded-full)',
+                    backgroundColor: isVerified ? 'var(--brand-green-soft)' : 'var(--surface-soft)',
+                    border: isVerified ? '1.5px solid var(--brand-green-dark)' : '1px solid var(--hairline-strong)',
+                    overflow: 'hidden',
+                    userSelect: 'none',
+                    touchAction: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: isVerified ? 'default' : 'pointer',
+                    transition: 'border-color 0.2s ease, background-color 0.2s ease'
+                  }}
+                >
+                  {/* Filled Progress Bar */}
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: `${slideProgress}%`,
+                      backgroundColor: 'var(--brand-green-soft)',
+                      opacity: 0.8,
+                      borderRadius: 'var(--rounded-full)',
+                      transition: isDragging ? 'none' : 'width 0.3s ease-out'
+                    }}
+                  />
+
+                  {/* Text Overlay */}
+                  <span style={{
+                    position: 'relative',
+                    zIndex: 2,
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: isVerified ? 'var(--brand-green-dark)' : 'var(--stone)',
+                    pointerEvents: 'none'
+                  }}>
+                    {isVerified ? '✓ Verified Human' : 'Slide to verify human →'}
+                  </span>
+
+                  {/* Slider Draggable Handle / Knob */}
+                  <div
+                    onMouseDown={handleDragStart}
+                    onTouchStart={handleDragStart}
+                    style={{
+                      position: 'absolute',
+                      left: `calc(${slideProgress}% * (100% - 44px) / 100)`,
+                      top: '2px',
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      backgroundColor: isVerified ? 'var(--brand-green-dark)' : 'var(--canvas)',
+                      color: isVerified ? '#ffffff' : 'var(--brand-green-dark)',
+                      border: '1px solid var(--hairline-strong)',
+                      boxShadow: 'var(--shadow-subtle)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: isVerified ? 'default' : 'grab',
+                      zIndex: 3,
+                      transition: isDragging ? 'none' : 'left 0.3s ease-out, background-color 0.2s'
+                    }}
+                  >
+                    {isVerified ? (
+                      <Check size={18} color="#ffffff" />
+                    ) : (
+                      <ArrowRight size={18} color="var(--brand-green-dark)" />
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <Button type="submit" variant="primary" style={{ width: '100%', marginTop: '8px', padding: '14px', borderRadius: 'var(--rounded-full)' }}>
+              <Button 
+                type="submit" 
+                variant="primary" 
+                disabled={!isVerified}
+                style={{ 
+                  width: '100%', 
+                  marginTop: '8px', 
+                  padding: '14px', 
+                  borderRadius: 'var(--rounded-full)',
+                  opacity: isVerified ? 1 : 0.6,
+                  cursor: isVerified ? 'pointer' : 'not-allowed'
+                }}
+              >
                 Send Message
               </Button>
             </form>

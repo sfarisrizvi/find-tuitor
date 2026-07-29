@@ -5,12 +5,27 @@ import { sendNotification } from '../../../lib/notifications';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { name, email, phone, role, message, captchaInput, captchaExpected } = body || {};
+    const { name, email, phone, role, message, isVerified, timeSpentMs, honeypot } = body || {};
 
-    // Bot Prevention / Captcha Validation
-    if (captchaInput === undefined || captchaExpected === undefined || parseInt(captchaInput) !== parseInt(captchaExpected)) {
+    // Multi-Layer Anti-Bot Security Validation
+    if (honeypot && honeypot.trim() !== '') {
+      // Honeypot triggered by automated bot -> drop request silently
       return NextResponse.json(
-        { error: 'Security Check failed. Please answer the math verification question correctly.' },
+        { success: true, message: 'Message sent successfully! We will get back to you shortly.' },
+        { status: 200 }
+      );
+    }
+
+    if (!isVerified) {
+      return NextResponse.json(
+        { error: 'Security Check failed: Please complete the slide verification bar.' },
+        { status: 400 }
+      );
+    }
+
+    if (typeof timeSpentMs === 'number' && timeSpentMs < 2000) {
+      return NextResponse.json(
+        { error: 'Security Check failed: Submission too fast.' },
         { status: 400 }
       );
     }
