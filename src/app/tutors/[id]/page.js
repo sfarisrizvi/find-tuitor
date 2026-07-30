@@ -1575,10 +1575,18 @@ export default function TutorProfile() {
 
                   {!isOwner && (
                     <>
-                      <Button variant="primary" style={{ width: '100%', height: '44px', marginBottom: '8px' }}>
+                      <Button
+                        variant="primary"
+                        onClick={() => router.push(`/client/messages?tutorId=${tutor.id}`)}
+                        style={{ width: '100%', height: '44px', marginBottom: '8px' }}
+                      >
                         Send Message
                       </Button>
-                      <Button variant="secondary" style={{ width: '100%', height: '40px', fontSize: '13px' }}>
+                      <Button
+                        variant="secondary"
+                        onClick={() => router.push(`/client/messages?tutorId=${tutor.id}`)}
+                        style={{ width: '100%', height: '40px', fontSize: '13px' }}
+                      >
                         Request a Trial Class
                       </Button>
                     </>
