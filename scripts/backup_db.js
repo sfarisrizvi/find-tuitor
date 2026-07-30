@@ -24,13 +24,19 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 
 // Tables to back up
 const TABLES = [
-  'profiles',
+  'admin_profiles',
+  'user_roles',
   'tutor_profiles',
   'client_profiles',
   'tutor_experience',
   'tutor_categories',
   'children',
-  'job_posts',
+  'jobs',
+  'conversations',
+  'messages',
+  'notifications',
+  'contact_queries',
+  'proposals'
 ];
 
 // Backup directory: /backups/YYYY-MM-DD_HH-MM-SS/
