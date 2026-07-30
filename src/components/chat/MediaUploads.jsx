@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Pause, Paperclip, X, Image as ImageIcon, FileText } from 'lucide-react';
+import { Mic, Square, Play, Pause, Paperclip, X, Image as ImageIcon, FileText, Loader2 } from 'lucide-react';
 import { createClient } from '../../utils/supabase/client';
 
 export function CustomAudioPlayer({ src, duration }) {
@@ -159,7 +159,7 @@ export function VoiceNoteRecorder({ onSendVoice, onCancel }) {
     }
   };
 
-  const handleSend = async () => {
+  const handleUploadAndAttach = async () => {
     if (!recordedBlob) return;
     setUploading(true);
     try {
@@ -198,106 +198,89 @@ export function VoiceNoteRecorder({ onSendVoice, onCancel }) {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-      backgroundColor: 'var(--canvas)',
-      border: '1px solid var(--hairline-strong)',
-      borderRadius: '999px',
-      padding: '4px 12px',
-      color: 'var(--ink)'
-    }}>
+    <div style={{ display: 'inline-flex', alignItems: 'center' }}>
       {!recordedBlob ? (
-        <>
-          {isRecording ? (
+        isRecording ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', padding: '4px 12px', borderRadius: '999px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#DC2626' }}>
+              🔴 {formatTime(duration)}
+            </span>
             <button
               type="button"
               onClick={stopRecording}
+              title="Stop Recording"
               style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '50%',
-                backgroundColor: '#EF4444',
-                color: '#fff',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
+                width: '26px', height: '26px', borderRadius: '50%',
+                backgroundColor: '#DC2626', color: '#fff', border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
               }}
             >
               <Square size={12} fill="#fff" />
             </button>
-          ) : (
             <button
               type="button"
-              onClick={startRecording}
-              style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--brand-green)',
-                color: 'var(--on-primary)',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-            >
-              <Mic size={15} />
-            </button>
-          )}
-          <span style={{ fontSize: '12px', fontWeight: 600, minWidth: '40px', color: isRecording ? '#EF4444' : 'var(--ink)' }}>
-            {isRecording ? `🔴 ${formatTime(duration)}` : 'Record'}
-          </span>
-          {isRecording && (
-            <button
-              type="button"
-              onClick={() => { stopRecording(); if (onCancel) onCancel(); }}
+              onClick={() => { stopRecording(); setRecordedBlob(null); if (onCancel) onCancel(); }}
               style={{ background: 'none', border: 'none', color: 'var(--steel)', cursor: 'pointer' }}
             >
               <X size={14} />
             </button>
-          )}
-        </>
-      ) : (
-        <>
-          <CustomAudioPlayer src={audioUrl} duration={duration} />
-          <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto' }}>
-            <button
-              type="button"
-              onClick={() => { setRecordedBlob(null); setAudioUrl(null); }}
-              style={{ background: 'none', border: 'none', color: 'var(--steel)', cursor: 'pointer' }}
-            >
-              <X size={16} />
-            </button>
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={uploading}
-              style={{
-                backgroundColor: 'var(--brand-green)',
-                color: 'var(--on-primary)',
-                border: 'none',
-                borderRadius: '999px',
-                padding: '4px 12px',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              {uploading ? 'Sending...' : 'Send'}
-            </button>
           </div>
-        </>
+        ) : (
+          <button
+            type="button"
+            onClick={startRecording}
+            title="Record Voice Note"
+            style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--canvas)',
+              border: '1px solid var(--hairline-strong)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'var(--ink)'
+            }}
+          >
+            <Mic size={18} />
+          </button>
+        )
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <CustomAudioPlayer src={audioUrl} duration={duration} />
+          <button
+            type="button"
+            onClick={() => { setRecordedBlob(null); setAudioUrl(null); }}
+            title="Discard Voice Note"
+            style={{ background: 'none', border: 'none', color: 'var(--steel)', cursor: 'pointer', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={handleUploadAndAttach}
+            disabled={uploading}
+            style={{
+              backgroundColor: 'var(--brand-green)',
+              color: 'var(--on-primary)',
+              border: 'none',
+              borderRadius: '999px',
+              padding: '6px 14px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+          >
+            {uploading ? 'Attaching...' : 'Attach Voice'}
+          </button>
+        </div>
       )}
     </div>
   );
 }
 
-export function AttachmentUploader({ onSendFile }) {
+export function AttachmentUploader({ onFileSelected }) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -331,7 +314,12 @@ export function AttachmentUploader({ onSendFile }) {
         .from('chat-media')
         .getPublicUrl(filePath);
 
-      await onSendFile(publicUrl, file.name, isImage ? 'image' : 'file');
+      // Pass staged file to parent state
+      onFileSelected({
+        url: publicUrl,
+        name: file.name,
+        type: isImage ? 'image' : 'file'
+      });
     } catch (err) {
       console.error('Error uploading file:', err);
       alert('Failed to upload attachment. Please try again.');
@@ -342,7 +330,7 @@ export function AttachmentUploader({ onSendFile }) {
   };
 
   return (
-    <div>
+    <div style={{ display: 'inline-flex', alignItems: 'center' }}>
       <input
         type="file"
         ref={fileInputRef}
@@ -356,10 +344,10 @@ export function AttachmentUploader({ onSendFile }) {
         disabled={uploading}
         title="Attach Document or Image"
         style={{
-          width: '38px',
-          height: '38px',
+          width: '44px',
+          height: '44px',
           borderRadius: '50%',
-          backgroundColor: 'transparent',
+          backgroundColor: 'var(--canvas)',
           border: '1px solid var(--hairline-strong)',
           display: 'flex',
           alignItems: 'center',
@@ -368,7 +356,7 @@ export function AttachmentUploader({ onSendFile }) {
           color: 'var(--ink)'
         }}
       >
-        <Paperclip size={18} />
+        {uploading ? <Loader2 size={18} className="animate-spin" /> : <Paperclip size={18} />}
       </button>
     </div>
   );

@@ -134,9 +134,19 @@ export function AppHeader() {
       }
     });
 
+    const handleMessagesRead = () => {
+      if (user?.id) fetchUnreadMessages(user.id);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('messages_read', handleMessagesRead);
+    }
+
     return () => {
       cancelled = true;
       subscription?.unsubscribe();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('messages_read', handleMessagesRead);
+      }
     };
   }, [staticRole]);
 
@@ -372,9 +382,12 @@ export function AppHeader() {
               )}
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <Link href="/login" onClick={handleSignInClick}>
                 <Button variant="secondary" size="sm" style={{ borderRadius: '999px' }}>Log In</Button>
+              </Link>
+              <Link href="/register">
+                <Button variant="secondary" size="sm" style={{ borderRadius: '999px', border: '1px solid var(--brand-green)', color: 'var(--brand-green-dark)', fontWeight: 600 }}>Join as Tutor</Button>
               </Link>
               <a href="#" onClick={handlePostTuitionClick}>
                 <Button variant="primary" size="sm" style={{ backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', borderRadius: '999px', fontWeight: 700 }}>Post Tuition</Button>
