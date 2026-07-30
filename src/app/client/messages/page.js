@@ -214,6 +214,19 @@ function ClientMessagesContent() {
         })
         .eq('id', selectedConv.id);
 
+      // Insert in-app notification for receiver
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: receiverId,
+          title: `New Message Received`,
+          message: finalContent.substring(0, 70) || 'Sent a media attachment',
+          type: 'message',
+          priority: 'HIGH',
+          action_url: '/tutor/messages',
+          read: false
+        });
+
       if (textOverride === null) setNewMessage('');
       setReplyingTo(null);
     } catch (err) {

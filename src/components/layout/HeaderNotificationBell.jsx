@@ -4,6 +4,8 @@ import { Bell, Check, ExternalLink } from 'lucide-react';
 import { createClient } from '../../utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
+import { playClingChime } from '../../lib/soundEffects';
+
 export function HeaderNotificationBell({ user, profile }) {
   const router = useRouter();
   const [notifications, setNotifications] = useState([]);
@@ -60,6 +62,7 @@ export function HeaderNotificationBell({ user, profile }) {
           if (!cancelled && payload.new) {
             setNotifications((prev) => [payload.new, ...prev]);
             setUnreadCount((prev) => prev + 1);
+            playClingChime();
           }
         }
       )
