@@ -5,9 +5,9 @@ import { createClient } from '../../../utils/supabase/client';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { Send, User, MessageSquare, Plus, AlertCircle, FileText, File, Lock } from 'lucide-react';
+import { Send, User, MessageSquare, Plus, AlertCircle, FileText, File, Reply, X, Image as ImageIcon } from 'lucide-react';
 import { inspectMessageSafety } from '../../../lib/chatSecurity';
-import { VoiceNoteRecorder, AttachmentUploader } from '../../../components/chat/MediaUploads';
+import { VoiceNoteRecorder, AttachmentUploader, CustomAudioPlayer } from '../../../components/chat/MediaUploads';
 import { TutorContractModal } from '../../../components/chat/TutorContractModal';
 import { ContractCard } from '../../../components/chat/ContractCard';
 
@@ -20,9 +20,11 @@ function TutorMessagesContent() {
   const [conversations, setConversations] = useState([]);
   const [selectedConv, setSelectedConv] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [contractsMap, setContractsMap] = useState({}); // contract_id -> contract object
-  const [clientProfiles, setClientProfiles] = useState({}); // id -> profile info
+  const [contractsMap, setContractsMap] = useState({});
+  const [clientProfiles, setClientProfiles] = useState({});
   const [newMessage, setNewMessage] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
@@ -48,7 +50,6 @@ function TutorMessagesContent() {
       setUser(u);
 
       try {
-        // Fetch conversations for tutor where client initiated
         const { data: convs, error } = await supabase
           .from('conversations')
           .select('id, client_id, tutor_id, initiated_by, created_at, last_message, last_message_at')
@@ -66,7 +67,6 @@ function TutorMessagesContent() {
           setSelectedConv(activeConvs[0]);
         }
 
-        // Fetch client names & avatars
         const clientIds = activeConvs.map(c => c.client_id);
         const nameMap = {};
 
@@ -92,7 +92,6 @@ function TutorMessagesContent() {
     init();
   }, [router, targetClientId]);
 
-  // Fetch messages and contracts when selected conversation changes
   useEffect(() => {
     if (!selectedConv) return;
 
@@ -107,7 +106,6 @@ function TutorMessagesContent() {
       if (!error && msgs) {
         setMessages(msgs);
 
-        // Fetch referenced contracts
         const contractIds = msgs.filter(m => m.contract_id).map(m => m.contract_id);
         if (contractIds.length > 0) {
           const { data: contracts } = await supabase
@@ -124,7 +122,6 @@ function TutorMessagesContent() {
 
     fetchMessagesAndContracts();
 
-    // Realtime channel for new messages
     const supabase = createClient();
     const channelName = `tutor_room_${selectedConv.id}_${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
@@ -157,13 +154,18 @@ function TutorMessagesContent() {
   }, [selectedConv]);
 
   const handleSendMessage = async (textOverride = null, messageType = 'text', mediaUrl = null, contractId = null) => {
-    const textToSend = textOverride !== null ? textOverride : newMessage;
-    if ((!textToSend || !textToSend.trim()) && !mediaUrl && !contractId) return;
+    let rawText = textOverride !== null ? textOverride : newMessage;
+    if ((!rawText || !rawText.trim()) && !mediaUrl && !contractId) return;
+
+    let finalContent = rawText ? rawText.trim() : '';
+    if (replyingTo) {
+      finalContent = `> ↩️ Replying to ${replyingTo.name}: "${replyingTo.content.substring(0, 60)}"\n\n${finalContent}`;
+    }
 
     setSending(true);
     try {
       const supabase = createClient();
-      const securityCheck = inspectMessageSafety(textToSend);
+      const securityCheck = inspectMessageSafety(finalContent);
 
       const { data: sentMsg, error } = await supabase
         .from('messages')
@@ -171,7 +173,7 @@ function TutorMessagesContent() {
           conversation_id: selectedConv.id,
           sender_id: user.id,
           receiver_id: selectedConv.client_id,
-          content: textToSend.trim(),
+          content: finalContent,
           message_type: messageType,
           media_url: mediaUrl,
           contract_id: contractId,
@@ -183,16 +185,16 @@ function TutorMessagesContent() {
 
       if (error) throw error;
 
-      // Update conversation last message timestamp
       await supabase
         .from('conversations')
         .update({
-          last_message: textToSend.trim() || 'Media sent',
+          last_message: finalContent || 'Media attachment',
           last_message_at: new Date().toISOString()
         })
         .eq('id', selectedConv.id);
 
       if (textOverride === null) setNewMessage('');
+      setReplyingTo(null);
     } catch (err) {
       console.error('Error sending tutor message:', err);
     } finally {
@@ -219,7 +221,7 @@ function TutorMessagesContent() {
       <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '20px', height: 'calc(100vh - 180px)', minHeight: '560px' }}>
 
         {/* Sidebar: Conversations List */}
-        <Card style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', border: '1px solid var(--hairline-strong)', borderRadius: '20px' }}>
+        <Card style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', border: '1px solid var(--hairline-strong)', borderRadius: '24px' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--hairline-soft)', fontWeight: 700, fontSize: '16px', color: 'var(--ink)' }}>
             Student Inquiries &amp; Messages
           </div>
@@ -260,7 +262,7 @@ function TutorMessagesContent() {
 
         {/* Main Chat Area */}
         {selectedConv ? (
-          <Card style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', border: '1px solid var(--hairline-strong)', borderRadius: '20px' }}>
+          <Card style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', border: '1px solid var(--hairline-strong)', borderRadius: '24px' }}>
             
             {/* Header */}
             <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--hairline-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'var(--canvas)' }}>
@@ -276,11 +278,10 @@ function TutorMessagesContent() {
                 </div>
               </div>
 
-              {/* Action: Create Formal Contract */}
               <Button
                 onClick={() => setShowContractModal(true)}
                 variant="primary"
-                style={{ backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', borderRadius: '999px', fontSize: '13px', padding: '6px 18px', fontWeight: 700 }}
+                style={{ backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', borderRadius: '999px', fontSize: '13px', padding: '6px 20px', fontWeight: 700 }}
               >
                 <Plus size={16} /> Create Formal Contract
               </Button>
@@ -295,9 +296,12 @@ function TutorMessagesContent() {
               ) : (
                 messages.map((m) => {
                   const isMe = m.sender_id === user.id;
+                  const senderName = isMe ? 'You' : activeClient?.name || 'Client';
                   const securityCheck = inspectMessageSafety(m.content);
                   const hasWarning = m.has_warning || securityCheck.hasWarning;
                   const contract = m.contract_id ? contractsMap[m.contract_id] : null;
+
+                  const isImage = m.message_type === 'image' || (m.media_url && /\.(png|jpg|jpeg|gif|webp)$/i.test(m.media_url));
 
                   return (
                     <div
@@ -310,7 +314,7 @@ function TutorMessagesContent() {
                         alignItems: isMe ? 'flex-end' : 'flex-start'
                       }}
                     >
-                      {/* Render Contract/Offer Card */}
+                      {/* Message Content */}
                       {m.message_type === 'contract' || m.message_type === 'offer' ? (
                         <ContractCard
                           contract={contract}
@@ -318,17 +322,10 @@ function TutorMessagesContent() {
                           onContractUpdated={handleContractUpdated}
                         />
                       ) : m.message_type === 'voice' ? (
-                        <div style={{
-                          backgroundColor: isMe ? 'var(--brand-teal-deep)' : 'var(--canvas)',
-                          color: isMe ? '#fff' : 'var(--ink)',
-                          border: isMe ? 'none' : '1px solid var(--hairline-strong)',
-                          borderRadius: '18px',
-                          padding: '12px 16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px'
-                        }}>
-                          <audio src={m.media_url} controls style={{ height: '32px', maxWidth: '240px' }} />
+                        <CustomAudioPlayer src={m.media_url} duration={15} />
+                      ) : isImage ? (
+                        <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--hairline-strong)', cursor: 'pointer', maxWidth: '280px' }} onClick={() => setPreviewImage(m.media_url)}>
+                          <img src={m.media_url} alt="Shared image" style={{ width: '100%', height: 'auto', display: 'block' }} />
                         </div>
                       ) : m.message_type === 'file' ? (
                         <a
@@ -355,7 +352,7 @@ function TutorMessagesContent() {
                           backgroundColor: isMe ? 'var(--brand-teal-deep)' : 'var(--canvas)',
                           color: isMe ? '#fff' : 'var(--ink)',
                           border: isMe ? 'none' : '1px solid var(--hairline-strong)',
-                          borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                          borderRadius: isMe ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
                           padding: '12px 16px',
                           fontSize: '14px',
                           lineHeight: '1.5',
@@ -383,9 +380,20 @@ function TutorMessagesContent() {
                         </div>
                       )}
 
-                      <span style={{ fontSize: '10px', color: 'var(--steel)', marginTop: '4px', padding: '0 4px' }}>
-                        {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                      {/* Message Footer: Timestamp + Reply Button */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', padding: '0 4px' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--steel)' }}>
+                          {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setReplyingTo({ id: m.id, name: senderName, content: m.content || 'Media message' })}
+                          style={{ background: 'none', border: 'none', color: 'var(--steel)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '11px' }}
+                          title="Reply to message"
+                        >
+                          <Reply size={12} /> Reply
+                        </button>
+                      </div>
                     </div>
                   );
                 })
@@ -393,13 +401,29 @@ function TutorMessagesContent() {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Replying Banner Preview */}
+            {replyingTo && (
+              <div style={{ padding: '8px 16px', backgroundColor: 'var(--surface)', borderTop: '1px solid var(--hairline-strong)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: 'var(--ink)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                  <Reply size={14} color="var(--brand-green)" />
+                  <span style={{ fontWeight: 600 }}>Replying to {replyingTo.name}:</span>
+                  <span style={{ color: 'var(--steel)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    &quot;{replyingTo.content}&quot;
+                  </span>
+                </div>
+                <button onClick={() => setReplyingTo(null)} style={{ background: 'none', border: 'none', color: 'var(--steel)', cursor: 'pointer' }}>
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+
             {/* Input Bar */}
             <div style={{ padding: '14px 20px', borderTop: '1px solid var(--hairline-soft)', backgroundColor: 'var(--canvas)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <AttachmentUploader onSendFile={(url, fileName) => handleSendMessage(fileName, 'file', url)} />
+              <AttachmentUploader onSendFile={(url, fileName, type) => handleSendMessage(fileName, type, url)} />
               <VoiceNoteRecorder onSendVoice={(url) => handleSendMessage('Voice Note', 'voice', url)} />
               
               <Input
-                placeholder="Type your reply..."
+                placeholder={replyingTo ? `Reply to ${replyingTo.name}...` : 'Type your reply...'}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => {
@@ -408,7 +432,7 @@ function TutorMessagesContent() {
                     handleSendMessage();
                   }
                 }}
-                style={{ flex: 1 }}
+                style={{ flex: 1, borderRadius: '999px' }}
               />
 
               <Button
@@ -423,12 +447,19 @@ function TutorMessagesContent() {
 
           </Card>
         ) : (
-          <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--steel)', border: '1px solid var(--hairline-strong)', borderRadius: '20px' }}>
+          <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--steel)', border: '1px solid var(--hairline-strong)', borderRadius: '24px' }}>
             Select an inquiry thread to start chatting.
           </Card>
         )}
 
       </div>
+
+      {/* Lightbox Image Preview Modal */}
+      {previewImage && (
+        <div onClick={() => setPreviewImage(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <img src={previewImage} alt="Expanded preview" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: '16px', objectFit: 'contain' }} />
+        </div>
+      )}
 
       {/* Tutor Contract Modal */}
       {selectedConv && (

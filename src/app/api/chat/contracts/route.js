@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../../utils/supabase/client';
+import { createClient } from '@supabase/supabase-js';
 import { sendNotification } from '../../../../lib/notifications';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export async function POST(request) {
   try {
@@ -23,8 +28,6 @@ export async function POST(request) {
       user_id,
       revision_feedback
     } = body;
-
-    const supabase = createClient();
 
     // ----------------------------------------------------
     // ACTION 1: CREATE CONTRACT / OFFER

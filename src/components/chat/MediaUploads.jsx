@@ -1,20 +1,115 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Pause, Paperclip, X, Upload, Check } from 'lucide-react';
+import { Mic, Square, Play, Pause, Paperclip, X, Image as ImageIcon, FileText } from 'lucide-react';
 import { createClient } from '../../utils/supabase/client';
+
+export function CustomAudioPlayer({ src, duration }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const audioRef = useRef(null);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleSeek = (e) => {
+    const newTime = parseFloat(e.target.value);
+    setCurrentTime(newTime);
+    if (audioRef.current) {
+      audioRef.current.currentTime = newTime;
+    }
+  };
+
+  const formatTime = (secs) => {
+    if (!secs || isNaN(secs)) return '0:00';
+    const mins = Math.floor(secs / 60);
+    const remainderSecs = Math.floor(secs % 60);
+    return `${mins}:${remainderSecs < 10 ? '0' : ''}${remainderSecs}`;
+  };
+
+  return (
+    <div style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '10px',
+      padding: '8px 14px',
+      borderRadius: '999px',
+      backgroundColor: 'var(--canvas)',
+      border: '1px solid var(--hairline-strong)',
+      minWidth: '220px'
+    }}>
+      <audio
+        ref={audioRef}
+        src={src}
+        onTimeUpdate={handleTimeUpdate}
+        onEnded={() => setIsPlaying(false)}
+        style={{ display: 'none' }}
+      />
+
+      <button
+        onClick={togglePlay}
+        type="button"
+        style={{
+          width: '32px',
+          height: '32px',
+          borderRadius: '50%',
+          backgroundColor: 'var(--brand-green)',
+          color: 'var(--on-primary)',
+          border: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          flexShrink: 0
+        }}
+      >
+        {isPlaying ? <Pause size={14} /> : <Play size={14} style={{ marginLeft: '2px' }} />}
+      </button>
+
+      <input
+        type="range"
+        min="0"
+        max={audioRef.current?.duration || duration || 100}
+        value={currentTime}
+        onChange={handleSeek}
+        style={{
+          flex: 1,
+          accentColor: 'var(--brand-green)',
+          cursor: 'pointer',
+          height: '4px'
+        }}
+      />
+
+      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)', minWidth: '35px', textAlign: 'right' }}>
+        {formatTime(currentTime > 0 ? currentTime : duration)}
+      </span>
+    </div>
+  );
+}
 
 export function VoiceNoteRecorder({ onSendVoice, onCancel }) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [uploading, setUploading] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
-  const audioPlayerRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -64,17 +159,6 @@ export function VoiceNoteRecorder({ onSendVoice, onCancel }) {
     }
   };
 
-  const togglePlayback = () => {
-    if (!audioPlayerRef.current) return;
-    if (isPlaying) {
-      audioPlayerRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioPlayerRef.current.play();
-      setIsPlaying(true);
-    }
-  };
-
   const handleSend = async () => {
     if (!recordedBlob) return;
     setUploading(true);
@@ -121,17 +205,18 @@ export function VoiceNoteRecorder({ onSendVoice, onCancel }) {
       backgroundColor: 'var(--canvas)',
       border: '1px solid var(--hairline-strong)',
       borderRadius: '999px',
-      padding: '6px 16px',
+      padding: '4px 12px',
       color: 'var(--ink)'
     }}>
       {!recordedBlob ? (
         <>
           {isRecording ? (
             <button
+              type="button"
               onClick={stopRecording}
               style={{
-                width: '32px',
-                height: '32px',
+                width: '30px',
+                height: '30px',
                 borderRadius: '50%',
                 backgroundColor: '#EF4444',
                 color: '#fff',
@@ -142,14 +227,15 @@ export function VoiceNoteRecorder({ onSendVoice, onCancel }) {
                 cursor: 'pointer'
               }}
             >
-              <Square size={14} fill="#fff" />
+              <Square size={12} fill="#fff" />
             </button>
           ) : (
             <button
+              type="button"
               onClick={startRecording}
               style={{
-                width: '32px',
-                height: '32px',
+                width: '30px',
+                height: '30px',
                 borderRadius: '50%',
                 backgroundColor: 'var(--brand-green)',
                 color: 'var(--on-primary)',
@@ -160,57 +246,35 @@ export function VoiceNoteRecorder({ onSendVoice, onCancel }) {
                 cursor: 'pointer'
               }}
             >
-              <Mic size={16} />
+              <Mic size={15} />
             </button>
           )}
-          <span style={{ fontSize: '13px', fontWeight: 600, minWidth: '45px', color: isRecording ? '#EF4444' : 'var(--ink)' }}>
-            {isRecording ? `🔴 ${formatTime(duration)}` : 'Hold to Record'}
+          <span style={{ fontSize: '12px', fontWeight: 600, minWidth: '40px', color: isRecording ? '#EF4444' : 'var(--ink)' }}>
+            {isRecording ? `🔴 ${formatTime(duration)}` : 'Record'}
           </span>
           {isRecording && (
             <button
-              onClick={() => { stopRecording(); onCancel(); }}
+              type="button"
+              onClick={() => { stopRecording(); if (onCancel) onCancel(); }}
               style={{ background: 'none', border: 'none', color: 'var(--steel)', cursor: 'pointer' }}
             >
-              <X size={16} />
+              <X size={14} />
             </button>
           )}
         </>
       ) : (
         <>
-          <audio
-            ref={audioPlayerRef}
-            src={audioUrl}
-            onEnded={() => setIsPlaying(false)}
-            style={{ display: 'none' }}
-          />
-          <button
-            onClick={togglePlayback}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--brand-green-soft)',
-              color: 'var(--brand-green-dark)',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer'
-            }}
-          >
-            {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-          </button>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
-            Voice ({formatTime(duration)})
-          </span>
+          <CustomAudioPlayer src={audioUrl} duration={duration} />
           <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto' }}>
             <button
+              type="button"
               onClick={() => { setRecordedBlob(null); setAudioUrl(null); }}
               style={{ background: 'none', border: 'none', color: 'var(--steel)', cursor: 'pointer' }}
             >
               <X size={16} />
             </button>
             <button
+              type="button"
               onClick={handleSend}
               disabled={uploading}
               style={{
@@ -219,12 +283,12 @@ export function VoiceNoteRecorder({ onSendVoice, onCancel }) {
                 border: 'none',
                 borderRadius: '999px',
                 padding: '4px 12px',
-                fontSize: '12px',
+                fontSize: '11px',
                 fontWeight: 700,
                 cursor: 'pointer'
               }}
             >
-              {uploading ? 'Sending...' : 'Send Voice'}
+              {uploading ? 'Sending...' : 'Send'}
             </button>
           </div>
         </>
@@ -249,8 +313,10 @@ export function AttachmentUploader({ onSendFile }) {
     setUploading(true);
     try {
       const supabase = createClient();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const fileExt = file.name.split('.').pop().toLowerCase();
+      const isImage = ['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(fileExt);
+
+      const fileName = `${isImage ? 'img' : 'file'}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
       const filePath = `attachments/${fileName}`;
 
       const { data, error } = await supabase.storage
@@ -265,10 +331,10 @@ export function AttachmentUploader({ onSendFile }) {
         .from('chat-media')
         .getPublicUrl(filePath);
 
-      await onSendFile(publicUrl, file.name);
+      await onSendFile(publicUrl, file.name, isImage ? 'image' : 'file');
     } catch (err) {
       console.error('Error uploading file:', err);
-      alert('Failed to upload file. Please try again.');
+      alert('Failed to upload attachment. Please try again.');
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -281,7 +347,7 @@ export function AttachmentUploader({ onSendFile }) {
         type="file"
         ref={fileInputRef}
         onChange={handleFileSelect}
-        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+        accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx"
         style={{ display: 'none' }}
       />
       <button

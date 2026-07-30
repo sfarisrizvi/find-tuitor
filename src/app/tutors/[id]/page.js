@@ -211,6 +211,7 @@ function VerifyRow({ label, status, docKey, helpText, isOwner, onUpload, rejecti
 // ─── Main Profile Page ────────────────────────────────────────
 export default function TutorProfile() {
   const { id } = useParams();
+  const router = useRouter();
   const [tutor, setTutor] = useState(null);
   const [experience, setExperience] = useState([]);
   const [categories, setCategories] = useState([]);
