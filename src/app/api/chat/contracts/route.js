@@ -37,6 +37,21 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Missing required contract fields.' }, { status: 400 });
       }
 
+      // If client creates the contract/offer, ensure they have sufficient credits to lock into escrow
+      if (creator_role === 'client') {
+        const { data: lockCheck, error: lockCheckErr } = await supabase.rpc('lock_contract_escrow', {
+          p_client_id: client_id,
+          p_contract_id: conversation_id,
+          p_amount: Number(amount)
+        });
+
+        if (lockCheckErr || (lockCheck && !lockCheck.success)) {
+          return NextResponse.json({
+            error: lockCheck?.error || `Insufficient credits. You need ${amount} credits to fund this contract in escrow. Please top up your wallet via bank deposit.`
+          }, { status: 400 });
+        }
+      }
+
       // 1. Insert contract record
       const { data: contract, error: contractErr } = await supabase
         .from('contracts')
@@ -190,6 +205,47 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Missing approval details.' }, { status: 400 });
       }
 
+      // Fetch contract details first
+      const { data: contractToApprove, error: fetchErr } = await supabase
+        .from('contracts')
+        .select('*')
+        .eq('id', contract_id)
+        .single();
+
+      if (fetchErr || !contractToApprove) {
+        return NextResponse.json({ error: 'Contract not found.' }, { status: 404 });
+      }
+
+      // If Tutor is accepting (deduct 10% platform fee in credits)
+      if (user_id === contractToApprove.tutor_id) {
+        const { data: feeRes, error: feeErr } = await supabase.rpc('tutor_accept_contract_fee', {
+          p_tutor_id: contractToApprove.tutor_id,
+          p_contract_id: contract_id,
+          p_amount: Number(contractToApprove.amount)
+        });
+
+        if (feeErr || (feeRes && !feeRes.success)) {
+          return NextResponse.json({
+            error: feeRes?.error || `Insufficient credits. You need 10% (${Math.round(contractToApprove.amount * 0.10)} credits) to accept this contract. Please buy credits via bank transfer.`
+          }, { status: 400 });
+        }
+      }
+
+      // If Client is accepting a tutor-initiated contract (lock 100% into escrow)
+      if (user_id === contractToApprove.client_id) {
+        const { data: escrowRes, error: escrowErr } = await supabase.rpc('lock_contract_escrow', {
+          p_client_id: contractToApprove.client_id,
+          p_contract_id: contract_id,
+          p_amount: Number(contractToApprove.amount)
+        });
+
+        if (escrowErr || (escrowRes && !escrowRes.success)) {
+          return NextResponse.json({
+            error: escrowRes?.error || 'Insufficient credits in wallet to fund this contract in escrow.'
+          }, { status: 400 });
+        }
+      }
+
       // 1. Update contract to approved & active
       const { data: approvedContract, error: appErr } = await supabase
         .from('contracts')
@@ -202,6 +258,22 @@ export async function POST(request) {
         .single();
 
       if (appErr) throw appErr;
+
+      // 2. Insert into escrow_contracts tracking 30-day validity
+      await supabase
+        .from('escrow_contracts')
+        .insert({
+          contract_id: contract_id,
+          client_id: approvedContract.client_id,
+          tutor_id: approvedContract.tutor_id,
+          cycle_number: 1,
+          cycle_amount_pkr: approvedContract.amount,
+          tutor_fee_credits: Math.round(Number(approvedContract.amount) * 0.10),
+          status: 'held',
+          cycle_start_date: new Date().toISOString(),
+          cycle_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          next_renewal_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
 
       // 2. Also insert active engagement in jobs table so both dashboards render it
       const { error: jobErr } = await supabase

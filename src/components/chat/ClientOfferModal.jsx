@@ -213,8 +213,29 @@ export function ClientOfferModal({ isOpen, onClose, conversation, clientUser, tu
         </div>
 
         {error && (
-          <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: '#B91C1C', padding: '12px 16px', borderRadius: '12px', fontSize: '13px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertCircle size={16} /> {error}
+          <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: '#B91C1C', padding: '12px 16px', borderRadius: '12px', fontSize: '13px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: error.toLowerCase().includes('credit') ? '8px' : 0 }}>
+              <AlertCircle size={16} /> <span>{error}</span>
+            </div>
+            {error.toLowerCase().includes('credit') && (
+              <a
+                href="/client/wallet"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: 'inline-block',
+                  background: '#B91C1C',
+                  color: '#fff',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  textDecoration: 'none'
+                }}
+              >
+                Top Up Credits via Bank Transfer →
+              </a>
+            )}
           </div>
         )}
 

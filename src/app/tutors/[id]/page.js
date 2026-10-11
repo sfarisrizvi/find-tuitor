@@ -227,6 +227,11 @@ export default function TutorProfile() {
   const [cropConfig, setCropConfig] = useState(null); // { imageSrc, type, aspect }
   const [isEditingCategories, setIsEditingCategories] = useState(false);
   const [isEditingExperience, setIsEditingExperience] = useState(false);
+  const [isContactUnlocked, setIsContactUnlocked] = useState(false);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [userWallet, setUserWallet] = useState(null);
+  const [unlocking, setUnlocking] = useState(false);
+  const [unlockError, setUnlockError] = useState('');
 
   const loadData = async (signal) => {
     if (!id) return;
@@ -248,14 +253,29 @@ export default function TutorProfile() {
       const u = authUser || null;
       setUser(u);
 
+      let isUnlockedDirectly = false;
+      if (u) {
+        const [{ data: unlockRecord }, { data: wRecord }] = await withTimeout(
+          Promise.all([
+            supabase.from('unlocked_contacts').select('id').eq('client_id', u.id).eq('tutor_id', id).maybeSingle(),
+            supabase.from('wallets').select('*').eq('user_id', u.id).maybeSingle()
+          ])
+        );
+        isUnlockedDirectly = !!unlockRecord;
+        if (!signal?.aborted) {
+          setIsContactUnlocked(isUnlockedDirectly);
+          setUserWallet(wRecord);
+        }
+      }
+
       if (id.startsWith('mock-')) {
         const found = MOCK_TUTORS.find(t => t.id === id) || MOCK_TUTORS[0];
-        const profile = { ...found };
+        const profile = { ...found, rawPhone: found.phone, rawEmail: found.email };
         const isOwner = u && u.id === id;
         const userRole = u?.user_metadata?.role;
         const isAdmin = userRole === 'admin';
         
-        if (!isOwner && !isAdmin) {
+        if (!isOwner && !isAdmin && !isUnlockedDirectly) {
           profile.phone = maskPhone(profile.phone);
           profile.email = maskEmail(profile.email);
         }
@@ -281,8 +301,11 @@ export default function TutorProfile() {
           const isOwner = u && u.id === id;
           const userRole = u?.user_metadata?.role;
           const isAdmin = userRole === 'admin';
+
+          profile.rawPhone = profile.phone;
+          profile.rawEmail = profile.email;
           
-          if (!isOwner && !isAdmin) {
+          if (!isOwner && !isAdmin && !isUnlockedDirectly) {
             if (profile.about) {
               if (!u) {
                 profile.about = profile.about.substring(0, 150) + '...';
@@ -332,6 +355,42 @@ export default function TutorProfile() {
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const handleUnlockContact = async () => {
+    if (!user) {
+      router.push(`/login?next=${encodeURIComponent(`/tutors/${id}`)}`);
+      return;
+    }
+    setUnlocking(true);
+    setUnlockError('');
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc('unlock_tutor_contacts', {
+        p_client_id: user.id,
+        p_tutor_id: id
+      });
+      if (error) throw error;
+      if (data && !data.success) {
+        throw new Error(data.error || 'Failed to unlock contact details');
+      }
+
+      setIsContactUnlocked(true);
+      setTutor(prev => ({
+        ...prev,
+        phone: data.phone || prev.rawPhone || prev.phone,
+        email: data.email || prev.rawEmail || prev.email
+      }));
+      if (data.new_balance !== undefined) {
+        setUserWallet(prev => prev ? ({ ...prev, balance: data.new_balance }) : null);
+      }
+      setShowUnlockModal(false);
+    } catch (err) {
+      console.error('Error unlocking contacts:', err);
+      setUnlockError(err.message || 'Error unlocking contact details.');
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   const isUnlocked = !!user;
 
@@ -1576,12 +1635,38 @@ export default function TutorProfile() {
 
                   {!isOwner && (
                     <>
+                      {isContactUnlocked ? (
+                        <div style={{
+                          padding: '8px 12px',
+                          borderRadius: 'var(--rounded-md)',
+                          background: 'var(--surface-feature)',
+                          border: '1px solid rgba(0, 104, 74, 0.2)',
+                          color: 'var(--brand-green-dark)',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          marginBottom: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <ShieldCheck size={15} /> Direct Contact Details Unlocked
+                        </div>
+                      ) : (
+                        <Button
+                          variant="primary"
+                          onClick={() => user ? setShowUnlockModal(true) : router.push(`/login?next=${encodeURIComponent(`/tutors/${id}`)}`)}
+                          style={{ width: '100%', height: '44px', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                        >
+                          <Lock size={15} /> Unlock Direct Phone & Email (500 Credits)
+                        </Button>
+                      )}
+
                       <Button
-                        variant="primary"
+                        variant={isContactUnlocked ? "primary" : "secondary"}
                         onClick={() => router.push(`/client/messages?tutorId=${tutor.id}`)}
                         style={{ width: '100%', height: '44px', marginBottom: '8px' }}
                       >
-                        Send Message
+                        Send Message (100 Credits)
                       </Button>
                       <Button
                         variant="secondary"
@@ -1606,11 +1691,11 @@ export default function TutorProfile() {
                     </div>
                   </div>
                   
-                   <Link href={`/login?next=${encodeURIComponent(`/tutors/${id}`)}`} style={{ textDecoration: 'none' }}>
-                     <Button variant="primary" style={{ width: '100%', height: '44px', marginBottom: '8px' }}>
-                       Log in to see contact info
-                     </Button>
-                   </Link>
+                  <Link href={`/login?next=${encodeURIComponent(`/tutors/${id}`)}`} style={{ textDecoration: 'none' }}>
+                    <Button variant="primary" style={{ width: '100%', height: '44px', marginBottom: '8px' }}>
+                      Log in to see contact info
+                    </Button>
+                  </Link>
                 </>
               )}
             </div>
@@ -1633,6 +1718,68 @@ export default function TutorProfile() {
 
         {/* Bottom padding */}
         <div style={{ height: '64px' }} />
+
+        {/* Unlock Contact Details Modal */}
+        {showUnlockModal && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', maxWidth: '440px', width: '100%', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--surface-feature)', color: 'var(--brand-green-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+                <Phone size={26} />
+              </div>
+
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 700, color: 'var(--ink)' }}>
+                Unlock Direct Contact Details
+              </h3>
+              <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--steel)', lineHeight: 1.5 }}>
+                Reveal direct phone number & email for <strong>{tutor?.full_name}</strong>.
+              </p>
+
+              <div style={{ background: 'var(--surface)', borderRadius: '8px', padding: '14px', marginBottom: '20px', border: '1px solid var(--hairline)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
+                  <span style={{ color: 'var(--steel)' }}>Unlock Cost:</span>
+                  <strong style={{ color: 'var(--ink)' }}>500 Credits</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: 'var(--steel)' }}>Your Available Balance:</span>
+                  <strong style={{ color: userWallet && userWallet.balance >= 500 ? 'var(--brand-green-dark)' : '#DC2626' }}>
+                    {userWallet ? Number(userWallet.balance).toLocaleString() : '0'} Credits
+                  </strong>
+                </div>
+              </div>
+
+              {unlockError && (
+                <div style={{ padding: '10px 14px', borderRadius: '6px', background: '#FEE2E2', color: '#DC2626', fontSize: '12px', marginBottom: '16px', textAlign: 'left' }}>
+                  {unlockError}
+                </div>
+              )}
+
+              {userWallet && userWallet.balance < 500 ? (
+                <div>
+                  <div style={{ padding: '10px 14px', borderRadius: '6px', background: '#FEF3C7', color: '#92400E', fontSize: '12px', marginBottom: '16px' }}>
+                    You need 500 credits to unlock. Please top up your wallet via bank deposit.
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <Button variant="secondary" style={{ flex: 1 }} onClick={() => setShowUnlockModal(false)}>
+                      Cancel
+                    </Button>
+                    <Button variant="primary" style={{ flex: 1 }} onClick={() => router.push('/client/wallet')}>
+                      Buy Credits
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <Button variant="secondary" style={{ flex: 1 }} onClick={() => setShowUnlockModal(false)} disabled={unlocking}>
+                    Cancel
+                  </Button>
+                  <Button variant="primary" style={{ flex: 1 }} onClick={handleUnlockContact} disabled={unlocking}>
+                    {unlocking ? 'Unlocking…' : 'Confirm Unlock (500 Credits)'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

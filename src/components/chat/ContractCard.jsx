@@ -279,8 +279,28 @@ export function ContractCard({ contract, currentUserId, onContractUpdated }) {
             </div>
 
             {error && (
-              <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: '#B91C1C', padding: '10px 14px', borderRadius: '10px', fontSize: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <AlertCircle size={16} /> {error}
+              <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: '#B91C1C', padding: '12px 14px', borderRadius: '10px', fontSize: '12px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: error.toLowerCase().includes('credit') ? '8px' : 0 }}>
+                  <AlertCircle size={16} /> <span>{error}</span>
+                </div>
+                {error.toLowerCase().includes('credit') && (
+                  <button
+                    type="button"
+                    onClick={() => router.push(currentUserId === contract.tutor_id ? '/tutor/wallet' : '/client/wallet')}
+                    style={{
+                      background: '#B91C1C',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '6px 12px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Top Up Credits via Bank Transfer →
+                  </button>
+                )}
               </div>
             )}
 

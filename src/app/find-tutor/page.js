@@ -24,8 +24,8 @@ export default function FindTutorLanding() {
 
   const faqs = [
     { q: "How do I choose the best verified tutor for my child?", a: "You can post a free job describing your subjects, boards, and budget. Our vetted educators will submit custom bids. You can check their qualifications, credentials, rating, and schedule a free 15-minute demo lesson to assess chemistry." },
-    { q: "How does the JazzCash/NayaPay secure escrow work?", a: "When you hire a tutor, you fund the milestone. These funds are held securely by TutorOnline. Once lessons are logged and you confirm completion, funds are released directly to the tutor." },
-    { q: "What if the tutor does not deliver the agreed lessons?", a: "Our milestone system ensures complete protection. If a tutor does not complete an agreed milestone or stops communicating, you can raise a dispute. Our support team will review the contract details and return the escrowed funds to your wallet." }
+    { q: "How does the 1 Credit = 1 PKR Escrow System work?", a: "1 Credit = 1 PKR. When you hire an educator, you fund 100% of the contract amount into platform escrow via bank transfer. Funds are safely held by TutorOnline. Once the educator delivers the 30-day lessons and you confirm completion, funds are released directly to the tutor." },
+    { q: "What if the tutor does not deliver the agreed lessons?", a: "We act as a middleman to guarantee no one gets scammed. If an educator skips sessions, does not complete the agreed 30-day lessons, or stops communicating, you can raise a dispute. Our team will review the contract and return the escrowed funds 100% back to your wallet." }
   ];
 
   const handleSearch = () => {

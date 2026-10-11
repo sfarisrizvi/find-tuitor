@@ -35,6 +35,7 @@ export function TutorNav() {
     { name: 'My Contracts', path: '/tutor/contracts' },
     { name: 'Messages', path: '/tutor/messages' },
     { name: 'Earnings', path: '/tutor/earnings' },
+    { name: 'Credits & Wallet', path: '/tutor/wallet' },
   ];
 
   return (

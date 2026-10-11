@@ -805,6 +805,14 @@ function OnboardingContent() {
       const { error: updateErr } = await supabase.from('tutor_profiles').update(updates).eq('id', user.id);
       if (updateErr) throw updateErr;
 
+      if (updates.onboarding_complete) {
+        try {
+          await supabase.rpc('claim_tutor_onboarding_bonus', { p_tutor_id: user.id });
+        } catch (bonusErr) {
+          console.error('Onboarding bonus claim error (non-fatal):', bonusErr);
+        }
+      }
+
       setSaveMsg('Saved!');
       setTimeout(() => setSaveMsg(''), 2000);
     } catch (err) {

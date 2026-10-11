@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '../ui/Button';
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X, User, Wallet } from 'lucide-react';
 import { createClient } from '../../utils/supabase/client';
 import { NAV_LINKS } from './navbar.config';
 import { HeaderNotificationBell } from './HeaderNotificationBell';
@@ -18,6 +18,7 @@ export function AppHeader() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [walletBalance, setWalletBalance] = useState(null);
 
   // Determine active role context based on URL route
   let staticRole = 'guest';
@@ -82,6 +83,21 @@ export function AppHeader() {
       }
     };
 
+    const fetchWallet = async (uId) => {
+      try {
+        const { data } = await supabase
+          .from('wallets')
+          .select('balance')
+          .eq('user_id', uId)
+          .maybeSingle();
+        if (!cancelled && data) {
+          setWalletBalance(Number(data.balance) || 0);
+        }
+      } catch (err) {
+        console.error('Error fetching wallet balance in header:', err);
+      }
+    };
+
     const initSession = async () => {
       try {
         const { data: { user: u } } = await supabase.auth.getUser();
@@ -90,6 +106,7 @@ export function AppHeader() {
           setUser(u);
           await loadProfile(u);
           await fetchUnreadMessages(u.id);
+          await fetchWallet(u.id);
 
           // Realtime listener for unread messages
           const channelName = `header_msgs_${u.id}_${Math.random().toString(36).substring(2, 7)}`;
@@ -104,6 +121,22 @@ export function AppHeader() {
               if (!cancelled) {
                 setUnreadMessageCount(prev => prev + 1);
                 playClingChime();
+              }
+            })
+            .subscribe();
+
+          // Realtime listener for wallet changes
+          const walletChannelName = `header_wallet_${u.id}_${Math.random().toString(36).substring(2, 7)}`;
+          supabase
+            .channel(walletChannelName)
+            .on('postgres_changes', {
+              event: '*',
+              schema: 'public',
+              table: 'wallets',
+              filter: `user_id=eq.${u.id}`
+            }, (payload) => {
+              if (!cancelled && payload.new?.balance !== undefined) {
+                setWalletBalance(Number(payload.new.balance) || 0);
               }
             })
             .subscribe();
@@ -124,12 +157,14 @@ export function AppHeader() {
         if (u) {
           loadProfile(u);
           fetchUnreadMessages(u.id);
+          fetchWallet(u.id);
         }
         setInitialized(true);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
         setUnreadMessageCount(0);
+        setWalletBalance(null);
         setInitialized(true);
       }
     });
@@ -137,8 +172,16 @@ export function AppHeader() {
     const handleMessagesRead = () => {
       if (user?.id) fetchUnreadMessages(user.id);
     };
+    const handleWalletUpdated = (e) => {
+      if (e?.detail?.balance !== undefined) {
+        setWalletBalance(Number(e.detail.balance));
+      } else if (user?.id) {
+        fetchWallet(user.id);
+      }
+    };
     if (typeof window !== 'undefined') {
       window.addEventListener('messages_read', handleMessagesRead);
+      window.addEventListener('wallet_updated', handleWalletUpdated);
     }
 
     return () => {
@@ -146,9 +189,10 @@ export function AppHeader() {
       subscription?.unsubscribe();
       if (typeof window !== 'undefined') {
         window.removeEventListener('messages_read', handleMessagesRead);
+        window.removeEventListener('wallet_updated', handleWalletUpdated);
       }
     };
-  }, [staticRole]);
+  }, [staticRole, user?.id]);
 
   useEffect(() => {
     if (!showDropdown) return;
@@ -303,6 +347,30 @@ export function AppHeader() {
             <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'var(--hairline-strong)', animation: 'pulse 1.5s infinite ease-in-out' }} />
           ) : user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+              {walletBalance !== null && (
+                <Link
+                  href={activeRole === 'tutor' ? '/tutor/wallet' : '/client/wallet'}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '5px 12px',
+                    borderRadius: '999px',
+                    backgroundColor: 'rgba(5, 150, 105, 0.08)',
+                    border: '1px solid rgba(5, 150, 105, 0.22)',
+                    color: 'var(--brand-green-dark, #065f46)',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="My Credits & Escrow Wallet"
+                >
+                  <Wallet size={14} style={{ color: '#059669' }} />
+                  <span>{walletBalance.toLocaleString()}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 500 }}>Credits</span>
+                </Link>
+              )}
               <HeaderNotificationBell user={user} profile={profile} />
               <button
                 id="header-avatar-btn"
@@ -344,6 +412,37 @@ export function AppHeader() {
                       {activeRole} Account
                     </div>
                   </div>
+
+                  <Link
+                    href={activeRole === 'tutor' ? '/tutor/wallet' : '/client/wallet'}
+                    onClick={() => setShowDropdown(false)}
+                    style={{
+                      padding: '10px 16px',
+                      fontSize: '13px',
+                      color: 'var(--ink)',
+                      textDecoration: 'none',
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderBottom: '1px solid var(--hairline-soft)'
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Wallet size={14} color="#059669" />
+                      Credits & Wallet
+                    </span>
+                    <span style={{
+                      fontWeight: 700,
+                      color: '#059669',
+                      backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                      padding: '2px 8px',
+                      borderRadius: '999px',
+                      fontSize: '12px'
+                    }}>
+                      {walletBalance !== null ? `${walletBalance.toLocaleString()}` : '...'}
+                    </span>
+                  </Link>
 
                   <Link
                     href={profileHref}
@@ -453,6 +552,40 @@ export function AppHeader() {
               </span>
             </div>
           </div>
+        )}
+
+        {initialized && user && walletBalance !== null && (
+          <Link
+            href={activeRole === 'tutor' ? '/tutor/wallet' : '/client/wallet'}
+            onClick={() => setIsOpen(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 14px',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(5, 150, 105, 0.08)',
+              border: '1px solid rgba(5, 150, 105, 0.2)',
+              textDecoration: 'none',
+              marginBottom: '12px'
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: 'var(--brand-green-dark)' }}>
+              <Wallet size={16} color="#059669" />
+              Credits Balance
+            </span>
+            <span style={{
+              fontWeight: 800,
+              fontSize: '14px',
+              color: '#059669',
+              backgroundColor: '#ffffff',
+              padding: '2px 10px',
+              borderRadius: '999px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+            }}>
+              {walletBalance.toLocaleString()} Credits
+            </span>
+          </Link>
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>

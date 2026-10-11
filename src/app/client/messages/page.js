@@ -29,6 +29,7 @@ function ClientMessagesContent() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
+  const [insufficientCreditsModal, setInsufficientCreditsModal] = useState(false);
 
   const messagesContainerRef = useRef(null);
 
@@ -68,21 +69,34 @@ function ClientMessagesContent() {
         if (targetTutorId && targetTutorId !== u.id) {
           let existing = activeConvs.find(c => c.tutor_id === targetTutorId);
           if (!existing) {
-            const { data: newConv, error: createErr } = await supabase
-              .from('conversations')
-              .insert({
-                client_id: u.id,
-                tutor_id: targetTutorId,
-                initiated_by: u.id,
-                last_message: 'Conversation started',
-                last_message_at: new Date().toISOString()
-              })
-              .select()
-              .single();
+            // Check & deduct 100 credits to initiate new chat
+            const { data: deductRes, error: deductErr } = await supabase.rpc('deduct_credits', {
+              p_user_id: u.id,
+              p_amount: 100,
+              p_type: 'chat_initiation',
+              p_description: 'Initiated in-built chat with tutor (100 credits)',
+              p_reference_id: targetTutorId
+            });
 
-            if (!createErr && newConv) {
-              activeConvs = [newConv, ...activeConvs];
-              existing = newConv;
+            if (deductErr || (deductRes && !deductRes.success)) {
+              setInsufficientCreditsModal(true);
+            } else {
+              const { data: newConv, error: createErr } = await supabase
+                .from('conversations')
+                .insert({
+                  client_id: u.id,
+                  tutor_id: targetTutorId,
+                  initiated_by: u.id,
+                  last_message: 'Conversation started',
+                  last_message_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+
+              if (!createErr && newConv) {
+                activeConvs = [newConv, ...activeConvs];
+                existing = newConv;
+              }
             }
           }
           if (existing) {
@@ -742,6 +756,39 @@ function ClientMessagesContent() {
       {previewImage && (
         <div onClick={() => setPreviewImage(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <img src={previewImage} alt="Preview" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }} />
+        </div>
+      )}
+
+      {/* Insufficient Credits Paywall Modal */}
+      {insufficientCreditsModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', maxWidth: '440px', width: '100%', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+              <AlertCircle size={28} />
+            </div>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 700, color: 'var(--ink)' }}>
+              100 Credits Required to Chat
+            </h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: 'var(--steel)', lineHeight: 1.5 }}>
+              Initiating a direct chat with a tutor requires 100 credits. Your account balance is low. Please top up your wallet via bank deposit to continue.
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <Button
+                variant="secondary"
+                style={{ flex: 1 }}
+                onClick={() => setInsufficientCreditsModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                style={{ flex: 1 }}
+                onClick={() => router.push('/client/wallet')}
+              >
+                Buy Credits Now
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

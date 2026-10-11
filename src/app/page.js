@@ -207,16 +207,20 @@ export default function Home() {
 
   const faqs = [
     {
-      q: "How does the platform hold and release payments safely?",
-      a: "When you officially hire an educator, you fund the upcoming milestone (weekly or monthly) using local wallets like JazzCash, Nayapay, or direct 1Link bank transfer. The platform securely holds these funds. Once the tutor delivers the classes and completes the milestone, you click 'Release Funds' to pay them."
+      q: "How does the Credit & Escrow system work?",
+      a: "1 Credit = 1 PKR. When a parent hires a tutor, the full monthly contract tuition fee is held securely in platform escrow. Once the tutor delivers the 30-day classes and milestones, funds are released. In case of tutor abandonment, escrowed funds are 100% refunded to the parent. If a parent tries to default, the tutor is protected."
     },
     {
-      q: "What happens if a tutor does not deliver the agreed lessons?",
-      a: "Our milestone system ensures complete protection. If an educator skips sessions, does not complete the agreed milestone, or stops communicating, you can raise a dispute. Our support team will review the contract details and return the escrowed funds to your wallet."
+      q: "Do parents and tutors get free credits?",
+      a: "Yes! Parents receive 1,500 free credits upon signing up. Tutors receive 1,000 free credits when completing their onboarding within 5 days, plus 500 additional free credits once verified by our admin team."
     },
     {
-      q: "Is posting a tutoring job post completely free?",
-      a: "Yes. Parents and students can post specific subject and budget requirements completely free of charge. You only ever fund the contract when you find an educator you completely love."
+      q: "What are the credit costs for chats, contacts, and contracts?",
+      a: "Parents spend 100 credits to initiate a built-in chat and 500 credits to unlock an educator's direct phone number and email. For tuition contracts, parents fund 100% into escrow, while tutors pay only a 10% platform success fee in credits upon accepting (valid for 30 days)."
+    },
+    {
+      q: "How do I purchase more credits?",
+      a: "Both parents and tutors can buy credits by transferring funds into our verified Pakistani bank account (Meezan Bank/Raast) and uploading the receipt screenshot in their Wallet. Credits are confirmed by our admin team within minutes."
     }
   ];
 
