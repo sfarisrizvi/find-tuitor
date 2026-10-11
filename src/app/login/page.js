@@ -13,6 +13,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [noAccountEmail, setNoAccountEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [lastUsed, setLastUsed] = useState(null);
@@ -54,6 +55,7 @@ function LoginForm() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setNoAccountEmail('');
     setLoading(true);
 
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
@@ -98,10 +100,46 @@ function LoginForm() {
           callback: async (response) => {
             setLoading(true);
             setError('');
+            setNoAccountEmail('');
+
+            // 1. Decode Google ID token to extract email
+            let googleEmail = '';
+            try {
+              const base64Url = response.credential.split('.')[1];
+              const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+              const jsonPayload = decodeURIComponent(
+                atob(base64)
+                  .split('')
+                  .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                  .join('')
+              );
+              const parsed = JSON.parse(jsonPayload);
+              googleEmail = parsed.email;
+            } catch (err) {
+              console.error('Error decoding Google ID token:', err);
+            }
+
+            const supabase = createClient();
+
+            // 2. Strict Check: Only allow existing users to log in from /login
+            if (googleEmail) {
+              const { data: userExists, error: rpcError } = await supabase.rpc('check_user_exists', {
+                p_email: googleEmail,
+              });
+
+              if (!userExists || rpcError) {
+                setLoading(false);
+                setError('NO_ACCOUNT_FOUND');
+                setNoAccountEmail(googleEmail);
+                return;
+              }
+            }
+
+            // 3. User exists: proceed with Google authentication
             if (typeof window !== 'undefined') {
               localStorage.setItem('last_login_method', 'google');
             }
-            const supabase = createClient();
+
             const { data, error: signInError } = await supabase.auth.signInWithIdToken({
               provider: 'google',
               token: response.credential,
@@ -111,7 +149,24 @@ function LoginForm() {
               setError(signInError.message);
               setLoading(false);
             } else {
-              const role = data.user?.user_metadata?.role;
+              let role = data.user?.user_metadata?.role;
+              if (!role) {
+                const { data: roleRow } = await supabase
+                  .from('user_roles')
+                  .select('role')
+                  .eq('user_id', data.user.id)
+                  .maybeSingle();
+                if (roleRow?.role) {
+                  role = roleRow.role;
+                } else {
+                  const { data: clientProf } = await supabase
+                    .from('client_profiles')
+                    .select('id')
+                    .eq('id', data.user.id)
+                    .maybeSingle();
+                  role = clientProf ? 'client' : 'tutor';
+                }
+              }
               setLoading(false);
               const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/')));
               window.location.href = targetUrl;
@@ -171,7 +226,50 @@ function LoginForm() {
           </p>
         </div>
 
-        {error && (
+        {error === 'NO_ACCOUNT_FOUND' ? (
+          <div style={{
+            backgroundColor: '#FFFBEB',
+            border: '1.5px solid #F59E0B',
+            borderRadius: '16px',
+            padding: '16px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+          }}>
+            <span style={{ fontSize: '20px', lineHeight: 1, marginTop: '2px' }}>⚠️</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: '15px', color: '#92400E' }}>
+                No Account Found
+              </p>
+              <p style={{ margin: 0, fontSize: '14px', color: '#B45309', lineHeight: 1.5 }}>
+                <Link 
+                  href="/register" 
+                  style={{ 
+                    color: 'var(--brand-green-dark, #00684A)', 
+                    fontWeight: 700, 
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '2px'
+                  }}
+                >
+                  Register as Tutor
+                </Link>
+                {' or '}
+                <Link 
+                  href="/signup" 
+                  style={{ 
+                    color: 'var(--brand-green-dark, #00684A)', 
+                    fontWeight: 700, 
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '2px'
+                  }}
+                >
+                  Signup as Parent/Student
+                </Link>
+              </p>
+            </div>
+          </div>
+        ) : error && (
           <div style={{
             backgroundColor: '#FFF0F0',
             border: '1px solid #FFCCCC',
@@ -380,7 +478,14 @@ function LoginForm() {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '14px', color: 'var(--steel)' }}>
-          Not a member? <Link href="/register" style={{ color: 'var(--brand-green-dark)', fontWeight: 600 }}>Register now</Link>
+          Not a member? Sign up as{' '}
+          <Link href="/signup" style={{ color: 'var(--brand-green-dark)', fontWeight: 600 }}>
+            Parent / Student
+          </Link>{' '}
+          or{' '}
+          <Link href="/register" style={{ color: 'var(--brand-green-dark)', fontWeight: 600 }}>
+            Tutor
+          </Link>
         </div>
       </div>
 
