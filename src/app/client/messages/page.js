@@ -5,8 +5,9 @@ import { createClient } from '../../../utils/supabase/client';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { Send, User, MessageSquare, Plus, AlertCircle, FileText, File, Reply, X, Image as ImageIcon, Check, CheckCheck, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Send, User, MessageSquare, Plus, AlertCircle, FileText, File, Reply, X, Image as ImageIcon, Check, CheckCheck, ExternalLink, ShieldCheck, Forward, Download } from 'lucide-react';
 import { inspectMessageSafety } from '../../../lib/chatSecurity';
+import { parseChatMessage } from '../../../lib/chatMessageParser';
 import { VoiceNoteRecorder, AttachmentUploader, CustomAudioPlayer } from '../../../components/chat/MediaUploads';
 import { ClientOfferModal } from '../../../components/chat/ClientOfferModal';
 import { ContractCard } from '../../../components/chat/ContractCard';
@@ -486,12 +487,12 @@ function ClientMessagesContent() {
                   const senderName = isMe ? 'You' : activeTutor?.name || 'Tutor';
                   const senderAvatar = isMe ? myProfile?.avatar : activeTutor?.avatar;
 
-                  const securityCheck = inspectMessageSafety(m.content);
+                  const { replyData, mainContent: rawReplyStrippedContent } = parseReplyContent(m.content);
+                  const { cleanContent: mainText, isForwarded, fileAttachment } = parseChatMessage(rawReplyStrippedContent, m.media_url, m.message_type);
+
+                  const securityCheck = inspectMessageSafety(mainText);
                   const hasWarning = m.has_warning || securityCheck.hasWarning;
                   const contract = m.contract_id ? contractsMap[m.contract_id] : null;
-
-                  const { replyData, mainContent } = parseReplyContent(m.content);
-                  const isImage = m.message_type === 'image' || (m.media_url && /\.(png|jpg|jpeg|gif|webp)$/i.test(m.media_url));
 
                   return (
                     <div
@@ -538,6 +539,22 @@ function ClientMessagesContent() {
                               whiteSpace: 'pre-wrap'
                             }}
                           >
+                            {/* Forwarded Header Indicator */}
+                            {isForwarded && (
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '11px',
+                                fontStyle: 'italic',
+                                color: isMe ? 'rgba(255, 255, 255, 0.8)' : 'var(--steel)',
+                                marginBottom: '6px'
+                              }}>
+                                <Forward size={13} style={{ transform: 'scaleX(-1)' }} />
+                                <span>Forwarded</span>
+                              </div>
+                            )}
+
                             {/* Nested Reply Block */}
                             {replyData && (
                               <div style={{
@@ -558,41 +575,87 @@ function ClientMessagesContent() {
                               </div>
                             )}
 
-                            {/* Media Attachment inside same single bubble */}
-                            {m.media_url && (
-                              m.message_type === 'voice' ? (
-                                <CustomAudioPlayer src={m.media_url} duration={15} />
-                              ) : isImage ? (
-                                <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--hairline-strong)', cursor: 'pointer', maxWidth: '280px', marginBottom: mainContent ? '8px' : '0' }} onClick={() => setPreviewImage(m.media_url)}>
-                                  <img src={m.media_url} alt="Shared image" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                            {/* Media / File Attachment via API Gateway */}
+                            {fileAttachment && (
+                              fileAttachment.isVoice ? (
+                                <CustomAudioPlayer src={fileAttachment.url} duration={15} />
+                              ) : fileAttachment.isImage ? (
+                                <div
+                                  style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--hairline-strong)', cursor: 'pointer', maxWidth: '280px', marginBottom: mainText ? '8px' : '0' }}
+                                  onClick={() => setPreviewImage(fileAttachment.url)}
+                                >
+                                  <img src={fileAttachment.url} alt={fileAttachment.name} style={{ width: '100%', height: 'auto', display: 'block' }} />
                                 </div>
                               ) : (
-                                <a
-                                  href={m.media_url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  style={{
-                                    display: 'inline-flex',
+                                <div style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '12px',
+                                  padding: '10px 14px',
+                                  borderRadius: '12px',
+                                  backgroundColor: isMe ? 'rgba(255, 255, 255, 0.15)' : 'var(--surface-soft)',
+                                  border: `1px solid ${isMe ? 'rgba(255, 255, 255, 0.25)' : 'var(--hairline-strong)'}`,
+                                  marginBottom: mainText ? '8px' : '0',
+                                  minWidth: '220px'
+                                }}>
+                                  <div style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    borderRadius: '8px',
+                                    backgroundColor: fileAttachment.isPdf ? '#EF4444' : 'var(--brand-green)',
+                                    color: '#FFFFFF',
+                                    display: 'flex',
                                     alignItems: 'center',
-                                    gap: '8px',
-                                    padding: '8px 12px',
-                                    borderRadius: '12px',
-                                    backgroundColor: isMe ? 'rgba(255, 255, 255, 0.2)' : 'var(--surface)',
-                                    color: 'inherit',
-                                    textDecoration: 'none',
-                                    fontWeight: 600,
-                                    fontSize: '13px',
-                                    marginBottom: mainContent ? '8px' : '0'
-                                  }}
-                                >
-                                  <File size={16} /> Shared Attachment
-                                </a>
+                                    justifyContent: 'center',
+                                    fontWeight: 700,
+                                    fontSize: '11px',
+                                    flexShrink: 0
+                                  }}>
+                                    {fileAttachment.isPdf ? 'PDF' : <FileText size={18} />}
+                                  </div>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{
+                                      fontWeight: 600,
+                                      fontSize: '13px',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      color: isMe ? '#FFFFFF' : 'var(--ink)'
+                                    }}>
+                                      {fileAttachment.name}
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: isMe ? 'rgba(255, 255, 255, 0.8)' : 'var(--steel)' }}>
+                                      {fileAttachment.isPdf ? 'PDF Document' : 'Attachment'}
+                                    </div>
+                                  </div>
+                                  <a
+                                    href={fileAttachment.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download={fileAttachment.name}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      padding: '6px 12px',
+                                      borderRadius: '8px',
+                                      backgroundColor: isMe ? '#FFFFFF' : 'var(--brand-green)',
+                                      color: isMe ? 'var(--brand-green-dark)' : '#FFFFFF',
+                                      textDecoration: 'none',
+                                      fontSize: '12px',
+                                      fontWeight: 600,
+                                      flexShrink: 0
+                                    }}
+                                  >
+                                    <Download size={13} /> View
+                                  </a>
+                                </div>
                               )
                             )}
 
                             {/* Main Text Content */}
-                            {mainContent && (
-                              <div>{mainContent}</div>
+                            {mainText && (
+                              <div>{mainText}</div>
                             )}
                           </div>
                         )}
@@ -635,7 +698,7 @@ function ClientMessagesContent() {
 
                       {/* External Reply Button (Center of Message Box Side) */}
                       <button
-                        onClick={() => setReplyingTo({ id: m.id, content: mainContent || (m.media_url ? 'Attachment' : 'Message'), sender_name: senderName })}
+                        onClick={() => setReplyingTo({ id: m.id, content: mainText || (fileAttachment ? fileAttachment.name : (m.media_url ? 'Attachment' : 'Message')), sender_name: senderName })}
                         title="Reply to message"
                         style={{
                           background: 'var(--canvas)',

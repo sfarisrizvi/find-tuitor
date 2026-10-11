@@ -10,9 +10,22 @@ export function inspectMessageSafety(text) {
     return { hasWarning: false, flagType: null };
   }
 
-  const hasPhone = PHONE_REGEX.test(text);
-  const hasEmail = EMAIL_REGEX.test(text);
-  const hasUrl = URL_REGEX.test(text);
+  // Strip internal attachments, API gateway URLs, and Supabase storage references
+  const cleanedText = text
+    .replace(/\[\[file:[^\]]+\]\]/gi, '')
+    .replace(/https?:\/\/[^\s]*supabase\.co\/storage\/[^\s]*/gi, '')
+    .replace(/https?:\/\/(?:[a-zA-Z0-9-]+\.)?tutoronline\.pk[^\s]*/gi, '')
+    .replace(/https?:\/\/localhost(?::\d+)?[^\s]*/gi, '')
+    .replace(/\/api\/[^\s]*/gi, '')
+    .trim();
+
+  if (!cleanedText) {
+    return { hasWarning: false, flagType: null };
+  }
+
+  const hasPhone = PHONE_REGEX.test(cleanedText);
+  const hasEmail = EMAIL_REGEX.test(cleanedText);
+  const hasUrl = URL_REGEX.test(cleanedText);
 
   if (hasPhone || hasEmail || hasUrl) {
     let flagType = 'contact_info';

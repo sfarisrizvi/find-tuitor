@@ -6,6 +6,7 @@ import { createClient } from '../../utils/supabase/client';
 export function CustomAudioPlayer({ src, duration }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(duration || 0);
   const audioRef = useRef(null);
 
   const togglePlay = () => {
@@ -22,6 +23,12 @@ export function CustomAudioPlayer({ src, duration }) {
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current?.duration) {
+      setAudioDuration(audioRef.current.duration);
     }
   };
 
@@ -55,6 +62,7 @@ export function CustomAudioPlayer({ src, duration }) {
         ref={audioRef}
         src={src}
         onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => setIsPlaying(false)}
         style={{ display: 'none' }}
       />
@@ -82,7 +90,7 @@ export function CustomAudioPlayer({ src, duration }) {
       <input
         type="range"
         min="0"
-        max={audioRef.current?.duration || duration || 100}
+        max={audioDuration || duration || 100}
         value={currentTime}
         onChange={handleSeek}
         style={{
@@ -176,11 +184,9 @@ export function VoiceNoteRecorder({ onSendVoice, onCancel }) {
 
       if (error) throw error;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('chat-media')
-        .getPublicUrl(filePath);
+      const gatewayUrl = `/api/chat/media?bucket=chat-media&path=${encodeURIComponent(filePath)}&name=voice_note.webm`;
 
-      await onSendVoice(publicUrl, duration);
+      await onSendVoice(gatewayUrl, duration);
       setRecordedBlob(null);
       setAudioUrl(null);
     } catch (err) {
@@ -310,13 +316,11 @@ export function AttachmentUploader({ onFileSelected }) {
 
       if (error) throw error;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('chat-media')
-        .getPublicUrl(filePath);
+      const gatewayUrl = `/api/chat/media?bucket=chat-media&path=${encodeURIComponent(filePath)}&name=${encodeURIComponent(file.name)}`;
 
       // Pass staged file to parent state
       onFileSelected({
-        url: publicUrl,
+        url: gatewayUrl,
         name: file.name,
         type: isImage ? 'image' : 'file'
       });
