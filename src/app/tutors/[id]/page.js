@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { ImageCropModal } from '../../../components/ui/ImageCropModal';
 import { CategoryEditModal } from '../../../components/ui/CategoryEditModal';
 import { ExperienceEditModal } from '../../../components/ui/ExperienceEditModal';
+import { TutorReviewsSection } from '../../../components/reviews/TutorReviewsSection';
 
 const PAKISTANI_CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
 
@@ -1547,6 +1548,15 @@ export default function TutorProfile() {
                 )}
               </div>
             </section>
+
+            {/* ── Verified Reviews Section ── */}
+            <TutorReviewsSection
+              tutorId={tutor.id}
+              isOwner={isOwner}
+              avgRating={avgRating}
+              reviewsCount={reviewsCount}
+              jssScore={tutor.jss_score}
+            />
 
           </div>
 

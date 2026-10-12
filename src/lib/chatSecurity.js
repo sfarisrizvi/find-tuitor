@@ -42,3 +42,19 @@ export function inspectMessageSafety(text) {
 
   return { hasWarning: false, flagType: null };
 }
+
+export function filterContactInfo(text) {
+  if (!text || typeof text !== 'string') return { filteredText: text, hasViolation: false };
+  const hasPhone = PHONE_REGEX.test(text);
+  const hasEmail = EMAIL_REGEX.test(text);
+  const hasUrl = URL_REGEX.test(text);
+  if (!hasPhone && !hasEmail && !hasUrl) return { filteredText: text, hasViolation: false };
+
+  let filtered = text
+    .replace(PHONE_REGEX, '[contact redacted]')
+    .replace(EMAIL_REGEX, '[email redacted]')
+    .replace(URL_REGEX, '[link redacted]');
+
+  return { filteredText: filtered, hasViolation: true };
+}
+

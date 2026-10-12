@@ -1,8 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
-import { FileText, CheckCircle2, Clock, MapPin, Banknote, Edit3, X, AlertCircle, Calendar, User, BookOpen } from 'lucide-react';
+import { FileText, CheckCircle2, Clock, MapPin, Banknote, Edit3, X, AlertCircle, Calendar, User, BookOpen, Star } from 'lucide-react';
 import { createClient } from '../../utils/supabase/client';
+import { ReviewModal } from '../reviews/ReviewModal';
 
 export function ContractCard({ contract, currentUserId, onContractUpdated }) {
   const [showViewModal, setShowViewModal] = useState(false);
@@ -14,6 +15,24 @@ export function ContractCard({ contract, currentUserId, onContractUpdated }) {
 
   const [clientInfo, setClientInfo] = useState(null);
   const [childrenDetails, setChildrenDetails] = useState([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+
+  useEffect(() => {
+    if (!contract?.id || !currentUserId) return;
+    const checkReview = async () => {
+      try {
+        const res = await fetch(`/api/reviews?contract_id=${contract.id}`);
+        const data = await res.json();
+        if (data.reviews && data.reviews.some(r => r.reviewer_id === currentUserId)) {
+          setHasReviewed(true);
+        }
+      } catch (e) {}
+    };
+    if (contract.status === 'completed' || contract.status === 'approved' || contract.status === 'active') {
+      checkReview();
+    }
+  }, [contract?.id, contract?.status, currentUserId]);
 
   useEffect(() => {
     if (!showViewModal || !contract?.client_id) return;
@@ -77,6 +96,7 @@ export function ContractCard({ contract, currentUserId, onContractUpdated }) {
   const isPending = contract.status === 'pending';
   const isApproved = contract.status === 'approved' || contract.status === 'active';
   const isRevision = contract.status === 'revision_requested';
+  const isCompleted = contract.status === 'completed';
 
   const handleApprove = async () => {
     if (!agreeTerms) {
@@ -103,6 +123,35 @@ export function ContractCard({ contract, currentUserId, onContractUpdated }) {
       onContractUpdated(data.contract);
     } catch (err) {
       console.error('Error approving contract:', err);
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCompleteContract = async () => {
+    if (!window.confirm('Are you sure you want to mark this tuition contract as completed? This will conclude the engagement and unlock verified reviews.')) return;
+    setError('');
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/chat/contracts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'complete_contract',
+          contract_id: contract.id,
+          user_id: currentUserId
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to complete contract.');
+
+      setShowViewModal(false);
+      if (onContractUpdated) onContractUpdated(data.contract);
+      setShowReviewModal(true);
+    } catch (err) {
+      console.error('Error completing contract:', err);
       setError(err.message);
     } finally {
       setSubmitting(false);
@@ -142,6 +191,9 @@ export function ContractCard({ contract, currentUserId, onContractUpdated }) {
   };
 
   const getStatusBadgeStyle = () => {
+    if (isCompleted) {
+      return { bg: 'rgba(16, 185, 129, 0.15)', color: '#059669', label: 'COMPLETED & VERIFIED' };
+    }
     if (isApproved) {
       return { bg: 'rgba(16, 185, 129, 0.15)', color: '#10B981', label: 'APPROVED & ACTIVE' };
     }
@@ -215,7 +267,7 @@ export function ContractCard({ contract, currentUserId, onContractUpdated }) {
         </div>
       )}
 
-      {/* Action Buttons: strictly 2 buttons (View Terms & Approve) */}
+      {/* Action Buttons */}
       <div style={{ display: 'flex', gap: '10px' }}>
         <Button
           onClick={() => setShowViewModal(true)}
@@ -232,6 +284,34 @@ export function ContractCard({ contract, currentUserId, onContractUpdated }) {
             style={{ flex: 1, backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', borderRadius: '999px', height: '40px', fontSize: '13px', fontWeight: 700 }}
           >
             Approve
+          </Button>
+        )}
+
+        {isCompleted && (
+          <Button
+            onClick={() => setShowReviewModal(true)}
+            variant={hasReviewed ? "secondary" : "primary"}
+            disabled={hasReviewed}
+            style={{
+              flex: 1.2,
+              backgroundColor: hasReviewed ? 'var(--surface-soft)' : '#F59E0B',
+              color: hasReviewed ? 'var(--stone)' : '#fff',
+              border: hasReviewed ? '1px solid var(--hairline-strong)' : 'none',
+              borderRadius: '999px',
+              height: '40px',
+              fontSize: '12px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            {hasReviewed ? (
+              <><CheckCircle2 size={14} color="var(--brand-green-dark)" /> Reviewed</>
+            ) : (
+              <><Star size={14} fill="#fff" /> Leave Review</>
+            )}
           </Button>
         )}
       </div>
@@ -447,6 +527,62 @@ export function ContractCard({ contract, currentUserId, onContractUpdated }) {
                 </div>
               )}
 
+              {/* Actions for Approved & Active Contracts */}
+              {isApproved && (
+                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--hairline-soft)' }}>
+                  <Button
+                    type="button"
+                    onClick={handleCompleteContract}
+                    disabled={submitting}
+                    variant="secondary"
+                    style={{
+                      width: '100%',
+                      height: '44px',
+                      borderRadius: '999px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      color: '#059669',
+                      borderColor: '#A7F3D0',
+                      backgroundColor: '#ECFDF5',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <CheckCircle2 size={16} /> Complete Tuition &amp; Leave Review
+                  </Button>
+                </div>
+              )}
+
+              {/* Actions for Completed Contracts */}
+              {isCompleted && (
+                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--hairline-soft)' }}>
+                  <Button
+                    type="button"
+                    onClick={() => { setShowViewModal(false); setShowReviewModal(true); }}
+                    disabled={hasReviewed}
+                    variant="primary"
+                    style={{
+                      width: '100%',
+                      height: '44px',
+                      borderRadius: '999px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      backgroundColor: hasReviewed ? 'var(--surface-soft)' : '#F59E0B',
+                      color: hasReviewed ? 'var(--stone)' : '#fff',
+                      border: hasReviewed ? '1px solid var(--hairline-strong)' : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {hasReviewed ? <><CheckCircle2 size={16} color="var(--brand-green-dark)" /> Verified Review Already Submitted</> : <><Star size={16} fill="#fff" /> Leave Verified Review</>}
+                  </Button>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
@@ -521,6 +657,19 @@ export function ContractCard({ contract, currentUserId, onContractUpdated }) {
           </div>
         </div>
       )}
+
+      {/* Verified Review Modal */}
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        contract={contract}
+        reviewerRole={currentUserId === contract.client_id ? 'client' : 'tutor'}
+        onReviewSubmitted={() => {
+          setHasReviewed(true);
+          setShowReviewModal(false);
+          if (onContractUpdated) onContractUpdated({ ...contract, status: 'completed' });
+        }}
+      />
 
     </div>
   );

@@ -329,6 +329,104 @@ export async function POST(request) {
       return NextResponse.json({ success: true, contract: approvedContract });
     }
 
+    // ----------------------------------------------------
+    // ACTION 4: COMPLETE CONTRACT (UNLOCK REVIEWS)
+    // ----------------------------------------------------
+    if (action === 'complete_contract') {
+      if (!contract_id || !user_id) {
+        return NextResponse.json({ error: 'Missing completion details.' }, { status: 400 });
+      }
+
+      // 1. Fetch contract
+      const { data: contractToComplete, error: fetchErr } = await supabase
+        .from('contracts')
+        .select('*')
+        .eq('id', contract_id)
+        .single();
+
+      if (fetchErr || !contractToComplete) {
+        return NextResponse.json({ error: 'Contract not found.' }, { status: 404 });
+      }
+
+      // Caller must be client or tutor
+      if (contractToComplete.client_id !== user_id && contractToComplete.tutor_id !== user_id) {
+        return NextResponse.json({ error: 'Unauthorized to complete this contract.' }, { status: 403 });
+      }
+
+      // 2. Call RPC to update contract status and release escrow
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('complete_contract_and_unlock_review', {
+        p_contract_id: contract_id,
+        p_user_id: user_id,
+        p_completion_notes: body.completion_notes || null
+      });
+
+      if (rpcErr || (rpcRes && !rpcRes.success)) {
+        return NextResponse.json({
+          error: rpcRes?.error || 'Failed to complete contract.'
+        }, { status: 400 });
+      }
+
+      // 3. Insert completion notice message into chat
+      const receiverId = user_id === contractToComplete.client_id 
+        ? contractToComplete.tutor_id 
+        : contractToComplete.client_id;
+
+      const completionMessage = `🏁 Tuition Contract Completed! Tuition agreement has concluded successfully. You can now leave a verified review.`;
+
+      await supabase
+        .from('messages')
+        .insert({
+          conversation_id: contractToComplete.conversation_id,
+          sender_id: user_id,
+          receiver_id: receiverId,
+          content: completionMessage,
+          message_type: 'contract',
+          contract_id: contract_id,
+          read: false
+        });
+
+      await supabase
+        .from('conversations')
+        .update({
+          last_message: completionMessage,
+          last_message_at: new Date().toISOString()
+        })
+        .eq('id', contractToComplete.conversation_id);
+
+      // 4. Notify receiver
+      const receiverTable = user_id === contractToComplete.client_id ? 'tutor_profiles' : 'client_profiles';
+      const { data: receiverProf } = await supabase
+        .from(receiverTable)
+        .select('full_name, email')
+        .eq('id', receiverId)
+        .maybeSingle();
+
+      if (receiverProf) {
+        const notifTitle = '🏁 Contract Marked Complete';
+        const notifMsg = `Your tuition contract has ended. Please share your feedback and leave a verified review.`;
+        const actionUrl = user_id === contractToComplete.client_id ? '/tutor/contracts' : '/client/dashboard';
+
+        await sendNotification({
+          userId: receiverId,
+          userEmail: receiverProf.email,
+          userName: receiverProf.full_name || 'User',
+          title: notifTitle,
+          message: notifMsg,
+          type: 'contract',
+          priority: 'HIGH',
+          actionUrl,
+          templateName: 'contract_notice',
+          templateData: {
+            TITLE: notifTitle,
+            MESSAGE: notifMsg,
+            ACTION_URL: `https://tutoronline.pk${actionUrl}`
+          }
+        });
+      }
+
+      return NextResponse.json({ success: true, contract: { ...contractToComplete, status: 'completed' } });
+    }
+
     return NextResponse.json({ error: 'Invalid action.' }, { status: 400 });
   } catch (err) {
     console.error('Error in contracts API route:', err);
