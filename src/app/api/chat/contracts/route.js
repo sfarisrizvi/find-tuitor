@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/utils/supabase/server';
 import { sendNotification } from '../../../../lib/notifications';
 
 const supabase = createClient(
@@ -9,6 +10,17 @@ const supabase = createClient(
 
 export async function POST(request) {
   try {
+    // 0. Cryptographic Session Authentication
+    const supabaseUser = await createServerClient();
+    const { data: { user }, error: authErr } = await supabaseUser.auth.getUser();
+
+    if (authErr || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized: A valid session is required.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const {
       action,
@@ -25,7 +37,6 @@ export async function POST(request) {
       duration_value,
       duration_unit,
       contract_id,
-      user_id,
       revision_feedback
     } = body;
 
@@ -37,10 +48,29 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Missing required contract fields.' }, { status: 400 });
       }
 
+      // Impersonation Prevention: User must match creator identity
+      if (creator_role === 'tutor' && tutor_id !== user.id) {
+        return NextResponse.json({ error: 'Forbidden: Tutor ID must match your authenticated user ID.' }, { status: 403 });
+      }
+      if (creator_role === 'client' && client_id !== user.id) {
+        return NextResponse.json({ error: 'Forbidden: Client ID must match your authenticated user ID.' }, { status: 403 });
+      }
+
+      // Verify caller is a verified participant of this conversation
+      const { data: conv, error: convErr } = await supabase
+        .from('conversations')
+        .select('id, client_id, tutor_id')
+        .eq('id', conversation_id)
+        .maybeSingle();
+
+      if (convErr || !conv || (conv.client_id !== user.id && conv.tutor_id !== user.id)) {
+        return NextResponse.json({ error: 'Forbidden: You are not a participant in this conversation.' }, { status: 403 });
+      }
+
       // If client creates the contract/offer, ensure they have sufficient credits to lock into escrow
       if (creator_role === 'client') {
         const { data: lockCheck, error: lockCheckErr } = await supabase.rpc('lock_contract_escrow', {
-          p_client_id: client_id,
+          p_client_id: user.id,
           p_contract_id: conversation_id,
           p_amount: Number(amount)
         });
@@ -86,7 +116,7 @@ export async function POST(request) {
         .from('messages')
         .insert({
           conversation_id,
-          sender_id: creator_role === 'tutor' ? tutor_id : client_id,
+          sender_id: user.id,
           receiver_id: receiverId,
           content: messageContent,
           message_type: creator_role === 'tutor' ? 'contract' : 'offer',
@@ -146,8 +176,23 @@ export async function POST(request) {
     // ACTION 2: REVISE CONTRACT
     // ----------------------------------------------------
     if (action === 'revise_contract') {
-      if (!contract_id || !user_id || !revision_feedback) {
+      if (!contract_id || !revision_feedback) {
         return NextResponse.json({ error: 'Missing contract revision details.' }, { status: 400 });
+      }
+
+      // Verify contract exists and caller is an active participant
+      const { data: contractToRevise, error: fetchRevErr } = await supabase
+        .from('contracts')
+        .select('*')
+        .eq('id', contract_id)
+        .single();
+
+      if (fetchRevErr || !contractToRevise) {
+        return NextResponse.json({ error: 'Contract not found.' }, { status: 404 });
+      }
+
+      if (contractToRevise.client_id !== user.id && contractToRevise.tutor_id !== user.id) {
+        return NextResponse.json({ error: 'Forbidden: You are not a party to this contract.' }, { status: 403 });
       }
 
       const { data: updatedContract, error: updateErr } = await supabase
@@ -201,8 +246,8 @@ export async function POST(request) {
     // ACTION 3: APPROVE CONTRACT
     // ----------------------------------------------------
     if (action === 'approve_contract') {
-      if (!contract_id || !user_id) {
-        return NextResponse.json({ error: 'Missing approval details.' }, { status: 400 });
+      if (!contract_id) {
+        return NextResponse.json({ error: 'Missing contract ID for approval.' }, { status: 400 });
       }
 
       // Fetch contract details first
@@ -216,8 +261,13 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Contract not found.' }, { status: 404 });
       }
 
+      // Caller must strictly be tutor or client of this contract
+      if (user.id !== contractToApprove.tutor_id && user.id !== contractToApprove.client_id) {
+        return NextResponse.json({ error: 'Forbidden: You are not authorized to approve this contract.' }, { status: 403 });
+      }
+
       // If Tutor is accepting (deduct 10% platform fee in credits)
-      if (user_id === contractToApprove.tutor_id) {
+      if (user.id === contractToApprove.tutor_id) {
         const { data: feeRes, error: feeErr } = await supabase.rpc('tutor_accept_contract_fee', {
           p_tutor_id: contractToApprove.tutor_id,
           p_contract_id: contract_id,
@@ -232,7 +282,7 @@ export async function POST(request) {
       }
 
       // If Client is accepting a tutor-initiated contract (lock 100% into escrow)
-      if (user_id === contractToApprove.client_id) {
+      if (user.id === contractToApprove.client_id) {
         const { data: escrowRes, error: escrowErr } = await supabase.rpc('lock_contract_escrow', {
           p_client_id: contractToApprove.client_id,
           p_contract_id: contract_id,
@@ -275,7 +325,7 @@ export async function POST(request) {
           next_renewal_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
         });
 
-      // 2. Also insert active engagement in jobs table so both dashboards render it
+      // 3. Also insert active engagement in jobs table so both dashboards render it
       const { error: jobErr } = await supabase
         .from('jobs')
         .insert({
@@ -294,7 +344,7 @@ export async function POST(request) {
         console.error('Non-critical error creating job engagement record:', jobErr);
       }
 
-      // 3. Dispatch Notifications
+      // 4. Dispatch Notifications
       const notifTitle = '🎉 Contract Approved & Tuition Started!';
       const notifMsg = `Your tuition agreement of PKR ${approvedContract.amount}/${approvedContract.payment_plan} has been approved. Tuition is now active!`;
       
@@ -333,8 +383,8 @@ export async function POST(request) {
     // ACTION 4: COMPLETE CONTRACT (UNLOCK REVIEWS)
     // ----------------------------------------------------
     if (action === 'complete_contract') {
-      if (!contract_id || !user_id) {
-        return NextResponse.json({ error: 'Missing completion details.' }, { status: 400 });
+      if (!contract_id) {
+        return NextResponse.json({ error: 'Missing contract ID for completion.' }, { status: 400 });
       }
 
       // 1. Fetch contract
@@ -348,15 +398,15 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Contract not found.' }, { status: 404 });
       }
 
-      // Caller must be client or tutor
-      if (contractToComplete.client_id !== user_id && contractToComplete.tutor_id !== user_id) {
+      // Caller must be client or tutor of this contract
+      if (contractToComplete.client_id !== user.id && contractToComplete.tutor_id !== user.id) {
         return NextResponse.json({ error: 'Unauthorized to complete this contract.' }, { status: 403 });
       }
 
       // 2. Call RPC to update contract status and release escrow
       const { data: rpcRes, error: rpcErr } = await supabase.rpc('complete_contract_and_unlock_review', {
         p_contract_id: contract_id,
-        p_user_id: user_id,
+        p_user_id: user.id,
         p_completion_notes: body.completion_notes || null
       });
 
@@ -367,7 +417,7 @@ export async function POST(request) {
       }
 
       // 3. Insert completion notice message into chat
-      const receiverId = user_id === contractToComplete.client_id 
+      const receiverId = user.id === contractToComplete.client_id 
         ? contractToComplete.tutor_id 
         : contractToComplete.client_id;
 
@@ -377,7 +427,7 @@ export async function POST(request) {
         .from('messages')
         .insert({
           conversation_id: contractToComplete.conversation_id,
-          sender_id: user_id,
+          sender_id: user.id,
           receiver_id: receiverId,
           content: completionMessage,
           message_type: 'contract',
@@ -394,7 +444,7 @@ export async function POST(request) {
         .eq('id', contractToComplete.conversation_id);
 
       // 4. Notify receiver
-      const receiverTable = user_id === contractToComplete.client_id ? 'tutor_profiles' : 'client_profiles';
+      const receiverTable = user.id === contractToComplete.client_id ? 'tutor_profiles' : 'client_profiles';
       const { data: receiverProf } = await supabase
         .from(receiverTable)
         .select('full_name, email')
@@ -404,7 +454,7 @@ export async function POST(request) {
       if (receiverProf) {
         const notifTitle = '🏁 Contract Marked Complete';
         const notifMsg = `Your tuition contract has ended. Please share your feedback and leave a verified review.`;
-        const actionUrl = user_id === contractToComplete.client_id ? '/tutor/contracts' : '/client/dashboard';
+        const actionUrl = user.id === contractToComplete.client_id ? '/tutor/contracts' : '/client/dashboard';
 
         await sendNotification({
           userId: receiverId,
