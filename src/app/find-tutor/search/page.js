@@ -483,46 +483,48 @@ function SearchContent() {
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
           {/* City Dropdown */}
-          <div style={{ position: 'relative', minWidth: '180px', flex: '1 1 180px' }}>
+          <div style={{ position: 'relative', width: '165px', flexShrink: 0 }}>
             <TehsilSelector
               value={filters.city}
               onChange={(payload, formatted) => handleFilterChange('city', payload ? (payload.tehsil || formatted) : '')}
               placeholder="Any Tehsil / City"
               allowAll={true}
               allOptionLabel="Any Tehsil"
+              showQuickGps={false}
               triggerStyle={{
                 minHeight: '40px',
                 height: '40px',
                 borderRadius: '999px',
-                padding: '0 14px',
-                fontSize: '14px'
+                padding: '0 12px',
+                fontSize: '13px'
               }}
             />
           </div>
 
           {/* Gender Dropdown */}
-          <div style={{ position: 'relative', minWidth: '140px' }}>
-            <User size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+          <div style={{ position: 'relative', width: '135px', flexShrink: 0 }}>
+            <User size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
             <select
               value={filters.gender}
               onChange={(e) => handleFilterChange('gender', e.target.value)}
               style={{
-                width: '100%', height: '40px', paddingLeft: '36px', paddingRight: '12px',
+                width: '100%', height: '40px', paddingLeft: '32px', paddingRight: '24px',
                 borderRadius: '999px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                fontSize: '14px', cursor: 'pointer', outline: 'none', appearance: 'none'
+                fontSize: '13px', cursor: 'pointer', outline: 'none', appearance: 'none', fontWeight: 500,
+                color: 'var(--ink)'
               }}
             >
-              <option value="">Any Gender</option>
+              <option value="">Gender</option>
               {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
             </select>
-            <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
+            <ChevronDown size={12} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
           </div>
 
           {/* Search query input */}
-          <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+          <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
             <Input
-              placeholder="Search by keyword..."
+              placeholder="Search by keyword, subject, or grade..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ height: '40px', paddingLeft: '36px', fontSize: '14px', border: '1px solid var(--hairline-strong)', borderRadius: '999px', backgroundColor: '#fff' }}
