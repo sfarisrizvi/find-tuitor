@@ -5,7 +5,7 @@ import { createClient } from '../../../utils/supabase/client';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { Send, User, MessageSquare, Plus, AlertCircle, FileText, File, Reply, X, Image as ImageIcon, Check, CheckCheck, ExternalLink, ShieldCheck, Forward, Download } from 'lucide-react';
+import { Send, User, MessageSquare, Plus, AlertCircle, FileText, File, Reply, X, Image as ImageIcon, Check, CheckCheck, ExternalLink, ShieldCheck, Forward, Download, ArrowLeft } from 'lucide-react';
 import { inspectMessageSafety } from '../../../lib/chatSecurity';
 import { parseChatMessage } from '../../../lib/chatMessageParser';
 import { VoiceNoteRecorder, AttachmentUploader, CustomAudioPlayer } from '../../../components/chat/MediaUploads';
@@ -33,6 +33,21 @@ function ClientMessagesContent() {
   const [insufficientCreditsModal, setInsufficientCreditsModal] = useState(false);
 
   const messagesContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (selectedConv) {
+        document.body.setAttribute('data-chat-active', 'true');
+      } else {
+        document.body.removeAttribute('data-chat-active');
+      }
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.removeAttribute('data-chat-active');
+      }
+    };
+  }, [selectedConv]);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -365,11 +380,11 @@ function ClientMessagesContent() {
   const myProfile = user ? tutorProfiles[user.id] : null;
 
   return (
-    <div className="container" style={{ padding: '32px 16px', minHeight: 'calc(100vh - 120px)' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '20px', height: 'calc(100vh - 180px)', minHeight: '560px' }}>
+    <div className="container messages-container-custom" style={{ padding: '32px 16px', minHeight: 'calc(100vh - 120px)' }}>
+      <div className="messages-page-wrapper">
 
         {/* Sidebar: Conversations List */}
-        <Card style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', border: '1px solid var(--hairline-strong)', borderRadius: '24px' }}>
+        <Card className={`messages-sidebar-col ${selectedConv ? 'mobile-hidden' : ''}`} style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', border: '1px solid var(--hairline-strong)', borderRadius: '24px' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--hairline-soft)', fontWeight: 700, fontSize: '16px', color: 'var(--ink)' }}>
             Messages &amp; Tutors
           </div>
@@ -428,25 +443,33 @@ function ClientMessagesContent() {
 
         {/* Main Chat Area */}
         {selectedConv ? (
-          <Card style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', border: '1px solid var(--hairline-strong)', borderRadius: '24px' }}>
+          <Card className={`messages-chat-col ${!selectedConv ? 'mobile-hidden' : ''}`} style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', border: '1px solid var(--hairline-strong)', borderRadius: '24px' }}>
             
             {/* Header */}
-            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--hairline-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'var(--canvas)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '42px', height: '42px', borderRadius: '50%', overflow: 'hidden', backgroundColor: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--brand-green-dark)', fontSize: '16px' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--hairline-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'var(--canvas)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                <button
+                  className="messages-back-btn"
+                  onClick={() => setSelectedConv(null)}
+                  aria-label="Back to conversations"
+                  title="Back to conversations"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div style={{ width: '42px', height: '42px', borderRadius: '50%', overflow: 'hidden', backgroundColor: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--brand-green-dark)', fontSize: '16px', flexShrink: 0 }}>
                   {activeTutor?.avatar ? (
                     <img src={activeTutor.avatar} alt={activeTutor.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     activeTutor?.name?.charAt(0) || 'T'
                   )}
                 </div>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>
+                    <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {activeTutor?.name || 'Verified Tutor'}
                     </h4>
                     {activeTutor?.verified && (
-                      <span title="Verified Profile" style={{ display: 'inline-flex', alignItems: 'center', color: '#10B981' }}>
+                      <span title="Verified Profile" style={{ display: 'inline-flex', alignItems: 'center', color: '#10B981', flexShrink: 0 }}>
                         <ShieldCheck size={16} fill="#10B981" color="#FFFFFF" />
                       </span>
                     )}
@@ -456,7 +479,7 @@ function ClientMessagesContent() {
                         target="_blank"
                         rel="noopener noreferrer"
                         title="View Tutor Profile in new tab"
-                        style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--brand-green)', marginLeft: '2px', cursor: 'pointer' }}
+                        style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--brand-green)', marginLeft: '2px', cursor: 'pointer', flexShrink: 0 }}
                       >
                         <ExternalLink size={15} />
                       </a>
@@ -469,9 +492,12 @@ function ClientMessagesContent() {
               <Button
                 onClick={() => setShowOfferModal(true)}
                 variant="primary"
-                style={{ backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', borderRadius: '999px', fontSize: '13px', padding: '6px 20px', fontWeight: 700 }}
+                className="messages-header-action-btn"
+                style={{ backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)', borderRadius: '999px', fontSize: '13px', padding: '6px 20px', fontWeight: 700, flexShrink: 0 }}
               >
-                <Plus size={16} /> Send Tuition Offer
+                <Plus size={16} />
+                <span className="btn-text-desktop">Send Tuition Offer</span>
+                <span className="btn-text-mobile">Offer</span>
               </Button>
             </div>
 
@@ -794,7 +820,7 @@ function ClientMessagesContent() {
 
           </Card>
         ) : (
-          <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--steel)', borderRadius: '24px' }}>
+          <Card className="messages-chat-col mobile-hidden" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--steel)', borderRadius: '24px' }}>
             Select a conversation from the left to start messaging.
           </Card>
         )}

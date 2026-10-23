@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { createClient } from '../../utils/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
 import { AuthSidebar } from '../../components/layout/AuthSidebar';
 
 function LoginForm() {
@@ -33,20 +33,25 @@ function LoginForm() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        let role = session.user.user_metadata?.role;
-        if (!role) {
-          const { data: clientProf } = await supabase.from('client_profiles').select('id').eq('id', session.user.id).maybeSingle();
-          if (clientProf) {
-            role = 'client';
-          } else {
-            role = 'tutor';
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          let role = session.user.user_metadata?.role;
+          if (!role) {
+            const { data: clientProf } = await supabase.from('client_profiles').select('id').eq('id', session.user.id).maybeSingle();
+            if (clientProf) {
+              role = 'client';
+            } else {
+              const { data: tutorProf } = await supabase.from('tutor_profiles').select('id').eq('id', session.user.id).maybeSingle();
+              role = tutorProf ? 'tutor' : 'client';
+            }
           }
+          const targetUrl = nextParam || (role === 'tutor' ? '/tutor/dashboard' : '/client/dashboard');
+          window.location.href = targetUrl;
         }
-        const targetUrl = nextParam || (role === 'tutor' ? '/tutor/dashboard' : '/client/dashboard');
-        window.location.href = targetUrl;
+      } catch (err) {
+        console.error('Session check error in login:', err);
       }
     };
     checkUser();
@@ -58,29 +63,78 @@ function LoginForm() {
     setNoAccountEmail('');
     setLoading(true);
 
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      setError('Supabase credentials are not configured in .env.local yet.');
-      setLoading(false);
-      return;
-    }
+    try {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        setError('Supabase credentials are not configured in .env.local yet.');
+        setLoading(false);
+        return;
+      }
 
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+      const cleanEmail = email.trim();
+      if (!cleanEmail || !password) {
+        setError('Please enter both email and password.');
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
+      const supabase = createClient();
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
+
+      if (authError) {
+        setError(authError.message || 'Invalid login credentials. Please check your email and password.');
+        setLoading(false);
+        return;
+      }
+
       if (typeof window !== 'undefined') {
         localStorage.setItem('last_login_method', 'email');
       }
-      const role = data.user.user_metadata?.role;
+
+      let role = data.user?.user_metadata?.role;
+      if (!role) {
+        const { data: clientProf } = await supabase.from('client_profiles').select('id').eq('id', data.user.id).maybeSingle();
+        if (clientProf) {
+          role = 'client';
+        } else {
+          const { data: tutorProf } = await supabase.from('tutor_profiles').select('id').eq('id', data.user.id).maybeSingle();
+          role = tutorProf ? 'tutor' : 'client';
+        }
+      }
+
       setLoading(false);
       const targetUrl = nextParam || (role === 'tutor' ? '/tutor/dashboard' : '/client/dashboard');
       window.location.href = targetUrl;
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err?.message || 'An unexpected error occurred during login. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleOAuthFallback = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      setNoAccountEmail('');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('last_login_method', 'google');
+      }
+      const supabase = createClient();
+      const redirectUrl = `${window.location.origin}/api/auth/callback${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ''}`;
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+        }
+      });
+      if (oauthError) throw oauthError;
+    } catch (err) {
+      console.error('Google OAuth error:', err);
+      setError(err?.message || 'Unable to connect to Google sign in. Please try email login.');
+      setLoading(false);
     }
   };
 
@@ -90,97 +144,103 @@ function LoginForm() {
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    let interval = null;
+    interval = setInterval(() => {
       if (typeof window !== 'undefined' && window.google?.accounts?.id) {
         clearInterval(interval);
         
-        window.google.accounts.id.initialize({
-          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-          ux_mode: 'popup',
-          callback: async (response) => {
-            setLoading(true);
-            setError('');
-            setNoAccountEmail('');
+        try {
+          window.google.accounts.id.initialize({
+            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+            ux_mode: 'popup',
+            callback: async (response) => {
+              setLoading(true);
+              setError('');
+              setNoAccountEmail('');
 
-            // 1. Decode Google ID token to extract email
-            let googleEmail = '';
-            try {
-              const base64Url = response.credential.split('.')[1];
-              const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-              const jsonPayload = decodeURIComponent(
-                atob(base64)
-                  .split('')
-                  .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                  .join('')
-              );
-              const parsed = JSON.parse(jsonPayload);
-              googleEmail = parsed.email;
-            } catch (err) {
-              console.error('Error decoding Google ID token:', err);
-            }
-
-            const supabase = createClient();
-
-            // 2. Strict Check: Only allow existing users to log in from /login
-            if (googleEmail) {
-              const { data: userExists, error: rpcError } = await supabase.rpc('check_user_exists', {
-                p_email: googleEmail,
-              });
-
-              if (!userExists || rpcError) {
-                setLoading(false);
-                setError('NO_ACCOUNT_FOUND');
-                setNoAccountEmail(googleEmail);
-                return;
+              // 1. Decode Google ID token to extract email
+              let googleEmail = '';
+              try {
+                const base64Url = response.credential.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(
+                  atob(base64)
+                    .split('')
+                    .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                    .join('')
+                );
+                const parsed = JSON.parse(jsonPayload);
+                googleEmail = parsed.email;
+              } catch (err) {
+                console.error('Error decoding Google ID token:', err);
               }
-            }
 
-            // 3. User exists: proceed with Google authentication
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('last_login_method', 'google');
-            }
+              const supabase = createClient();
 
-            const { data, error: signInError } = await supabase.auth.signInWithIdToken({
-              provider: 'google',
-              token: response.credential,
-            });
+              // 2. Strict Check: Only allow existing users to log in from /login
+              if (googleEmail) {
+                const { data: userExists, error: rpcError } = await supabase.rpc('check_user_exists', {
+                  p_email: googleEmail,
+                });
 
-            if (signInError) {
-              setError(signInError.message);
-              setLoading(false);
-            } else {
-              let role = data.user?.user_metadata?.role;
-              if (!role) {
-                const { data: roleRow } = await supabase
-                  .from('user_roles')
-                  .select('role')
-                  .eq('user_id', data.user.id)
-                  .maybeSingle();
-                if (roleRow?.role) {
-                  role = roleRow.role;
-                } else {
-                  const { data: clientProf } = await supabase
-                    .from('client_profiles')
-                    .select('id')
-                    .eq('id', data.user.id)
-                    .maybeSingle();
-                  role = clientProf ? 'client' : 'tutor';
+                if (!userExists || rpcError) {
+                  setLoading(false);
+                  setError('NO_ACCOUNT_FOUND');
+                  setNoAccountEmail(googleEmail);
+                  return;
                 }
               }
-              setLoading(false);
-              const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/')));
-              window.location.href = targetUrl;
-            }
-          }
-        });
 
-        const container = document.getElementById("google-signin-btn-container");
-        if (container) {
-          window.google.accounts.id.renderButton(container, {
-            theme: "outline",
-            size: "large",
-            width: container.offsetWidth || 320,
+              // 3. User exists: proceed with Google authentication
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('last_login_method', 'google');
+              }
+
+              const { data, error: signInError } = await supabase.auth.signInWithIdToken({
+                provider: 'google',
+                token: response.credential,
+              });
+
+              if (signInError) {
+                setError(signInError.message);
+                setLoading(false);
+              } else {
+                let role = data.user?.user_metadata?.role;
+                if (!role) {
+                  const { data: roleRow } = await supabase
+                    .from('user_roles')
+                    .select('role')
+                    .eq('user_id', data.user.id)
+                    .maybeSingle();
+                  if (roleRow?.role) {
+                    role = roleRow.role;
+                  } else {
+                    const { data: clientProf } = await supabase
+                      .from('client_profiles')
+                      .select('id')
+                      .eq('id', data.user.id)
+                      .maybeSingle();
+                    role = clientProf ? 'client' : 'tutor';
+                  }
+                }
+                setLoading(false);
+                const targetUrl = nextParam || (role === 'client' ? '/client/dashboard' : (role === 'tutor' ? '/tutor/dashboard' : (role === 'admin' ? '/admin/dashboard' : '/')));
+                window.location.href = targetUrl;
+              }
+            }
           });
+
+          const container = document.getElementById("google-signin-btn-container");
+          if (container) {
+            window.google.accounts.id.renderButton(container, {
+              theme: "outline",
+              size: "large",
+              width: container.offsetWidth || 320,
+            });
+            container.style.pointerEvents = 'auto';
+          }
+        } catch (initErr) {
+          console.warn('Google GSI init notice:', initErr);
         }
       }
     }, 500);
@@ -237,7 +297,7 @@ function LoginForm() {
             alignItems: 'flex-start',
             gap: '12px',
           }}>
-            <span style={{ fontSize: '20px', lineHeight: 1, marginTop: '2px' }}>⚠️</span>
+            <AlertCircle size={20} color="#D97706" style={{ flexShrink: 0, marginTop: '2px' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <p style={{ margin: 0, fontWeight: 700, fontSize: '15px', color: '#92400E' }}>
                 No Account Found
@@ -290,6 +350,7 @@ function LoginForm() {
             {/* Google Button */}
             <button
               type="button"
+              onClick={handleGoogleOAuthFallback}
               style={{
                 width: '100%',
                 height: '50px',
@@ -328,6 +389,7 @@ function LoginForm() {
                 overflow: 'hidden',
                 cursor: 'pointer',
                 zIndex: 5,
+                pointerEvents: 'none',
               }}
             />
             {lastUsed === 'google' && (

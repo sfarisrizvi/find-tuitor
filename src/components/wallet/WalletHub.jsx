@@ -24,12 +24,9 @@ import {
 } from 'lucide-react';
 
 const OFFICIAL_BANK_DETAILS = {
-  bankName: 'Meezan Bank Limited',
-  accountTitle: 'Tutor Online PK (Private) Ltd',
-  accountNumber: '01020304050607',
-  iban: 'PK65MEZN0001020304050607',
-  raastId: '03001234567',
-  branch: 'F-7 Markaz Branch, Islamabad'
+  bankName: 'NayaPay',
+  accountTitle: 'Fahad Suleman',
+  accountNumber: '03333480179'
 };
 
 export function WalletHub({ userRole = 'client' }) {
@@ -56,7 +53,20 @@ export function WalletHub({ userRole = 'client' }) {
   const fileInputRef = useRef(null);
 
   const handleCopy = (text, fieldName) => {
-    navigator.clipboard.writeText(text);
+    try {
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+    } catch (e) {
+      console.warn('Clipboard write failed:', e);
+    }
     setCopiedField(fieldName);
     setTimeout(() => setCopiedField(''), 2000);
   };
@@ -496,47 +506,96 @@ export function WalletHub({ userRole = 'client' }) {
               </p>
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ background: 'var(--surface)', borderBottom: '1px solid var(--hairline)', color: 'var(--steel)', fontSize: '12px' }}>
-                    <th style={{ padding: '12px 16px' }}>Date</th>
-                    <th style={{ padding: '12px 16px' }}>Type</th>
-                    <th style={{ padding: '12px 16px' }}>Description</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>Amount</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>Balance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTransactions.map((tx) => {
-                    const isCredit = Number(tx.amount) > 0;
-                    return (
-                      <tr key={tx.id} style={{ borderBottom: '1px solid var(--hairline)' }}>
-                        <td style={{ padding: '12px 16px', color: 'var(--steel)', whiteSpace: 'nowrap' }}>
-                          {new Date(tx.created_at).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </td>
-                        <td style={{ padding: '12px 16px' }}>
+            <>
+              {/* Desktop Table View */}
+              <div className="desktop-ledger-table" style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--surface)', borderBottom: '1px solid var(--hairline)', color: 'var(--steel)', fontSize: '12px' }}>
+                      <th style={{ padding: '12px 16px' }}>Date</th>
+                      <th style={{ padding: '12px 16px' }}>Type</th>
+                      <th style={{ padding: '12px 16px' }}>Description</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right' }}>Amount</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right' }}>Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTransactions.map((tx) => {
+                      const isCredit = Number(tx.amount) > 0;
+                      return (
+                        <tr key={tx.id} style={{ borderBottom: '1px solid var(--hairline)' }}>
+                          <td style={{ padding: '12px 16px', color: 'var(--steel)', whiteSpace: 'nowrap' }}>
+                            {new Date(tx.created_at).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </td>
+                          <td style={{ padding: '12px 16px' }}>
+                            {getTransactionBadge(tx.type)}
+                          </td>
+                          <td style={{ padding: '12px 16px', color: 'var(--charcoal)', fontWeight: 500 }}>
+                            {tx.description}
+                          </td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: isCredit ? '#00875A' : '#E11D48', whiteSpace: 'nowrap' }}>
+                            {isCredit ? `+${Number(tx.amount).toLocaleString()}` : Number(tx.amount).toLocaleString()}
+                          </td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: 'var(--ink)', whiteSpace: 'nowrap' }}>
+                            {Number(tx.balance_after).toLocaleString()}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Native Card View */}
+              <div className="mobile-ledger-cards" style={{ padding: '12px' }}>
+                {filteredTransactions.map((tx) => {
+                  const isCredit = Number(tx.amount) > 0;
+                  return (
+                    <div
+                      key={tx.id}
+                      style={{
+                        padding: '12px 14px',
+                        backgroundColor: 'var(--canvas)',
+                        borderRadius: '12px',
+                        border: '1px solid var(--hairline)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        gap: '12px'
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                           {getTransactionBadge(tx.type)}
-                        </td>
-                        <td style={{ padding: '12px 16px', color: 'var(--charcoal)', fontWeight: 500 }}>
+                          <span style={{ fontSize: '11px', color: 'var(--stone)' }}>
+                            {new Date(tx.created_at).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.3 }}>
                           {tx.description}
-                        </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: isCredit ? '#00875A' : '#E11D48', whiteSpace: 'nowrap' }}>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: isCredit ? '#00875A' : '#E11D48' }}>
                           {isCredit ? `+${Number(tx.amount).toLocaleString()}` : Number(tx.amount).toLocaleString()}
-                        </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: 'var(--ink)', whiteSpace: 'nowrap' }}>
-                          {Number(tx.balance_after).toLocaleString()}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--stone)', marginTop: '2px' }}>
+                          Bal: {Number(tx.balance_after).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </Card>
       </div>
@@ -634,48 +693,100 @@ export function WalletHub({ userRole = 'client' }) {
                 border: '1px solid var(--hairline)',
                 marginBottom: '20px'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                  <Building size={16} color="var(--brand-green-dark)" />
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
-                    Step 1: Transfer Funds to Official Bank Account
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Building size={16} color="var(--brand-green-dark)" />
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
+                      Step 1: Transfer Funds via NayaPay
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: 'var(--brand-green-dark)', background: '#ecfdf5', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                    Instant Transfer
                   </span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', fontSize: '13px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--steel)' }}>Bank:</span>
-                    <strong style={{ color: 'var(--ink)' }}>{OFFICIAL_BANK_DETAILS.bankName}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--steel)' }}>Account Title:</span>
-                    <strong style={{ color: 'var(--ink)' }}>{OFFICIAL_BANK_DETAILS.accountTitle}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--canvas)', padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--hairline)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', fontSize: '13px' }}>
+                  {/* Bank / Wallet Name */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--canvas)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--hairline)' }}>
                     <div>
-                      <span style={{ color: 'var(--steel)', fontSize: '11px', display: 'block' }}>IBAN / Account Number</span>
-                      <strong style={{ color: 'var(--ink)', fontFamily: 'monospace' }}>{OFFICIAL_BANK_DETAILS.iban}</strong>
+                      <span style={{ color: 'var(--steel)', fontSize: '11px', display: 'block', fontWeight: 500 }}>Bank / Wallet</span>
+                      <strong style={{ color: 'var(--ink)', fontSize: '14px' }}>{OFFICIAL_BANK_DETAILS.bankName}</strong>
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleCopy(OFFICIAL_BANK_DETAILS.iban, 'iban')}
-                      style={{ background: 'none', border: 'none', color: 'var(--brand-green-dark)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 600 }}
+                      onClick={() => handleCopy(OFFICIAL_BANK_DETAILS.bankName, 'bankName')}
+                      style={{
+                        background: copiedField === 'bankName' ? '#ecfdf5' : 'transparent',
+                        border: copiedField === 'bankName' ? '1px solid #10b981' : 'none',
+                        color: copiedField === 'bankName' ? '#047857' : 'var(--brand-green-dark)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        padding: '4px 8px',
+                        borderRadius: '4px'
+                      }}
                     >
-                      {copiedField === 'iban' ? <Check size={14} /> : <Copy size={14} />}
-                      {copiedField === 'iban' ? 'Copied' : 'Copy'}
+                      {copiedField === 'bankName' ? <Check size={14} /> : <Copy size={14} />}
+                      {copiedField === 'bankName' ? 'Copied' : 'Copy'}
                     </button>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--canvas)', padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--hairline)' }}>
+
+                  {/* Account Title */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--canvas)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--hairline)' }}>
                     <div>
-                      <span style={{ color: 'var(--steel)', fontSize: '11px', display: 'block' }}>Raast ID (Instant Transfer)</span>
-                      <strong style={{ color: 'var(--ink)', fontFamily: 'monospace' }}>{OFFICIAL_BANK_DETAILS.raastId}</strong>
+                      <span style={{ color: 'var(--steel)', fontSize: '11px', display: 'block', fontWeight: 500 }}>Account Title</span>
+                      <strong style={{ color: 'var(--ink)', fontSize: '14px' }}>{OFFICIAL_BANK_DETAILS.accountTitle}</strong>
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleCopy(OFFICIAL_BANK_DETAILS.raastId, 'raast')}
-                      style={{ background: 'none', border: 'none', color: 'var(--brand-green-dark)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 600 }}
+                      onClick={() => handleCopy(OFFICIAL_BANK_DETAILS.accountTitle, 'title')}
+                      style={{
+                        background: copiedField === 'title' ? '#ecfdf5' : 'transparent',
+                        border: copiedField === 'title' ? '1px solid #10b981' : 'none',
+                        color: copiedField === 'title' ? '#047857' : 'var(--brand-green-dark)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        padding: '4px 8px',
+                        borderRadius: '4px'
+                      }}
                     >
-                      {copiedField === 'raast' ? <Check size={14} /> : <Copy size={14} />}
-                      {copiedField === 'raast' ? 'Copied' : 'Copy'}
+                      {copiedField === 'title' ? <Check size={14} /> : <Copy size={14} />}
+                      {copiedField === 'title' ? 'Copied' : 'Copy'}
+                    </button>
+                  </div>
+
+                  {/* Account Number */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--canvas)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--hairline)' }}>
+                    <div>
+                      <span style={{ color: 'var(--steel)', fontSize: '11px', display: 'block', fontWeight: 500 }}>NayaPay Account Number</span>
+                      <strong style={{ color: 'var(--ink)', fontFamily: 'monospace', fontSize: '15px', letterSpacing: '0.5px' }}>{OFFICIAL_BANK_DETAILS.accountNumber}</strong>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(OFFICIAL_BANK_DETAILS.accountNumber, 'accountNumber')}
+                      style={{
+                        background: copiedField === 'accountNumber' ? '#ecfdf5' : 'transparent',
+                        border: copiedField === 'accountNumber' ? '1px solid #10b981' : 'none',
+                        color: copiedField === 'accountNumber' ? '#047857' : 'var(--brand-green-dark)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        padding: '4px 8px',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      {copiedField === 'accountNumber' ? <Check size={14} /> : <Copy size={14} />}
+                      {copiedField === 'accountNumber' ? 'Copied' : 'Copy'}
                     </button>
                   </div>
                 </div>

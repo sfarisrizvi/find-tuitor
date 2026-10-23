@@ -38,10 +38,7 @@ const GRADE_SUBJECTS = {
   'University': ['Calculus', 'Computer Programming', 'Data Structures', 'Organic Chemistry', 'Physics', 'English Literature', 'Microeconomics']
 };
 
-const PAKISTAN_CITIES = [
-  'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Peshawar', 'Faisalabad',
-  'Multan', 'Gujranwala', 'Sialkot', 'Quetta', 'Hyderabad', 'Abbottabad'
-];
+import { TehsilSelector } from '../../../../components/ui/TehsilSelector';
 
 const GENDERS = ['Male', 'Female', 'Any'];
 const LEVELS = ['Primary', 'Secondary', 'Matric', 'FSc', 'O-Level', 'A-Level', 'University'];
@@ -381,7 +378,14 @@ function SearchContent() {
         job.city.toLowerCase().includes(query);
       if (!match) return false;
     }
-    if (filters.city && job.city.toLowerCase() !== filters.city.toLowerCase()) return false;
+    if (filters.city) {
+      const filterCityLower = (typeof filters.city === 'object' ? (filters.city.tehsil || filters.city.name || '') : filters.city).toLowerCase();
+      const jobCityLower = (job.city || '').toLowerCase();
+      const jobAreaLower = (job.area || '').toLowerCase();
+      if (filterCityLower && !jobCityLower.includes(filterCityLower) && !filterCityLower.includes(jobCityLower) && !jobAreaLower.includes(filterCityLower)) {
+        return false;
+      }
+    }
     if (filters.gender && filters.gender !== 'Any') {
       if (job.gender_preference !== 'Any' && job.gender_preference !== filters.gender) return false;
     }
@@ -506,73 +510,41 @@ function SearchContent() {
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
           {/* Custom City Selection Dropdown */}
-          <div style={{ position: 'relative', minWidth: '160px' }}>
-            <button
-              onClick={() => { setShowCityDropdown(!showCityDropdown); setShowGenderDropdown(false); }}
-              style={{
-                width: '100%', height: '38px', paddingLeft: '34px', paddingRight: '28px',
-                borderRadius: '999px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                fontSize: '13px', cursor: 'pointer', outline: 'none', fontWeight: 500,
-                display: 'flex', alignItems: 'center', justifyContent: 'flex-start', position: 'relative',
-                textAlign: 'left', color: 'var(--ink)'
+          <div style={{ position: 'relative', width: '165px', flexShrink: 0 }}>
+            <TehsilSelector
+              value={filters.city}
+              onChange={(payload, formatted) => handleFilterChange('city', payload ? (payload.tehsil || formatted) : '')}
+              placeholder="Any Tehsil / City"
+              allowAll={true}
+              allOptionLabel="Any Tehsil"
+              showQuickGps={false}
+              triggerStyle={{
+                minHeight: '38px',
+                height: '38px',
+                borderRadius: '999px',
+                padding: '0 12px',
+                fontSize: '13px'
               }}
-            >
-              <MapPin size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-              <span>{filters.city || 'Any City'}</span>
-              <ChevronDown size={12} style={{ position: 'absolute', right: '12px', top: '50%', transform: showCityDropdown ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)', color: 'var(--stone)', transition: 'transform 0.15s ease' }} />
-            </button>
-            {showCityDropdown && (
-              <div style={{
-                position: 'absolute', left: 0, top: '44px', width: '200px', maxHeight: '280px', overflowY: 'auto',
-                backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--hairline-strong)',
-                boxShadow: 'var(--shadow-lg)', padding: '6px 0', zIndex: 50
-              }}>
-                <div
-                  onClick={() => { handleFilterChange('city', ''); setShowCityDropdown(false); }}
-                  style={{
-                    padding: '8px 16px', fontSize: '13px', cursor: 'pointer',
-                    color: !filters.city ? 'var(--brand-green-dark)' : 'var(--slate)',
-                    backgroundColor: !filters.city ? 'var(--brand-green-soft)' : 'transparent',
-                    fontWeight: !filters.city ? 600 : 500
-                  }}
-                  className="dropdown-item"
-                >
-                  Any City
-                </div>
-                {PAKISTAN_CITIES.map(c => (
-                  <div
-                    key={c}
-                    onClick={() => { handleFilterChange('city', c); setShowCityDropdown(false); }}
-                    style={{
-                      padding: '8px 16px', fontSize: '13px', cursor: 'pointer',
-                      color: filters.city === c ? 'var(--brand-green-dark)' : 'var(--slate)',
-                      backgroundColor: filters.city === c ? 'var(--brand-green-soft)' : 'transparent',
-                      fontWeight: filters.city === c ? 600 : 500
-                    }}
-                    className="dropdown-item"
-                  >
-                    {c}
-                  </div>
-                ))}
-              </div>
-            )}
+            />
           </div>
 
           {/* Custom Gender Preference Selection Dropdown */}
-          <div style={{ position: 'relative', minWidth: '140px' }}>
+          <div style={{ position: 'relative', width: '135px', flexShrink: 0 }}>
             <button
               onClick={() => { setShowGenderDropdown(!showGenderDropdown); setShowCityDropdown(false); }}
               style={{
-                width: '100%', height: '38px', paddingLeft: '34px', paddingRight: '28px',
+                width: '100%', height: '38px', paddingLeft: '32px', paddingRight: '24px',
                 borderRadius: '999px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
                 fontSize: '13px', cursor: 'pointer', outline: 'none', fontWeight: 500,
                 display: 'flex', alignItems: 'center', justifyContent: 'flex-start', position: 'relative',
                 textAlign: 'left', color: 'var(--ink)'
               }}
             >
-              <User size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-              <span>{filters.gender ? (filters.gender === 'Any' ? 'No Preference' : filters.gender + ' Only') : 'Gender'}</span>
-              <ChevronDown size={12} style={{ position: 'absolute', right: '12px', top: '50%', transform: showGenderDropdown ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)', color: 'var(--stone)', transition: 'transform 0.15s ease' }} />
+              <User size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {filters.gender ? (filters.gender === 'Any' ? 'No Preference' : filters.gender + ' Only') : 'Gender'}
+              </span>
+              <ChevronDown size={12} style={{ position: 'absolute', right: '10px', top: '50%', transform: showGenderDropdown ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)', color: 'var(--stone)', transition: 'transform 0.15s ease' }} />
             </button>
             {showGenderDropdown && (
               <div style={{
@@ -611,34 +583,14 @@ function SearchContent() {
             )}
           </div>
 
-          {/* Search bar inside header */}
-          <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
-            <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+          {/* Search bar inside header (Major portion) */}
+          <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
+            <Search size={15} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
             <Input
-              placeholder="Search by keyword..."
+              placeholder="Search by keyword, subject, or grade..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ height: '38px', paddingLeft: '36px', fontSize: '13px', border: '1px solid var(--hairline-strong)', borderRadius: '999px', backgroundColor: '#fff' }}
-            />
-          </div>
-
-          {/* Price Filters */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fff', padding: '0 16px', borderRadius: '999px', border: '1px solid var(--hairline-strong)', height: '38px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--stone)', marginRight: '2px' }}>Rs</span>
-            <input
-              type="number"
-              placeholder="Min"
-              value={filters.min_price}
-              onChange={(e) => handleFilterChange('min_price', e.target.value)}
-              style={{ border: 'none', outline: 'none', width: '70px', fontSize: '13px', fontWeight: 500 }}
-            />
-            <span style={{ color: 'var(--hairline-strong)', fontSize: '14px', margin: '0 4px' }}>|</span>
-            <input
-              type="number"
-              placeholder="Max"
-              value={filters.max_price}
-              onChange={(e) => handleFilterChange('max_price', e.target.value)}
-              style={{ border: 'none', outline: 'none', width: '70px', fontSize: '13px', fontWeight: 500 }}
+              style={{ height: '38px', paddingLeft: '38px', fontSize: '13px', border: '1px solid var(--hairline-strong)', borderRadius: '999px', backgroundColor: '#fff', width: '100%' }}
             />
           </div>
         </div>
@@ -802,57 +754,118 @@ function SearchContent() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '8px', height: '36px',
                   borderRadius: '999px', border: '1px solid var(--hairline-strong)',
-                  backgroundColor: showSortDropdown ? 'var(--brand-green-soft)' : '#fff',
-                  color: showSortDropdown ? 'var(--brand-green-dark)' : 'var(--slate)',
-                  fontWeight: 500, fontSize: '13px', padding: '0 16px'
+                  backgroundColor: (showSortDropdown || filters.min_price || filters.max_price) ? 'rgba(5, 150, 105, 0.08)' : '#fff',
+                  color: (showSortDropdown || filters.min_price || filters.max_price) ? 'var(--brand-green-dark)' : 'var(--slate)',
+                  fontWeight: 600, fontSize: '13px', padding: '0 16px'
                 }}
               >
                 <SlidersHorizontal size={14} />
-                <span>Sort: {sortBy === 'price_asc' ? 'Budget: Low to High' : sortBy === 'price_desc' ? 'Budget: High to Low' : 'Newest First'}</span>
+                <span>
+                  Sort: {sortBy === 'price_asc' ? 'Budget: Low to High' : sortBy === 'price_desc' ? 'Budget: High to Low' : 'Newest First'}
+                  {(filters.min_price || filters.max_price) ? ` (Rs ${filters.min_price || '0'}-${filters.max_price || '∞'})` : ''}
+                </span>
                 <ChevronDown size={14} style={{ transform: showSortDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
               </Button>
 
               {showSortDropdown && (
                 <div style={{
-                  position: 'absolute', right: 0, top: '44px', width: '220px',
-                  backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--hairline-strong)',
-                  boxShadow: 'var(--shadow-lg)', padding: '6px 0', zIndex: 50, display: 'flex', flexDirection: 'column'
+                  position: 'absolute', right: 0, top: '44px', width: '250px',
+                  backgroundColor: '#fff', borderRadius: '16px', border: '1px solid var(--hairline-strong)',
+                  boxShadow: '0 16px 36px rgba(0, 0, 0, 0.16)', padding: '12px', zIndex: 50, display: 'flex', flexDirection: 'column', gap: '8px'
                 }}>
-                  <div
-                    onClick={() => { setSortBy('default'); setShowSortDropdown(false); }}
-                    style={{
-                      padding: '10px 16px', fontSize: '13px', cursor: 'pointer',
-                      color: sortBy === 'default' ? 'var(--brand-green-dark)' : 'var(--slate)',
-                      backgroundColor: sortBy === 'default' ? 'var(--brand-green-soft)' : 'transparent',
-                      fontWeight: sortBy === 'default' ? 600 : 500
-                    }}
-                    className="dropdown-item"
-                  >
-                    Newest First
+                  {/* Sort By section */}
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--stone)', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '0 4px' }}>
+                    Sort By
                   </div>
-                  <div
-                    onClick={() => { setSortBy('price_asc'); setShowSortDropdown(false); }}
-                    style={{
-                      padding: '10px 16px', fontSize: '13px', cursor: 'pointer',
-                      color: sortBy === 'price_asc' ? 'var(--brand-green-dark)' : 'var(--slate)',
-                      backgroundColor: sortBy === 'price_asc' ? 'var(--brand-green-soft)' : 'transparent',
-                      fontWeight: sortBy === 'price_asc' ? 600 : 500
-                    }}
-                    className="dropdown-item"
-                  >
-                    Budget: Low to High
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <div
+                      onClick={() => { setSortBy('default'); }}
+                      style={{
+                        padding: '8px 12px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer',
+                        color: sortBy === 'default' ? 'var(--brand-green-dark)' : 'var(--ink)',
+                        backgroundColor: sortBy === 'default' ? 'rgba(5, 150, 105, 0.08)' : 'transparent',
+                        fontWeight: sortBy === 'default' ? 700 : 500
+                      }}
+                      className="dropdown-item"
+                    >
+                      Newest First
+                    </div>
+                    <div
+                      onClick={() => { setSortBy('price_asc'); }}
+                      style={{
+                        padding: '8px 12px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer',
+                        color: sortBy === 'price_asc' ? 'var(--brand-green-dark)' : 'var(--ink)',
+                        backgroundColor: sortBy === 'price_asc' ? 'rgba(5, 150, 105, 0.08)' : 'transparent',
+                        fontWeight: sortBy === 'price_asc' ? 700 : 500
+                      }}
+                      className="dropdown-item"
+                    >
+                      Budget: Low to High
+                    </div>
+                    <div
+                      onClick={() => { setSortBy('price_desc'); }}
+                      style={{
+                        padding: '8px 12px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer',
+                        color: sortBy === 'price_desc' ? 'var(--brand-green-dark)' : 'var(--ink)',
+                        backgroundColor: sortBy === 'price_desc' ? 'rgba(5, 150, 105, 0.08)' : 'transparent',
+                        fontWeight: sortBy === 'price_desc' ? 700 : 500
+                      }}
+                      className="dropdown-item"
+                    >
+                      Budget: High to Low
+                    </div>
                   </div>
-                  <div
-                    onClick={() => { setSortBy('price_desc'); setShowSortDropdown(false); }}
-                    style={{
-                      padding: '10px 16px', fontSize: '13px', cursor: 'pointer',
-                      color: sortBy === 'price_desc' ? 'var(--brand-green-dark)' : 'var(--slate)',
-                      backgroundColor: sortBy === 'price_desc' ? 'var(--brand-green-soft)' : 'transparent',
-                      fontWeight: sortBy === 'price_desc' ? 600 : 500
-                    }}
-                    className="dropdown-item"
-                  >
-                    Budget: High to Low
+
+                  <div style={{ height: '1px', backgroundColor: 'var(--hairline, #e2e8f0)', margin: '4px 0' }} />
+
+                  {/* Budget Min / Max Inputs */}
+                  <div style={{ padding: '0 4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--stone)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Budget Range (PKR)
+                      </span>
+                      {(filters.min_price || filters.max_price) && (
+                        <button
+                          type="button"
+                          onClick={() => { handleFilterChange('min_price', ''); handleFilterChange('max_price', ''); }}
+                          style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '11px', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--surface, #f8fafc)', padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--hairline-strong)' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--stone)' }}>Rs</span>
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        value={filters.min_price}
+                        onChange={(e) => handleFilterChange('min_price', e.target.value)}
+                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}
+                      />
+                      <span style={{ color: 'var(--hairline-strong)', fontSize: '12px' }}>—</span>
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        value={filters.max_price}
+                        onChange={(e) => handleFilterChange('max_price', e.target.value)}
+                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowSortDropdown(false)}
+                      style={{
+                        width: '100%', backgroundColor: 'var(--brand-green-dark, #065f46)',
+                        color: '#fff', border: 'none', borderRadius: '8px', padding: '7px',
+                        fontSize: '12px', fontWeight: 700, cursor: 'pointer'
+                      }}
+                    >
+                      Done
+                    </button>
                   </div>
                 </div>
               )}
@@ -1246,21 +1259,23 @@ function SearchContent() {
               </button>
             </div>
 
-            {/* City */}
+            {/* Tehsil / City */}
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--brand-teal-deep)', textTransform: 'uppercase', marginBottom: '8px' }}>City</label>
-              <select
+              <TehsilSelector
                 value={filters.city}
-                onChange={(e) => handleFilterChange('city', e.target.value)}
-                style={{
-                  width: '100%', height: '40px', padding: '0 12px',
-                  borderRadius: '8px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                  fontSize: '14px', outline: 'none'
+                onChange={(payload, formatted) => handleFilterChange('city', payload ? (payload.tehsil || formatted) : '')}
+                placeholder="Any Tehsil / City"
+                label="Tehsil / City"
+                allowAll={true}
+                allOptionLabel="Any Tehsil"
+                triggerStyle={{
+                  height: '40px',
+                  minHeight: '40px',
+                  borderRadius: '8px',
+                  padding: '0 12px',
+                  fontSize: '14px'
                 }}
-              >
-                <option value="">Any City</option>
-                {PAKISTAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              />
             </div>
 
             {/* Gender Preference */}

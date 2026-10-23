@@ -7,8 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { User, Mail, Lock, Phone, MapPin, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { AuthSidebar } from '../../components/layout/AuthSidebar';
-
-const PAKISTANI_CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
+import { TehsilSelector } from '../../components/ui/TehsilSelector';
 
 export default function Register() {
   const [fullName, setFullName] = useState('');
@@ -264,34 +263,21 @@ export default function Register() {
             />
           </div>
 
-          {/* City Selection */}
-          <div style={{ position: 'relative' }}>
-            <MapPin size={18} style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', zIndex: 1 }} />
-            <select
+          {/* Tehsil Selection */}
+          <div>
+            <TehsilSelector
               value={city}
-              onChange={e => setCity(e.target.value)}
+              onChange={(payload, formatted) => setCity(payload ? (payload.tehsil || formatted) : '')}
+              placeholder="Select your Tehsil / City"
               required
-              style={{
-                width: '100%',
-                height: '48px',
-                paddingLeft: '48px',
-                paddingRight: '48px',
+              triggerStyle={{
                 borderRadius: '999px',
-                border: '1.5px solid var(--hairline-strong)',
-                backgroundColor: 'var(--canvas)',
-                fontSize: '14px',
-                color: city ? 'var(--ink)' : 'var(--stone)',
-                cursor: 'pointer',
-                outline: 'none',
-                appearance: 'none',
-                WebkitAppearance: 'none',
-                MozAppearance: 'none',
+                height: '48px',
+                paddingLeft: '18px',
+                paddingRight: '18px',
+                border: '1.5px solid var(--hairline-strong)'
               }}
-            >
-              <option value="">Select your city</option>
-              {PAKISTANI_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <ChevronDown size={18} style={{ position: 'absolute', right: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
+            />
           </div>
 
           {/* Password */}

@@ -17,10 +17,7 @@ const GRADE_SUBJECTS = {
   'University': ['Calculus', 'Computer Programming', 'Data Structures', 'Organic Chemistry', 'Physics', 'English Literature', 'Microeconomics']
 };
 
-const PAKISTAN_CITIES = [
-  'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Peshawar', 'Faisalabad', 
-  'Multan', 'Gujranwala', 'Sialkot', 'Quetta', 'Hyderabad', 'Abbottabad'
-];
+import { TehsilSelector } from '../../../components/ui/TehsilSelector';
 
 export default function ClientProfile() {
   const [loading, setLoading] = useState(true);
@@ -252,7 +249,7 @@ export default function ClientProfile() {
       <div style={{ maxWidth: '1100px', margin: '-40px auto 0', padding: '0 20px', position: 'relative', zIndex: 10 }}>
         
         {/* Main Grid: Left Sidebar (Personal Info) + Right Settings (Academic / Children) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '30px', alignItems: 'start' }}>
           
           {/* LEFT COLUMN: PERSONAL DETAILS & SUMMARY */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -327,24 +324,22 @@ export default function ClientProfile() {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '6px' }}>City</label>
-                    <select 
-                      style={{
-                        width: '100%', height: '38px', padding: '0 12px',
-                        borderRadius: 'var(--rounded-md)', border: '1px solid var(--hairline-strong)',
-                        backgroundColor: 'var(--canvas)', fontSize: '14px', color: 'var(--ink)'
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '6px' }}>Tehsil & Area</label>
+                    <TehsilSelector
+                      mode="form"
+                      value={{ tehsil: city, area: address }}
+                      onChange={(payload) => {
+                        if (payload) {
+                          setCity(payload.tehsil || '');
+                          if (payload.area) setAddress(payload.area);
+                        } else {
+                          setCity('');
+                        }
                       }}
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="Select Tehsil / City"
                       required
-                    >
-                      {PAKISTAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '6px' }}>Address / Location</label>
-                    <Input value={address} onChange={(e) => setAddress(e.target.value)} required style={{ height: '38px', fontSize: '14px' }} />
+                      triggerStyle={{ minHeight: '38px', padding: '6px 12px', fontSize: '14px' }}
+                    />
                   </div>
 
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '10px' }}>

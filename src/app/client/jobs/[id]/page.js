@@ -176,7 +176,7 @@ export default function JobDetailsPage({ params }) {
                         {proposal.cover_letter || 'No cover letter provided.'}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
                       <Link href={`/tutors/${tutor?.id}`}>
                         <Button variant="outline" style={{ height: '40px' }}>View Full Profile</Button>
                       </Link>

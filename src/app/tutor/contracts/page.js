@@ -382,7 +382,9 @@ export default function TutorContractsPage() {
           gap: '8px',
           borderBottom: '1px solid var(--hairline-strong)',
           paddingBottom: '12px',
-          marginBottom: '24px'
+          marginBottom: '24px',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch'
         }}>
           <button
             onClick={() => setActiveTab('active')}

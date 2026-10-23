@@ -15,8 +15,7 @@ import { ImageCropModal } from '../../../components/ui/ImageCropModal';
 import { CategoryEditModal } from '../../../components/ui/CategoryEditModal';
 import { ExperienceEditModal } from '../../../components/ui/ExperienceEditModal';
 import { TutorReviewsSection } from '../../../components/reviews/TutorReviewsSection';
-
-const PAKISTANI_CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
+import { TehsilSelector } from '../../../components/ui/TehsilSelector';
 
 const maskPhone = (phone) => {
   if (!phone) return '';
@@ -920,17 +919,28 @@ export default function TutorProfile() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
               {editingField === 'location' ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Select 
-                    value={editValues.city || ''} 
-                    onChange={e => setEditValues(p => ({ ...p, city: e.target.value }))} 
-                    style={{ width: '140px', height: '36px', fontSize: '14px' }}
-                    options={PAKISTANI_CITIES.map(c => ({ label: c, value: c }))}
-                    placeholder="Select City"
-                  />
-                  <Input placeholder="Area" value={editValues.area || ''} onChange={e => setEditValues(p => ({ ...p, area: e.target.value }))} style={{ width: '120px', height: '36px', fontSize: '14px' }} />
-                  <button onClick={() => handleSaveField('location')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-green-dark)' }}><CheckCircle2 size={18} /></button>
-                  <button onClick={() => setEditingField(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--stone)' }}><X size={18} /></button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <div style={{ minWidth: '220px' }}>
+                    <TehsilSelector
+                      mode="form"
+                      value={{ tehsil: editValues.city || '', area: editValues.area || '' }}
+                      onChange={(payload) => {
+                        if (payload) {
+                          setEditValues(p => ({
+                            ...p,
+                            city: payload.tehsil || '',
+                            area: payload.area || p.area || ''
+                          }));
+                        } else {
+                          setEditValues(p => ({ ...p, city: '' }));
+                        }
+                      }}
+                      placeholder="Select Tehsil / City"
+                      triggerStyle={{ minHeight: '36px', height: '36px', padding: '4px 10px', fontSize: '13px' }}
+                    />
+                  </div>
+                  <button onClick={() => handleSaveField('location')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-green-dark)' }} title="Save location"><CheckCircle2 size={18} /></button>
+                  <button onClick={() => setEditingField(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--stone)' }} title="Cancel"><X size={18} /></button>
                 </div>
               ) : (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '14px', color: 'var(--stone)', fontWeight: 500 }}>

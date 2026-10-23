@@ -10,6 +10,7 @@ import {
   Award, BookOpen, Zap, SlidersHorizontal, User, ArrowUpDown
 } from 'lucide-react';
 import { createClient } from '../../../utils/supabase/client';
+import { TehsilSelector } from '../../../components/ui/TehsilSelector';
 
 const getHeadingText = (tutor) => {
   const role = tutor.current_role;
@@ -92,7 +93,6 @@ function SearchContent() {
     ]
   };
 
-  const CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
   const LEVELS = ['Kindergarten', 'Primary', 'Secondary', 'Matric', 'Inter', 'BS/MS'];
   const GENDERS = ['Male', 'Female'];
   const MODES = [
@@ -392,6 +392,15 @@ function SearchContent() {
   };
 
   const sortedTutors = [...filteredTutors].sort((a, b) => {
+    // 1. Real tutors always stay on top; dummy profiles always stay on bottom
+    const aDummy = Boolean(a.is_dummy || a.id?.startsWith('mock-') || a.full_name?.startsWith('Mr. Tutor') || a.full_name?.startsWith('Miss Tutor'));
+    const bDummy = Boolean(b.is_dummy || b.id?.startsWith('mock-') || b.full_name?.startsWith('Mr. Tutor') || b.full_name?.startsWith('Miss Tutor'));
+
+    if (aDummy !== bDummy) {
+      return aDummy ? 1 : -1;
+    }
+
+    // 2. Secondary sort within each group
     if (sortBy === 'price_asc') {
       return (a.hourly_rate || 0) - (b.hourly_rate || 0);
     }
@@ -474,21 +483,21 @@ function SearchContent() {
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
           {/* City Dropdown */}
-          <div style={{ position: 'relative', minWidth: '160px' }}>
-            <MapPin size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-            <select
+          <div style={{ position: 'relative', minWidth: '180px', flex: '1 1 180px' }}>
+            <TehsilSelector
               value={filters.city}
-              onChange={(e) => handleFilterChange('city', e.target.value)}
-              style={{
-                width: '100%', height: '40px', paddingLeft: '36px', paddingRight: '12px',
-                borderRadius: '999px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                fontSize: '14px', cursor: 'pointer', outline: 'none', appearance: 'none'
+              onChange={(payload, formatted) => handleFilterChange('city', payload ? (payload.tehsil || formatted) : '')}
+              placeholder="Any Tehsil / City"
+              allowAll={true}
+              allOptionLabel="Any Tehsil"
+              triggerStyle={{
+                minHeight: '40px',
+                height: '40px',
+                borderRadius: '999px',
+                padding: '0 14px',
+                fontSize: '14px'
               }}
-            >
-              <option value="">Any City</option>
-              {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
+            />
           </div>
 
           {/* Gender Dropdown */}
@@ -615,25 +624,23 @@ function SearchContent() {
               </button>
             </div>
 
-            {/* City */}
+            {/* Tehsil / City */}
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>City</label>
-              <div style={{ position: 'relative' }}>
-                <MapPin size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
-                <select
-                  value={filters.city}
-                  onChange={(e) => handleFilterChange('city', e.target.value)}
-                  style={{
-                    width: '100%', height: '44px', paddingLeft: '36px', paddingRight: '12px',
-                    borderRadius: '12px', border: '1px solid var(--hairline-strong)', backgroundColor: '#fff',
-                    fontSize: '14px', cursor: 'pointer', outline: 'none', appearance: 'none'
-                  }}
-                >
-                  <option value="">Any City</option>
-                  {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)', pointerEvents: 'none' }} />
-              </div>
+              <TehsilSelector
+                value={filters.city}
+                onChange={(payload, formatted) => handleFilterChange('city', payload ? (payload.tehsil || formatted) : '')}
+                placeholder="Any Tehsil / City"
+                label="Tehsil / City"
+                allowAll={true}
+                allOptionLabel="Any Tehsil"
+                triggerStyle={{
+                  height: '44px',
+                  minHeight: '44px',
+                  borderRadius: '12px',
+                  padding: '0 14px',
+                  fontSize: '14px'
+                }}
+              />
             </div>
 
             {/* Gender */}

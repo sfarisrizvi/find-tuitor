@@ -17,10 +17,7 @@ const GRADE_SUBJECTS = {
   'University': ['Calculus', 'Computer Programming', 'Data Structures', 'Organic Chemistry', 'Physics', 'English Literature', 'Microeconomics']
 };
 
-const PAKISTAN_CITIES = [
-  'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Peshawar', 'Faisalabad', 
-  'Multan', 'Gujranwala', 'Sialkot', 'Quetta', 'Hyderabad', 'Abbottabad'
-];
+import { TehsilSelector } from '../../../components/ui/TehsilSelector';
 
 export default function ClientOnboarding() {
   const router = useRouter();
@@ -319,31 +316,19 @@ export default function ClientOnboarding() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '8px' }}>City</label>
-                <div style={{ position: 'relative' }}>
-                  <MapPin size={16} color="var(--steel)" style={{ position: 'absolute', left: '14px', top: '14px', zIndex: 10 }} />
-                  <select 
-                    style={{
-                      width: '100%', height: '44px', paddingLeft: '40px', paddingRight: '16px',
-                      borderRadius: 'var(--rounded-md)', border: '1px solid var(--hairline-strong)',
-                      backgroundColor: 'var(--canvas)', fontSize: '15px'
-                    }}
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    required
-                  >
-                    <option value="">Select your city</option>
-                    {PAKISTAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '8px' }}>Area / Location Address</label>
-                <Input 
-                  placeholder="e.g. DHA Phase 6, Sector C" 
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                <TehsilSelector
+                  label="Location (Tehsil & Town)"
+                  mode="form"
+                  value={{ tehsil: city, area: address }}
+                  onChange={(payload) => {
+                    if (payload) {
+                      setCity(payload.tehsil || '');
+                      if (payload.area) setAddress(payload.area);
+                    } else {
+                      setCity('');
+                    }
+                  }}
+                  placeholder="Select your Tehsil / City"
                   required
                 />
               </div>

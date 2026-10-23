@@ -9,6 +9,7 @@ import {
   MapPin, Clock, DollarSign, BookOpen, FileText, Video, AlertCircle, Check,
   X, Lock, Pencil, HelpCircle
 } from 'lucide-react';
+import { TehsilSelector } from '../../../components/ui/TehsilSelector';
 
 // ============================================================
 // TEACHING CATEGORIES DATA
@@ -65,7 +66,6 @@ const escapeHtml = (str) => {
 const COMBINED_FORBIDDEN_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})|((https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.(com|org|net|edu|pk|gov|mil|biz|info|me|io|co|us|uk|ca)\b([-a-zA-Z0-9@:%_\+.~#?&//=]*))|((\+?92[-\s]?|0)3\d{2}[-\s]?\d{7}\b|\b\d{3}[-\s]?\d{3}[-\s]?\d{4}\b|\b\d{10,13}\b)/gi;
 
 const LANGUAGES = ['English', 'Urdu', 'Punjabi', 'Sindhi', 'Pashto', 'Balochi', 'Saraiki', 'Arabic', 'French'];
-const PAKISTANI_CITIES = ['Islamabad', 'Rawalpindi', 'Attock', 'Lahore', 'Karachi'];
 const DAYS = [
   { key: 'mon', label: 'Mon' }, { key: 'tue', label: 'Tue' },
   { key: 'wed', label: 'Wed' }, { key: 'thu', label: 'Thu' },
@@ -1680,17 +1680,13 @@ function OnboardingContent() {
                   </div>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Cities You Serve</label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {PAKISTANI_CITIES.map(c => {
-                      const active = serviceCities.includes(c);
-                      return (
-                        <button key={c} onClick={() => toggleServiceCity(c)} style={{ padding: '4px 14px', borderRadius: '999px', border: active ? '2px solid var(--brand-green-dark)' : '1px solid var(--hairline-strong)', backgroundColor: active ? 'var(--brand-green-dark)' : 'var(--canvas)', color: active ? '#fff' : 'var(--slate)', fontSize: '13px', cursor: 'pointer' }}>
-                          {c}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <TehsilSelector
+                    multiple={true}
+                    value={serviceCities}
+                    onChange={setServiceCities}
+                    label="Tehsils & Cities You Serve"
+                    placeholder="Search or select all tehsils you serve..."
+                  />
                 </div>
               </div>
             )}
@@ -2026,8 +2022,29 @@ function OnboardingContent() {
             </button>
           </div>
 
+          {/* Mobile Compact Progress Bar */}
+          <div className="mobile-onboarding-stepper" style={{ marginBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
+                Step {step} of {TOTAL_STEPS}: {STEP_LABELS[step - 1]}
+              </span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-green-dark)' }}>
+                {Math.round(((step - 1) / (TOTAL_STEPS - 1)) * 100)}%
+              </span>
+            </div>
+            <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--hairline-strong)', borderRadius: '999px', overflow: 'hidden', marginTop: '6px' }}>
+              <div style={{
+                height: '100%',
+                width: `${((step - 1) / (TOTAL_STEPS - 1)) * 100}%`,
+                backgroundColor: '#41B01B',
+                borderRadius: '999px',
+                transition: 'width 0.4s ease'
+              }} />
+            </div>
+          </div>
+
           {/* Timeline Stepper */}
-          <div style={{
+          <div className="desktop-onboarding-stepper" style={{
             position: 'relative',
             display: 'flex',
             justifyContent: 'space-between',

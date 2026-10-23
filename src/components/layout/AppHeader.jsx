@@ -20,6 +20,8 @@ export function AppHeader() {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [walletBalance, setWalletBalance] = useState(null);
 
+  const userRef = React.useRef(null);
+
   // Determine active role context based on URL route
   let staticRole = 'guest';
   if (pathname?.startsWith('/tutor/jobs')) {
@@ -33,6 +35,8 @@ export function AppHeader() {
   useEffect(() => {
     const supabase = createClient();
     let cancelled = false;
+    let messageChannel = null;
+    let walletChannel = null;
 
     const loadProfile = async (u) => {
       try {
@@ -98,48 +102,58 @@ export function AppHeader() {
       }
     };
 
+    const setupRealtime = (uId) => {
+      if (!uId) return;
+      if (messageChannel) supabase.removeChannel(messageChannel);
+      if (walletChannel) supabase.removeChannel(walletChannel);
+
+      const channelName = `header_msgs_${uId}_${Math.random().toString(36).substring(2, 7)}`;
+      messageChannel = supabase
+        .channel(channelName)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${uId}`
+        }, () => {
+          if (!cancelled) {
+            setUnreadMessageCount(prev => prev + 1);
+            playClingChime();
+          }
+        })
+        .subscribe();
+
+      const walletChannelName = `header_wallet_${uId}_${Math.random().toString(36).substring(2, 7)}`;
+      walletChannel = supabase
+        .channel(walletChannelName)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'wallets',
+          filter: `user_id=eq.${uId}`
+        }, (payload) => {
+          if (!cancelled && payload.new?.balance !== undefined) {
+            setWalletBalance(Number(payload.new.balance) || 0);
+          }
+        })
+        .subscribe();
+    };
+
     const initSession = async () => {
       try {
-        const { data: { user: u } } = await supabase.auth.getUser();
+        const { data: { session } } = await supabase.auth.getSession();
         if (cancelled) return;
+        const u = session?.user || null;
         if (u) {
           setUser(u);
+          userRef.current = u;
           await loadProfile(u);
           await fetchUnreadMessages(u.id);
           await fetchWallet(u.id);
-
-          // Realtime listener for unread messages
-          const channelName = `header_msgs_${u.id}_${Math.random().toString(36).substring(2, 7)}`;
-          supabase
-            .channel(channelName)
-            .on('postgres_changes', {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'messages',
-              filter: `receiver_id=eq.${u.id}`
-            }, () => {
-              if (!cancelled) {
-                setUnreadMessageCount(prev => prev + 1);
-                playClingChime();
-              }
-            })
-            .subscribe();
-
-          // Realtime listener for wallet changes
-          const walletChannelName = `header_wallet_${u.id}_${Math.random().toString(36).substring(2, 7)}`;
-          supabase
-            .channel(walletChannelName)
-            .on('postgres_changes', {
-              event: '*',
-              schema: 'public',
-              table: 'wallets',
-              filter: `user_id=eq.${u.id}`
-            }, (payload) => {
-              if (!cancelled && payload.new?.balance !== undefined) {
-                setWalletBalance(Number(payload.new.balance) || 0);
-              }
-            })
-            .subscribe();
+          setupRealtime(u.id);
+        } else {
+          setUser(null);
+          userRef.current = null;
         }
       } catch (err) {
         console.error('Error initializing session:', err);
@@ -149,19 +163,25 @@ export function AppHeader() {
     };
     initSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (cancelled) return;
-      if (event === 'SIGNED_IN') {
-        const u = session?.user || null;
-        setUser(u);
+      const u = session?.user || null;
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
         if (u) {
+          setUser(u);
+          userRef.current = u;
           loadProfile(u);
           fetchUnreadMessages(u.id);
           fetchWallet(u.id);
+          setupRealtime(u.id);
+        } else if (event === 'INITIAL_SESSION') {
+          setUser(null);
+          userRef.current = null;
         }
         setInitialized(true);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        userRef.current = null;
         setProfile(null);
         setUnreadMessageCount(0);
         setWalletBalance(null);
@@ -170,13 +190,14 @@ export function AppHeader() {
     });
 
     const handleMessagesRead = () => {
-      if (user?.id) fetchUnreadMessages(user.id);
+      const currentId = userRef.current?.id;
+      if (currentId) fetchUnreadMessages(currentId);
     };
     const handleWalletUpdated = (e) => {
       if (e?.detail?.balance !== undefined) {
         setWalletBalance(Number(e.detail.balance));
-      } else if (user?.id) {
-        fetchWallet(user.id);
+      } else if (userRef.current?.id) {
+        fetchWallet(userRef.current.id);
       }
     };
     if (typeof window !== 'undefined') {
@@ -187,12 +208,14 @@ export function AppHeader() {
     return () => {
       cancelled = true;
       subscription?.unsubscribe();
+      if (messageChannel) supabase.removeChannel(messageChannel);
+      if (walletChannel) supabase.removeChannel(walletChannel);
       if (typeof window !== 'undefined') {
         window.removeEventListener('messages_read', handleMessagesRead);
         window.removeEventListener('wallet_updated', handleWalletUpdated);
       }
     };
-  }, [staticRole, user?.id]);
+  }, [staticRole]);
 
   useEffect(() => {
     if (!showDropdown) return;
@@ -304,48 +327,38 @@ export function AppHeader() {
 
           {/* Desktop Nav Links */}
           <div className="nav-links">
-            {!initialized && activeRole === 'guest' ? (
-              <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                <div style={{ width: '80px', height: '14px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', animation: 'pulse 1.5s infinite ease-in-out' }} />
-                <div style={{ width: '90px', height: '14px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', animation: 'pulse 1.5s infinite ease-in-out' }} />
-                <div style={{ width: '80px', height: '14px', backgroundColor: 'var(--hairline-strong)', borderRadius: '4px', animation: 'pulse 1.5s infinite ease-in-out' }} />
-              </div>
-            ) : (
-              links.map((link) => {
-                const isMessagesLink = link.href.includes('/messages');
-                return (
-                  <Link key={link.href} href={link.href} style={{ ...linkStyle, position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                    {link.label}
-                    {isMessagesLink && unreadMessageCount > 0 && (
-                      <span style={{
-                        backgroundColor: '#EF4444',
-                        color: '#ffffff',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        borderRadius: '999px',
-                        minWidth: '18px',
-                        height: '18px',
-                        padding: '0 4px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginLeft: '6px'
-                      }}>
-                        {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })
-            )}
+            {links.map((link) => {
+              const isMessagesLink = link.href.includes('/messages');
+              return (
+                <Link key={link.href} href={link.href} style={{ ...linkStyle, position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                  {link.label}
+                  {isMessagesLink && unreadMessageCount > 0 && (
+                    <span style={{
+                      backgroundColor: '#EF4444',
+                      color: '#ffffff',
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      borderRadius: '999px',
+                      minWidth: '18px',
+                      height: '18px',
+                      padding: '0 4px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginLeft: '6px'
+                    }}>
+                      {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </div>
 
         {/* Desktop Header Right Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', position: 'relative' }} className="nav-actions-desktop">
-          {!initialized ? (
-            <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'var(--hairline-strong)', animation: 'pulse 1.5s infinite ease-in-out' }} />
-          ) : user ? (
+          {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
               {walletBalance !== null && (
                 <Link

@@ -5,11 +5,7 @@ import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../../../utils/supabase/client';
-
-const PAKISTAN_CITIES = [
-  'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Peshawar', 'Faisalabad', 
-  'Multan', 'Gujranwala', 'Sialkot', 'Quetta', 'Hyderabad', 'Abbottabad'
-];
+import { TehsilSelector } from '../../../../components/ui/TehsilSelector';
 
 const GRADE_LEVELS = [
   'Primary', 'Secondary', 'Matric', 'FSc', 'O-Level', 'A-Level', 'University', 'Professional'
@@ -167,22 +163,28 @@ export default function PostJob() {
                   </select>
                 </div>
                 {job.mode !== 'online' && (
-                  <div style={{ flex: '1 1 45%' }}>
-                    <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px' }}>City</label>
-                    <select className="input-field" style={inputStyle} value={job.city} onChange={e => setJob({...job, city: e.target.value})} required={job.mode !== 'online'}>
-                      <option value="">Select City...</option>
-                      {PAKISTAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                  <div style={{ flex: '1 1 100%' }}>
+                    <TehsilSelector
+                      label="Location (Tehsil & Town)"
+                      mode="form"
+                      value={{ tehsil: job.city, area: job.area }}
+                      onChange={(payload) => {
+                        if (payload) {
+                          setJob(prev => ({
+                            ...prev,
+                            city: payload.tehsil || '',
+                            area: payload.area || ''
+                          }));
+                        } else {
+                          setJob(prev => ({ ...prev, city: '', area: '' }));
+                        }
+                      }}
+                      placeholder="Select Tehsil / City..."
+                      required={job.mode !== 'online'}
+                    />
                   </div>
                 )}
               </div>
-
-              {job.mode !== 'online' && (
-                <div>
-                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px' }}>Area (Location Address)</label>
-                  <Input placeholder="e.g. DHA Phase 5" value={job.area} onChange={e => setJob({...job, area: e.target.value})} required={job.mode !== 'online'} />
-                </div>
-              )}
             </div>
           )}
 

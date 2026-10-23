@@ -263,3 +263,166 @@ button {
     display: flex !important;
   }
 }
+
+/* Mobile App Bottom Navigation Bar */
+.mobile-bottom-nav-container {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav-container {
+    display: flex !important;
+  }
+
+  /* Safe bottom clearance for fixed bottom app nav bar */
+  body {
+    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Mobile Messaging Master-Detail & App Layout */
+.messages-page-wrapper {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+  height: calc(100vh - 180px);
+  min-height: 560px;
+}
+
+.messages-sidebar-col {
+  display: flex !important;
+  flex-direction: column;
+}
+
+.messages-chat-col {
+  display: flex !important;
+  flex-direction: column;
+}
+
+.messages-back-btn {
+  display: none !important;
+}
+
+.messages-header-action-btn .btn-text-mobile {
+  display: none;
+}
+.messages-header-action-btn .btn-text-desktop {
+  display: inline;
+}
+
+@media (max-width: 768px) {
+  /* Container override for messages */
+  .messages-container-custom {
+    padding: 8px 8px !important;
+    min-height: calc(100dvh - 70px) !important;
+  }
+
+  .messages-page-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100dvh - 80px) !important;
+    min-height: unset !important;
+    gap: 0 !important;
+  }
+
+  /* When conversation list is active */
+  .messages-sidebar-col {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 16px !important;
+  }
+
+  .messages-sidebar-col.mobile-hidden {
+    display: none !important;
+  }
+
+  /* When chat is active */
+  .messages-chat-col {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 16px !important;
+  }
+
+  .messages-chat-col.mobile-hidden {
+    display: none !important;
+  }
+
+  /* Mobile back button inside chat header */
+  .messages-back-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--ink);
+    cursor: pointer;
+    padding: 6px;
+    margin-right: 4px;
+    border-radius: 50%;
+  }
+
+  /* Header action button compact on mobile */
+  .messages-header-action-btn {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+  .messages-header-action-btn .btn-text-desktop {
+    display: none !important;
+  }
+  .messages-header-action-btn .btn-text-mobile {
+    display: inline !important;
+  }
+
+  /* When inside active chat on mobile, hide the bottom nav bar and remove body bottom padding */
+  body[data-chat-active="true"] {
+    padding-bottom: 0 !important;
+  }
+  body[data-chat-active="true"] .mobile-bottom-nav-container {
+    display: none !important;
+  }
+}
+
+/* Financial Ledger Mobile Card View */
+.desktop-ledger-table {
+  display: block;
+}
+.mobile-ledger-cards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-ledger-table {
+    display: none !important;
+  }
+  .mobile-ledger-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+}
+
+/* Responsive Card Grid with fluid safe minimum */
+.app-fluid-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--spacing-lg);
+}
+
+/* Onboarding Stepper Mobile Adaptation */
+.desktop-onboarding-stepper {
+  display: flex !important;
+}
+.mobile-onboarding-stepper {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .desktop-onboarding-stepper {
+    display: none !important;
+  }
+  .mobile-onboarding-stepper {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+}

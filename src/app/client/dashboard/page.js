@@ -130,7 +130,7 @@ export default function ParentDashboard() {
           </div>
         </Card>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: 'var(--spacing-lg)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: 'var(--spacing-lg)' }}>
           {activeEngagements.map((eng) => {
             const tutor = eng.tutor_profiles || {};
             const job = eng.jobs || {};

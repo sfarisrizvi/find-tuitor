@@ -1,5 +1,6 @@
 import "./globals.css";
 import { AppHeader } from "../components/layout/AppHeader";
+import { MobileBottomNav } from "../components/layout/MobileBottomNav";
 import { Footer } from "../components/layout/Footer";
 import { CookieConsentBanner } from "../components/layout/CookieConsentBanner";
 import Script from "next/script";
@@ -145,6 +146,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         </PostHogProvider>
         <Footer />
         <CookieConsentBanner />
+        <MobileBottomNav />
       </body>
     </html>
   );

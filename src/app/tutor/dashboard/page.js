@@ -229,7 +229,7 @@ export default function TutorDashboard() {
             <span style={{ fontSize: '13px', color: 'var(--steel)', fontWeight: 500 }}>{activeContracts.length} Ongoing</span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '20px' }}>
             {activeContracts.map(contract => {
               const job = contract.jobs || {};
               return (

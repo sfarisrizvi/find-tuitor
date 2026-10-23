@@ -220,7 +220,7 @@ export default function Home() {
     },
     {
       q: "How do I purchase more credits?",
-      a: "Both parents and tutors can buy credits by transferring funds into our verified Pakistani bank account (Meezan Bank/Raast) and uploading the receipt screenshot in their Wallet. Credits are confirmed by our admin team within minutes."
+      a: "Both parents and tutors can buy credits by transferring funds into our verified NayaPay account and uploading the receipt screenshot in their Wallet. Credits are confirmed by our admin team within minutes."
     }
   ];
 

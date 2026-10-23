@@ -146,7 +146,7 @@ export default function ParentJobs() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--hairline)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--hairline)', flexWrap: 'wrap', gap: '12px' }}>
                   
                   {/* Proposal Avatars */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
