@@ -28,13 +28,53 @@ export async function GET(request) {
 
     // Scenario A: Check review status for a specific contract
     if (contractId) {
+      const supabaseUser = await createServerClient();
+      const { data: { user }, error: authErr } = await supabaseUser.auth.getUser();
+
+      if (authErr || !user) {
+        return NextResponse.json({ error: 'Unauthorized: A valid session is required.' }, { status: 401 });
+      }
+
+      // Verify caller is a verified contract participant or admin
+      const { data: contract, error: contractErr } = await serviceClient
+        .from('contracts')
+        .select('client_id, tutor_id')
+        .eq('id', contractId)
+        .maybeSingle();
+
+      if (contractErr || !contract) {
+        return NextResponse.json({ error: 'Contract not found.' }, { status: 404 });
+      }
+
+      const isParticipant = contract.client_id === user.id || contract.tutor_id === user.id;
+      const { data: roleRecord } = await serviceClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      const isAdmin = roleRecord?.role === 'admin';
+
+      if (!isParticipant && !isAdmin) {
+        return NextResponse.json({ error: 'Forbidden: You are not a participant in this contract.' }, { status: 403 });
+      }
+
       const { data: reviews, error } = await serviceClient
         .from('contract_reviews')
         .select('*')
         .eq('contract_id', contractId);
 
       if (error) throw error;
-      return NextResponse.json({ reviews: reviews || [] });
+
+      // Strip private_feedback unless caller is the author of the review or an administrator
+      const sanitizedReviews = (reviews || []).map(r => {
+        if (r.reviewer_id !== user.id && !isAdmin) {
+          const { private_feedback, ...rest } = r;
+          return rest;
+        }
+        return r;
+      });
+
+      return NextResponse.json({ reviews: sanitizedReviews });
     }
 
     // Scenario B: Fetch public published reviews for a tutor

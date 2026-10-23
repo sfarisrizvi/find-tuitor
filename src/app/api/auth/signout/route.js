@@ -19,17 +19,17 @@ async function handleSignOutFlow() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // Ignore
+            // Ignore in server component context
           }
         },
       },
     }
   )
 
-  // Check if session exists
-  const { data: { session } } = await supabase.auth.getSession()
+  // Verify and terminate session using cryptographically checked getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (session) {
+  if (user) {
     await supabase.auth.signOut()
   }
 
@@ -52,16 +52,25 @@ export async function POST(request) {
 }
 
 export async function GET(request) {
+  // Prevent Logout CSRF: Reject cross-site image or subresource embedding
+  const secFetchSite = request.headers.get('sec-fetch-site')
+  const secFetchMode = request.headers.get('sec-fetch-mode')
+  if (secFetchSite === 'cross-site' || secFetchMode === 'no-cors') {
+    return new NextResponse('Forbidden: Cross-site signout requests are disallowed.', { status: 403 })
+  }
+
   await handleSignOutFlow()
   
   const { searchParams } = new URL(request.url)
-  const nextPath = searchParams.get('next')
+  const nextParam = searchParams.get('next')
   
-  // Safely construct the redirect URL to avoid 0.0.0.0 from internal proxies
-  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || 'signup.tutoronline.pk';
-  const protocol = request.headers.get('x-forwarded-proto') || 'https';
-  
-  const targetPath = (nextPath && nextPath.startsWith('/tutors/')) ? nextPath : '/';
-  
-  return NextResponse.redirect(new URL(targetPath, `${protocol}://${host}`));
+  // Whitelist redirect path to avoid open redirects
+  const targetPath = (nextParam && nextParam.startsWith('/tutors/')) ? nextParam : '/'
+
+  // Prevent Host Header Injection
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoronline.pk'
+  const isLocal = request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1'
+  const trustedOrigin = isLocal ? request.nextUrl.origin : siteUrl
+
+  return NextResponse.redirect(new URL(targetPath, trustedOrigin))
 }

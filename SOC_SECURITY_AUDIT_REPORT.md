@@ -28,23 +28,23 @@ The application implements foundational security utilities (such as payload size
 
 | ID | Title | Severity | CVSS v3.1 | Status |
 | :--- | :--- | :---: | :---: | :---: |
-| **CV-01** | Broken Object Level Authorization (BOLA) in Contracts API | **CRITICAL** | 9.8 | Unpatched |
-| **CV-02** | Unauthenticated Arbitrary Storage Retrieval & KYC Leak | **CRITICAL** | 9.1 | Unpatched |
-| **CV-03** | Minor Children & Parent PII Mass Exposure via RLS `USING (true)` | **CRITICAL** | 8.6 | Unpatched |
-| **CV-04** | Admin Privilege Escalation via Client-Controlled `user_metadata` | **CRITICAL** | 8.8 | Unpatched |
-| **CV-05** | Unauthenticated Public Email Relay & Resend Quota Exhaustion | **HIGH** | 7.5 | Unpatched |
-| **CV-06** | Public Storage Bucket & Policy Exposing All Chat Media to Internet | **CRITICAL** | 9.1 | Unpatched |
-| **CV-07** | Permissive Insert RLS on Contracts & Notifications Tables | **HIGH** | 8.3 | Unpatched |
-| **HV-01** | Inactive Route Protection Middleware (Misnamed `src/proxy.js`) | **HIGH** | 7.5 | Unpatched |
-| **HV-02** | Insecure Escrow Contracts Direct Client Update Policy | **HIGH** | 7.4 | Unpatched |
-| **HV-03** | Open Redirect & Host Header Injection in Auth Callback | **MEDIUM** | 6.1 | Unpatched |
-| **HV-04** | Exposure of Confidential Review Private Feedback to Public via Table-Level RLS & API | **HIGH** | 7.1 | Unpatched |
-| **HV-05** | In-Memory Rate Limiter Unbounded Memory Growth (OOM DoS) & IP Spoofing | **HIGH** | 7.5 | Unpatched |
-| **MV-01** | Client-Enforced-Only Anti-Bot Verification on Contact API | **MEDIUM** | 5.3 | Unpatched |
-| **MV-02** | Plaintext Credentials & SSH Passwords in Deployment Files & Git | **MEDIUM** | 5.0 | Action Required |
-| **MV-03** | Logout CSRF & Insecure `getSession()` in Auth Signout Endpoint | **MEDIUM** | 5.4 | Unpatched |
-| **MV-04** | Unrestricted Account Registration & Mass Welcome Email Flooding | **MEDIUM** | 5.3 | Unpatched |
-| **MV-05** | Missing Essential HTTP Security Headers in Next.js Config | **MEDIUM** | 5.0 | Unpatched |
+| **CV-01** | Broken Object Level Authorization (BOLA) in Contracts API | **CRITICAL** | 9.8 | **Patched (Verified)** |
+| **CV-02** | Unauthenticated Arbitrary Storage Retrieval & KYC Leak | **CRITICAL** | 9.1 | **Patched (Verified)** |
+| **CV-03** | Minor Children & Parent PII Mass Exposure via RLS `USING (true)` | **CRITICAL** | 8.6 | **Patched (Verified)** |
+| **CV-04** | Admin Privilege Escalation via Client-Controlled `user_metadata` | **CRITICAL** | 8.8 | **Patched (Verified)** |
+| **CV-05** | Unauthenticated Public Email Relay & Resend Quota Exhaustion | **HIGH** | 7.5 | **Patched (Verified)** |
+| **CV-06** | Public Storage Bucket & Policy Exposing All Chat Media to Internet | **CRITICAL** | 9.1 | **Patched (Verified)** |
+| **CV-07** | Permissive Insert RLS on Contracts & Notifications Tables | **HIGH** | 8.3 | **Patched (Verified)** |
+| **HV-01** | Inactive Route Protection Middleware (Misnamed `src/proxy.js`) | **HIGH** | 7.5 | **Patched (Verified)** |
+| **HV-02** | Insecure Escrow Contracts Direct Client Update Policy | **HIGH** | 7.4 | **Patched (Verified)** |
+| **HV-03** | Open Redirect & Host Header Injection in Auth Callback | **MEDIUM** | 6.1 | **Patched (Verified)** |
+| **HV-04** | Exposure of Confidential Review Private Feedback to Public via Table-Level RLS & API | **HIGH** | 7.1 | **Patched (Verified)** |
+| **HV-05** | In-Memory Rate Limiter Unbounded Memory Growth (OOM DoS) & IP Spoofing | **HIGH** | 7.5 | **Patched (Verified)** |
+| **MV-01** | Client-Enforced-Only Anti-Bot Verification on Contact API | **MEDIUM** | 5.3 | **Patched (Verified)** |
+| **MV-02** | Plaintext Credentials & SSH Passwords in Deployment Files & Git | **MEDIUM** | 5.0 | Protected via .gitignore (Rotate in Dashboard) |
+| **MV-03** | Logout CSRF & Insecure `getSession()` in Auth Signout Endpoint | **MEDIUM** | 5.4 | **Patched (Verified)** |
+| **MV-04** | Unrestricted Account Registration & Mass Welcome Email Flooding | **MEDIUM** | 5.3 | **Patched (Verified)** |
+| **MV-05** | Missing Essential HTTP Security Headers in Next.js Config | **MEDIUM** | 5.0 | **Patched (Verified)** |
 
 ---
 

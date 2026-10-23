@@ -1,5 +1,5 @@
 import { Resend } from 'resend';
-import { createClient } from '../utils/supabase/client';
+import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 
@@ -20,7 +20,10 @@ export async function sendNotification({
   templateData = {},
 }) {
   try {
-    const supabase = createClient();
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
 
     // 1. Insert In-App Notification into PostgreSQL
     const { error: dbError } = await supabase

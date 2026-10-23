@@ -5,8 +5,9 @@ import { createClient as createServerClient } from '@/utils/supabase/server';
 
 async function checkIsAdmin(supabaseUser, user) {
   if (!user) return false;
-  if (user.user_metadata?.role === 'admin') return true;
 
+  // CRITICAL: Never trust client-controlled user_metadata for administrative authorization.
+  // Role verification must exclusively query the database user_roles table.
   const { data: roleRecord } = await supabaseUser
     .from('user_roles')
     .select('role')

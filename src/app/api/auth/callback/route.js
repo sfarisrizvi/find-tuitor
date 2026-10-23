@@ -3,15 +3,19 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
-  // next is a custom redirect param to forward the user to after login
-  const next = searchParams.get('next') ?? '/tutor/dashboard'
 
-  // Construct absolute redirect URL
-  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || 'signup.tutoronline.pk'
-  const protocol = request.headers.get('x-forwarded-proto') || 'https'
-  const absoluteOrigin = `${protocol}://${host}`
+  // 1. Sanitize 'next' parameter to prevent Open Redirect attacks
+  let next = searchParams.get('next') ?? '/tutor/dashboard'
+  if (!next.startsWith('/') || next.startsWith('//') || next.startsWith('/\\') || next.includes('\\')) {
+    next = '/tutor/dashboard'
+  }
+
+  // 2. Prevent Host Header Injection: Use environment-defined or whitelisted origin
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoronline.pk'
+  const isLocal = request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1'
+  const trustedOrigin = isLocal ? request.nextUrl.origin : siteUrl
 
   if (code) {
     const cookieStore = await cookies()
@@ -29,18 +33,18 @@ export async function GET(request) {
                 cookieStore.set(name, value, options)
               )
             } catch {
-              // Ignore
+              // Ignore in server component context
             }
           },
         },
       }
     )
-    const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
-      // If a role was passed (from signup), update the user metadata
+      // Validate client signup role parameter against strict whitelist
       const roleParam = searchParams.get('role')
-      if (roleParam) {
+      if (roleParam && ['parent', 'student'].includes(roleParam)) {
         await supabase.auth.updateUser({
           data: {
             role: 'client',
@@ -48,10 +52,10 @@ export async function GET(request) {
           }
         })
       }
-      return NextResponse.redirect(`${absoluteOrigin}${next}`)
+      return NextResponse.redirect(`${trustedOrigin}${next}`)
     }
   }
 
-  // Return to login with error
-  return NextResponse.redirect(`${absoluteOrigin}/login?error=auth_failed`)
+  // Return to login with error parameter on failure
+  return NextResponse.redirect(`${trustedOrigin}/login?error=auth_failed`)
 }

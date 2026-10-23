@@ -36,7 +36,7 @@ export async function proxy(request) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
           })
@@ -50,11 +50,22 @@ export async function proxy(request) {
 
   const url = request.nextUrl.clone()
 
-  // Refresh session if expired
+  // Refresh and verify session cryptographically
   const { data: { user } } = await supabase.auth.getUser()
 
+  // If already authenticated and navigating to login/signup/register -> redirect to appropriate dashboard
   if (user && (url.pathname === '/login' || url.pathname === '/signup' || url.pathname === '/register')) {
     let role = user.user_metadata?.role;
+
+    // Verify role legitimately
+    if (role === 'admin') {
+      const { data: roleRecord } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (roleRecord?.role !== 'admin') role = null;
+    }
 
     if (!role) {
       const { data: clientProf } = await supabase.from('client_profiles').select('id').eq('id', user.id).maybeSingle();
@@ -85,7 +96,12 @@ export async function proxy(request) {
     url.pathname === '/find-tutor' ||
     url.pathname.startsWith('/find-tutor/') ||
     url.pathname.startsWith('/tutor/jobs') ||
-    url.pathname.startsWith('/tutors/');
+    url.pathname.startsWith('/tutors/') ||
+    url.pathname === '/terms' ||
+    url.pathname === '/privacy' ||
+    url.pathname === '/forgot-password' ||
+    url.pathname === '/update-password' ||
+    url.pathname === '/confirm';
 
   const isProtectedRoute = (url.pathname.startsWith('/client') ||
     url.pathname.startsWith('/tutor')) &&
@@ -97,7 +113,21 @@ export async function proxy(request) {
       return redirect(url)
     }
 
-    const role = user.user_metadata?.role
+    let role = user.user_metadata?.role;
+
+    // Secure administrative validation (prevent client metadata forgery)
+    if (role === 'admin') {
+      const { data: roleRecord } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (roleRecord?.role !== 'admin') {
+        role = null;
+      }
+    }
+
+    // Role-based directory access control
     if (role && role !== 'admin') {
       if (url.pathname.startsWith('/tutor') && role !== 'tutor') {
         url.pathname = '/client/dashboard'
@@ -115,6 +145,6 @@ export async function proxy(request) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
