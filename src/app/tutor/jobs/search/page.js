@@ -24,7 +24,9 @@ import {
   CheckCircle2,
   User,
   Users,
-  GraduationCap
+  GraduationCap,
+  X,
+  AlertCircle
 } from 'lucide-react';
 import { createClient } from '../../../../utils/supabase/client';
 
@@ -1044,7 +1046,7 @@ function SearchContent() {
                 justifyContent: 'center', fontSize: '18px', color: 'var(--steel)'
               }}
             >
-              ✕
+              <X size={18} />
             </button>
 
             {isSuccess ? (
@@ -1113,7 +1115,7 @@ function SearchContent() {
                         backgroundColor: '#FFFBEB', border: '1px solid #FCD34D',
                         borderRadius: '8px', padding: '14px 16px', display: 'flex', gap: '10px', alignItems: 'flex-start'
                       }}>
-                        <span style={{ fontSize: '18px' }}>⚠️</span>
+                        <AlertCircle size={18} color="#B45309" style={{ flexShrink: 0, marginTop: '2px' }} />
                         <div style={{ fontSize: '13px', color: '#92400E', lineHeight: '1.5', fontWeight: 500 }}>
                           <strong>Location Warning:</strong> You are located in <strong>{tutorCity}</strong>, but this physical home tuition requires travel to <strong>{activeJobForApply.city}</strong>. Please ensure you are willing/able to commute before submitting.
                         </div>
@@ -1255,7 +1257,7 @@ function SearchContent() {
                   justifyContent: 'center', fontSize: '16px', cursor: 'pointer'
                 }}
               >
-                ✕
+                <X size={16} />
               </button>
             </div>
 

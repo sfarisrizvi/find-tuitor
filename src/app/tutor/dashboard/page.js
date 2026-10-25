@@ -6,7 +6,7 @@ import { Badge } from '../../../components/ui/Badge';
 import { Input } from '../../../components/ui/Input';
 import Link from 'next/link';
 import { createClient } from '../../../utils/supabase/client';
-import { AlertCircle, ChevronRight, CheckCircle2, MapPin, X } from 'lucide-react';
+import { AlertCircle, ChevronRight, CheckCircle2, MapPin, X, Settings, BookOpen, Globe, Home, Car } from 'lucide-react';
 
 const TOTAL_STEPS = 8;
 const STEP_LABELS = [
@@ -179,17 +179,33 @@ export default function TutorDashboard() {
               </Link>
             </div>
           ) : profile?.kyc_status === 'pending' && profile?.onboarding_complete ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#FFF9E6', border: '1px solid #FFD566', borderRadius: 'var(--rounded-lg)', padding: '14px 20px', marginBottom: 'var(--spacing-lg)' }}>
-              <AlertCircle size={20} color="#B45309" />
-              <span style={{ fontWeight: 600, color: '#78350F', fontSize: '14px' }}>
-                Verification Pending: Your documents have been submitted and are currently pending review by our moderation team.
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', backgroundColor: '#FFF9E6', border: '1px solid #FFD566', borderRadius: 'var(--rounded-lg)', padding: '14px 20px', marginBottom: 'var(--spacing-lg)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <AlertCircle size={20} color="#B45309" />
+                <span style={{ fontWeight: 600, color: '#78350F', fontSize: '14px' }}>
+                  Verification Pending: Your documents have been submitted and are currently pending review by our moderation team.
+                </span>
+              </div>
+              <Link href="/tutor/onboarding" style={{ color: '#B45309', fontSize: '13px', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <Settings size={13} />
+                <span>Edit Profile</span>
+              </Link>
             </div>
           ) : isComplete && profile?.kyc_status === 'approved' ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-lg)', padding: '14px 20px', marginBottom: 'var(--spacing-lg)' }}>
-              <CheckCircle2 size={20} color="var(--brand-green-dark)" />
-              <span style={{ fontWeight: 600, color: 'var(--brand-green-dark)', fontSize: '14px' }}>Your profile is complete and live!</span>
-              <Link href={`/tutors/${profile?.id}`} style={{ marginLeft: 'auto', color: 'var(--brand-green-dark)', fontSize: '13px', fontWeight: 600 }}>View My Profile →</Link>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-lg)', padding: '14px 20px', marginBottom: 'var(--spacing-lg)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <CheckCircle2 size={20} color="var(--brand-green-dark)" />
+                <span style={{ fontWeight: 600, color: 'var(--brand-green-dark)', fontSize: '14px' }}>Your profile is complete and live!</span>
+              </div>
+              <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                <Link href="/tutor/onboarding" style={{ color: 'var(--ink)', fontSize: '13px', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <Settings size={13} />
+                  <span>Edit Profile</span>
+                </Link>
+                <Link href={`/tutors/${profile?.id}`} style={{ color: 'var(--brand-green-dark)', fontSize: '13px', fontWeight: 600 }}>
+                  View My Profile →
+                </Link>
+              </div>
             </div>
           ) : null}
         </>
@@ -279,16 +295,24 @@ export default function TutorDashboard() {
                     {/* Metadata Tags */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
                       {job.subject && (
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--slate)', backgroundColor: 'var(--surface)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--hairline)' }}>
-                          📚 {job.subject}
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--slate)', backgroundColor: 'var(--surface)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--hairline)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <BookOpen size={12} color="var(--brand-teal)" />
+                          <span>{job.subject}</span>
                         </span>
                       )}
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--slate)', backgroundColor: 'var(--surface)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--hairline)' }}>
-                        {job.mode === 'online' ? '🌐 Online' : job.mode === 'home' ? '🏠 Home Visit' : '🏫 Tutor Place'}
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--slate)', backgroundColor: 'var(--surface)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--hairline)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        {job.mode === 'online' ? (
+                          <><Globe size={12} color="var(--brand-teal)" /> Online</>
+                        ) : job.mode === 'home' ? (
+                          <><Car size={12} color="var(--brand-teal)" /> Home Visit</>
+                        ) : (
+                          <><Home size={12} color="var(--brand-teal)" /> Tutor Place</>
+                        )}
                       </span>
                       {job.city && job.mode !== 'online' && (
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--slate)', backgroundColor: 'var(--surface)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--hairline)' }}>
-                          <MapPin size={12} style={{ display: 'inline', marginRight: '2px' }} /> {job.city}
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--slate)', backgroundColor: 'var(--surface)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--hairline)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <MapPin size={12} style={{ display: 'inline' }} />
+                          <span>{job.city}</span>
                         </span>
                       )}
                     </div>

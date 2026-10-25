@@ -20,7 +20,9 @@ import {
   Sparkles,
   Info,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Globe,
+  Home
 } from 'lucide-react';
 
 export default function TutorContractsPage() {
@@ -540,8 +542,12 @@ export default function TutorContractsPage() {
                           <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--ink)', margin: 0 }}>
                             {contract.client?.full_name || 'Parent'}
                           </h3>
-                          <span style={{ fontSize: '12px', color: 'var(--stone)', backgroundColor: 'var(--canvas-subtle)', padding: '2px 8px', borderRadius: '6px' }}>
-                            {contract.mode === 'online' ? '🌐 Online Tuition' : '🏠 Home Tuition'}
+                          <span style={{ fontSize: '12px', color: 'var(--stone)', backgroundColor: 'var(--canvas-subtle)', padding: '2px 8px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            {contract.mode === 'online' ? (
+                              <><Globe size={12} color="var(--brand-teal)" /> Online Tuition</>
+                            ) : (
+                              <><Home size={12} color="var(--brand-teal)" /> Home Tuition</>
+                            )}
                           </span>
                         </div>
                         <p style={{ fontSize: '13px', color: 'var(--stone)', margin: '3px 0 0 0' }}>
@@ -683,8 +689,9 @@ export default function TutorContractsPage() {
                           flexWrap: 'wrap',
                           gap: '8px'
                         }}>
-                          <span>
-                            ⚠️ <strong>Upcoming 30-day renewal:</strong> Ensure your wallet has {requiredFeeCredits} credits to seamlessly accept the renewal.
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            <AlertCircle size={15} color="#B45309" />
+                            <span><strong>Upcoming 30-day renewal:</strong> Ensure your wallet has {requiredFeeCredits} credits to seamlessly accept the renewal.</span>
                           </span>
                           <Link href="/tutor/wallet" style={{ color: '#B45309', fontWeight: 700, textDecoration: 'underline' }}>
                             Top up wallet &rarr;

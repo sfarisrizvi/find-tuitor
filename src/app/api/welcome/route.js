@@ -46,8 +46,8 @@ export async function POST(request) {
     const isTutor = role === 'tutor';
     const templateName = isTutor ? 'welcome_tutor' : 'welcome_client';
     const title = isTutor
-      ? 'Welcome to TutorOnline.pk! Start Building Your Profile 🎓'
-      : 'Welcome to TutorOnline.pk! Find Your Ideal Home & Online Tutor 🌟';
+      ? 'Welcome to TutorOnline.pk! Start Building Your Profile'
+      : 'Welcome to TutorOnline.pk! Find Your Ideal Home & Online Tutor';
     const message = isTutor
       ? `Hello ${userName || 'Tutor'}, welcome to Pakistan's premier tutor network! Complete your onboarding steps to get verified.`
       : `Hello ${userName || 'User'}, welcome to TutorOnline.pk! Browse verified home & online tutors across Pakistan with zero placement fees.`;

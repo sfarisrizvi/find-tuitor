@@ -91,7 +91,7 @@ export async function POST(request) {
       userId: user.id,
       userEmail: email.trim().toLowerCase(),
       userName: fullName.trim(),
-      title: 'Welcome to TutorOnline.pk! Start Building Your Profile 🎓',
+      title: 'Welcome to TutorOnline.pk! Start Building Your Profile',
       message: `Hello ${fullName.trim()}, welcome to Pakistan's premier tutor network! Complete your onboarding steps to get verified.`,
       type: 'welcome',
       priority: 'HIGH',

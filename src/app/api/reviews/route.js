@@ -315,7 +315,7 @@ export async function POST(request) {
       .maybeSingle();
 
     if (revieweeProf) {
-      const notifTitle = `⭐ New ${numRating}★ Verified Review Received!`;
+      const notifTitle = `New ${numRating}-Star Verified Review Received!`;
       const notifMsg = `${isClient ? 'A parent' : 'Your tutor'} left a verified review: "${sanitizedFeedback.slice(0, 80)}${sanitizedFeedback.length > 80 ? '...' : ''}"`;
       const actionUrl = isClient ? `/tutors/${revieweeId}` : '/client/dashboard';
 

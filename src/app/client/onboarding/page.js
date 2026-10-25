@@ -332,13 +332,26 @@ export default function ClientOnboarding() {
                   required
                 />
               </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--brand-teal-deep)', marginBottom: '8px' }}>Area / Town / Street Address <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--steel)' }}>(Optional)</span></label>
+                <div style={{ position: 'relative' }}>
+                  <MapPin size={16} color="var(--steel)" style={{ position: 'absolute', left: '14px', top: '14px' }} />
+                  <Input 
+                    placeholder="e.g. F-7/2, Street 15 or DHA Phase 5" 
+                    style={{ paddingLeft: '40px' }} 
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '16px' }}>
               <Button onClick={() => setStep(1)} variant="secondary" style={{ flex: 1 }}>Back</Button>
               <Button 
                 onClick={() => saveProgress(3)} 
-                disabled={saving || !fullName || !phone || !city || !address} 
+                disabled={saving || !fullName?.trim() || !phone?.trim() || !city?.trim()} 
                 variant="primary" 
                 style={{ flex: 1, backgroundColor: 'var(--brand-green)', color: 'var(--on-primary)' }}
               >

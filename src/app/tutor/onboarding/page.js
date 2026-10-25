@@ -1,15 +1,29 @@
 'use client';
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '../../../utils/supabase/client';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import {
   Camera, Upload, CheckCircle2, ChevronRight, ChevronLeft, Plus, Trash2,
   MapPin, Clock, DollarSign, BookOpen, FileText, Video, AlertCircle, Check,
-  X, Lock, Pencil, HelpCircle
+  X, Lock, Pencil, HelpCircle, Phone, Sparkles, User, GraduationCap, Award,
+  Home, Car, Laptop, Settings, Info
 } from 'lucide-react';
 import { TehsilSelector } from '../../../components/ui/TehsilSelector';
+
+// ============================================================
+// EDUCATION LEVELS
+// ============================================================
+const EDUCATION_LEVELS = [
+  'Matric',
+  'Inter',
+  'BA/BSc',
+  'BS',
+  'MS',
+  'PhD'
+];
 
 // ============================================================
 // TEACHING CATEGORIES DATA
@@ -205,6 +219,152 @@ function UploadBox({ label, hint, accept, onChange, value, icon: Icon = Upload, 
   );
 }
 
+function CertificateItemRow({ cert, index, onUpdateTitle, onUpdateFile, onRemove }) {
+  const fileInputRef = useRef(null);
+
+  const getFileName = () => {
+    if (!cert.file) return null;
+    if (typeof cert.file === 'string') {
+      const parts = cert.file.split('/');
+      return parts[parts.length - 1];
+    }
+    return cert.file.name;
+  };
+
+  const fileName = getFileName();
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      padding: '12px 14px',
+      backgroundColor: 'var(--surface-soft)',
+      border: '1px solid var(--hairline-strong)',
+      borderRadius: 'var(--rounded-md)'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+          Certificate #{index + 1}
+        </span>
+        <button
+          type="button"
+          onClick={onRemove}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--accent-orange)',
+            cursor: 'pointer',
+            padding: '2px 4px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            fontSize: '12px',
+            fontWeight: 500
+          }}
+          title="Remove certificate"
+        >
+          <Trash2 size={14} /> Remove
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Certificate name (e.g. IELTS 8.0, TEFL, Cambridge TKT)"
+          value={cert.title || ''}
+          onChange={e => onUpdateTitle(e.target.value)}
+          style={{
+            flex: 1,
+            minWidth: '200px',
+            height: '42px',
+            padding: '0 12px',
+            borderRadius: 'var(--rounded-md)',
+            border: '1px solid var(--hairline-strong)',
+            backgroundColor: 'var(--canvas)',
+            fontSize: '14px',
+            color: 'var(--ink)',
+            outline: 'none',
+            boxSizing: 'border-box'
+          }}
+        />
+
+        <div style={{ flexShrink: 0 }}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            style={{ display: 'none' }}
+            onChange={e => {
+              if (e.target.files?.[0]) {
+                onUpdateFile(e.target.files[0]);
+              }
+            }}
+          />
+
+          {fileName ? (
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              height: '42px',
+              padding: '0 12px',
+              backgroundColor: 'var(--brand-green-soft)',
+              border: '1px solid var(--brand-green-dark)',
+              borderRadius: 'var(--rounded-md)',
+              color: 'var(--brand-green-dark)',
+              fontSize: '12px',
+              fontWeight: 600
+            }}>
+              <CheckCircle2 size={15} color="var(--brand-green-dark)" style={{ flexShrink: 0 }} />
+              <span style={{ maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={fileName}>
+                {fileName}
+              </span>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--brand-green-dark)',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '2px 4px'
+                }}
+              >
+                Change
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                height: '42px',
+                padding: '0 14px',
+                backgroundColor: 'var(--canvas)',
+                border: '1.5px dashed var(--brand-green-dark)',
+                borderRadius: 'var(--rounded-md)',
+                color: 'var(--brand-green-dark)',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              <Upload size={14} /> Upload Document
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CategorySection({ group, selected, onToggle }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -377,8 +537,18 @@ function OnboardingContent() {
   const backdropRef = useRef(null);
   const [step, setStep] = useState(1);
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+
+  // Step 0: Google Signup Contact & Location Info
+  const [isGoogleSignup, setIsGoogleSignup] = useState(false);
+  const [step0FullName, setStep0FullName] = useState('');
+  const [step0Phone, setStep0Phone] = useState('');
+  const [step0City, setStep0City] = useState('');
+  const [step0Area, setStep0Area] = useState('');
+  const [step0Error, setStep0Error] = useState('');
 
   // Step 1: Photo & Cover
   const [avatarFile, setAvatarFile] = useState(null);
@@ -395,10 +565,13 @@ function OnboardingContent() {
   const [currentCompany, setCurrentCompany] = useState('');
   const [qualification, setQualification] = useState('');
 
-  // Step 2: KYC docs
+  // Step 2: KYC docs & Education
   const [cnicFront, setCnicFront] = useState(null);
   const [cnicBack, setCnicBack] = useState(null);
   const [degree, setDegree] = useState(null);
+  const [educationLevel, setEducationLevel] = useState('');
+  const [educationField, setEducationField] = useState('');
+  const [additionalDegrees, setAdditionalDegrees] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [hasKycDocs, setHasKycDocs] = useState(false);
   const [kycObjections, setKycObjections] = useState(null);
@@ -465,16 +638,29 @@ function OnboardingContent() {
       const { data: { user: u } } = await supabase.auth.getUser();
       if (!u) { router.push('/login'); return; }
       setUser(u);
+      const isGoogle = u.app_metadata?.provider === 'google' ||
+        u.identities?.some(id => id.provider === 'google') ||
+        (typeof window !== 'undefined' && localStorage.getItem('last_login_method') === 'google');
+      
+      setIsGoogleSignup(isGoogle);
+
       // Load existing progress
       const { data: profile } = await supabase.from('tutor_profiles').select('*').eq('id', u.id).single();
       if (profile) {
+        setProfile(profile);
+        setOnboardingComplete(profile.onboarding_complete || false);
         setSuspended(profile.suspended || false);
         setKycVerifications(profile.kyc_verifications || {});
-        // If onboarding already completed and no specific step requested, redirect to profile
-        if (profile.onboarding_complete && !stepParam) {
-          router.push('/tutor/dashboard');
-          return;
-        }
+
+        const initialFullName = profile.full_name || u.user_metadata?.full_name || u.user_metadata?.name || '';
+        setStep0FullName(initialFullName);
+        setStep0Phone(profile.phone || '');
+        setStep0City(profile.city || '');
+        setStep0Area(profile.area || '');
+
+        // Determine if Step 0 is needed: only if user signed up with Google and phone/city are not set yet
+        const needsStep0 = isGoogle && (!profile.phone || !profile.city || profile.onboarding_step === 0);
+
         setBio(profile.bio || '');
         setAbout(profile.about || '');
         setHourlyRate(profile.hourly_rate ? String(profile.hourly_rate) : '');
@@ -484,18 +670,69 @@ function OnboardingContent() {
         setSelectedLanguages(profile.languages || []);
         setAvatarUrl(profile.avatar_url || '');
         setCoverUrl(profile.cover_url || '');
-        setProfileName(profile.full_name || u.user_metadata?.full_name || '');
+        setProfileName(initialFullName);
         setProfileEmail(profile.email || u.email || '');
         setCurrentRole(profile.current_role || '');
         setCurrentCompany(profile.current_company || '');
         setQualification(profile.qualification || '');
+
+        // Initialize education qualification
+        let initLevel = '';
+        let initField = '';
+        if (profile.kyc_docs?.education_level) {
+          initLevel = profile.kyc_docs.education_level;
+          initField = profile.kyc_docs.education_title || profile.kyc_docs.education_field || '';
+        } else if (profile.qualification) {
+          const parts = profile.qualification.split(' - ');
+          if (parts.length >= 2 && EDUCATION_LEVELS.includes(parts[0].trim())) {
+            initLevel = parts[0].trim();
+            initField = parts.slice(1).join(' - ').trim();
+          } else if (EDUCATION_LEVELS.includes(profile.qualification.trim())) {
+            initLevel = profile.qualification.trim();
+          } else {
+            const match = EDUCATION_LEVELS.find(lvl => 
+              profile.qualification.toLowerCase().startsWith(lvl.toLowerCase())
+            );
+            if (match) {
+              initLevel = match;
+              initField = profile.qualification.substring(match.length).replace(/^[\s\-–—:]+/, '').trim();
+            } else {
+              initField = profile.qualification;
+            }
+          }
+        }
+        setEducationLevel(initLevel);
+        setEducationField(initField);
 
         if (profile.kyc_docs && Object.keys(profile.kyc_docs).length > 0) {
           setHasKycDocs(true);
           if (profile.kyc_docs.cnic_front) setCnicFront(profile.kyc_docs.cnic_front);
           if (profile.kyc_docs.cnic_back) setCnicBack(profile.kyc_docs.cnic_back);
           if (profile.kyc_docs.degree) setDegree(profile.kyc_docs.degree);
-          if (profile.kyc_docs.certificates) setCertificates(profile.kyc_docs.certificates);
+          
+          if (profile.kyc_docs.additional_degrees && Array.isArray(profile.kyc_docs.additional_degrees)) {
+            setAdditionalDegrees(profile.kyc_docs.additional_degrees.map((d, i) => ({
+              id: d.id || `ad-${i}`,
+              level: d.level || '',
+              field: d.field || d.education_title || '',
+              file: d.path || d.file || null,
+              path: d.path || ''
+            })));
+          }
+
+          if (profile.kyc_docs.certificates && Array.isArray(profile.kyc_docs.certificates)) {
+            setCertificates(profile.kyc_docs.certificates.map((c, i) => {
+              if (typeof c === 'string') {
+                return { id: `cert-${i}`, title: `Certificate ${i + 1}`, file: c, path: c };
+              }
+              return {
+                id: c.id || `cert-${i}`,
+                title: c.title || c.name || `Certificate ${i + 1}`,
+                file: c.path || c.file || null,
+                path: c.path || ''
+              };
+            }));
+          }
         }
         if (profile.kyc_objections) {
           setKycObjections(profile.kyc_objections);
@@ -542,15 +779,21 @@ function OnboardingContent() {
           (profile.teaching_modes || []).forEach(mode => { m[mode] = true; });
           setTeachingModes(m);
         }
-        if (stepParam) {
+        if (stepParam !== null && stepParam !== undefined) {
           const parsedStep = parseInt(stepParam);
-          if (parsedStep >= 1 && parsedStep <= 9) {
+          if (!isNaN(parsedStep) && parsedStep >= 0 && parsedStep <= 8) {
             setStep(parsedStep);
-          } else if (profile.onboarding_step) {
+          } else if (needsStep0) {
+            setStep(0);
+          } else if (profile.onboarding_step !== undefined) {
             setStep(Math.max(1, profile.onboarding_step));
           }
-        } else if (profile.onboarding_step) {
+        } else if (needsStep0) {
+          setStep(0);
+        } else if (profile.onboarding_step !== undefined) {
           setStep(Math.max(1, profile.onboarding_step));
+        } else {
+          setStep(1);
         }
       }
 
@@ -629,6 +872,16 @@ function OnboardingContent() {
     try {
       let updates = { onboarding_step: nextStep || step };
 
+      if (step === 0) {
+        updates = {
+          ...updates,
+          full_name: step0FullName.trim(),
+          phone: step0Phone.trim(),
+          city: step0City.trim(),
+          area: step0Area ? step0Area.trim() : null
+        };
+      }
+
       if (step === 1) {
         let avatar_path = avatarUrl;
         let cover_path = coverUrl;
@@ -686,16 +939,61 @@ function OnboardingContent() {
       }
 
       if (step === 2) {
-        const kyc_docs = {};
+        const { data: currentTutor } = await supabase.from('tutor_profiles').select('kyc_docs').eq('id', user.id).maybeSingle();
+        const kyc_docs = { ...(currentTutor?.kyc_docs || {}) };
+        
         if (cnicFront) kyc_docs.cnic_front = await uploadFile(cnicFront, 'kyc');
         if (cnicBack) kyc_docs.cnic_back = await uploadFile(cnicBack, 'kyc');
         if (degree) kyc_docs.degree = await uploadFile(degree, 'kyc');
-        const certPaths = [];
-        for (const cert of certificates) {
-          const p = await uploadFile(cert, 'kyc');
-          if (p) certPaths.push(p);
+
+        const fullDegreeName = [educationLevel, educationField.trim()].filter(Boolean).join(' - ');
+        if (educationLevel) kyc_docs.education_level = educationLevel;
+        if (educationField.trim()) kyc_docs.education_title = educationField.trim();
+        if (fullDegreeName) {
+          kyc_docs.degree_name = fullDegreeName;
+          updates.qualification = fullDegreeName;
+          setQualification(fullDegreeName);
         }
-        if (certPaths.length > 0) kyc_docs.certificates = certPaths;
+
+        if (additionalDegrees.length > 0) {
+          const savedAdditional = [];
+          for (const ad of additionalDegrees) {
+            if (!ad.file && !ad.level && !ad.field) continue;
+            let p = null;
+            if (ad.file) {
+              p = await uploadFile(ad.file, 'kyc');
+            }
+            savedAdditional.push({
+              level: ad.level || '',
+              field: ad.field?.trim() || '',
+              degree_name: [ad.level, ad.field?.trim()].filter(Boolean).join(' - '),
+              path: p || ad.path || ''
+            });
+          }
+          if (savedAdditional.length > 0) {
+            kyc_docs.additional_degrees = savedAdditional;
+          }
+        }
+
+        if (certificates.length > 0) {
+          const savedCerts = [];
+          for (const cert of certificates) {
+            if (!cert.file && !cert.title?.trim()) continue;
+            let p = null;
+            if (cert.file) {
+              p = await uploadFile(cert.file, 'kyc');
+            }
+            savedCerts.push({
+              title: cert.title?.trim() || 'Certificate',
+              path: p || cert.path || '',
+              name: typeof cert.file === 'object' && cert.file?.name ? cert.file.name : (cert.title || 'Certificate')
+            });
+          }
+          if (savedCerts.length > 0) {
+            kyc_docs.certificates = savedCerts;
+          }
+        }
+
         if (Object.keys(kyc_docs).length > 0) updates.kyc_docs = kyc_docs;
         setHasKycDocs(true);
       }
@@ -806,6 +1104,8 @@ function OnboardingContent() {
       if (updateErr) throw updateErr;
 
       if (updates.onboarding_complete) {
+        setOnboardingComplete(true);
+        setProfile(prev => prev ? { ...prev, onboarding_complete: true } : null);
         try {
           await supabase.rpc('claim_tutor_onboarding_bonus', { p_tutor_id: user.id });
         } catch (bonusErr) {
@@ -824,10 +1124,68 @@ function OnboardingContent() {
     }
   };
 
+  const handleStep0Continue = async () => {
+    setStep0Error('');
+    if (!step0FullName.trim()) {
+      setStep0Error('Please enter your full name.');
+      return;
+    }
+    if (!step0Phone.trim() || step0Phone.trim().replace(/\D/g, '').length < 7) {
+      setStep0Error('Please enter a valid phone number (at least 7 digits).');
+      return;
+    }
+    if (!step0City.trim()) {
+      setStep0Error('Please select your city or tehsil.');
+      return;
+    }
+
+    setSaving(true);
+    setSaveMsg('');
+    const supabase = createClient();
+    try {
+      const updates = {
+        full_name: step0FullName.trim(),
+        phone: step0Phone.trim(),
+        city: step0City.trim(),
+        area: step0Area ? step0Area.trim() : null,
+        onboarding_step: 1
+      };
+      const { error: dbErr } = await supabase
+        .from('tutor_profiles')
+        .update(updates)
+        .eq('id', user.id);
+
+      if (dbErr) throw dbErr;
+
+      setProfileName(step0FullName.trim());
+      setStep(1);
+      setSaveMsg('Saved!');
+      setTimeout(() => setSaveMsg(''), 2000);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      console.error('Error saving step 0:', err);
+      const errMsg = err?.message || 'Failed to save details. Please try again.';
+      setStep0Error(errMsg);
+      setSaveMsg(`Error: ${errMsg}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getStepDisplayName = (sNum) => {
+    if (sNum === 0) return 'Step 0 (Contact & City)';
+    return `Step ${sNum} (${STEP_LABELS[sNum - 1] || ''})`;
+  };
+
   const next = async () => {
+    if (step === 0) {
+      await handleStep0Continue();
+      return;
+    }
+
     if (step === TOTAL_STEPS) {
       if (!isAllStepsCompleted) {
-        alert(`Cannot complete onboarding. You have ${incompleteSteps.length} incomplete step(s): ${incompleteSteps.map(s => `Step ${s} (${STEP_LABELS[s - 1]})`).join(', ')}`);
+        alert(`Cannot complete onboarding. You have ${incompleteSteps.length} incomplete step(s): ${incompleteSteps.map(s => getStepDisplayName(s)).join(', ')}`);
         return;
       }
       await saveStep(TOTAL_STEPS + 1);
@@ -842,15 +1200,20 @@ function OnboardingContent() {
   };
 
   const back = () => {
-    setStep(s => Math.max(1, s - 1));
+    const minStep = isGoogleSignup ? 0 : 1;
+    setStep(s => Math.max(minStep, s - 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const skip = () => {
+    if (step === 0) {
+      setStep0Error('Please fill in your name, phone, and city before proceeding.');
+      return;
+    }
     const ns = step + 1;
     if (ns > TOTAL_STEPS) {
       if (!isAllStepsCompleted) {
-        alert(`Cannot complete onboarding. You have ${incompleteSteps.length} incomplete step(s): ${incompleteSteps.map(s => `Step ${s} (${STEP_LABELS[s - 1]})`).join(', ')}`);
+        alert(`Cannot complete onboarding. You have ${incompleteSteps.length} incomplete step(s): ${incompleteSteps.map(s => getStepDisplayName(s)).join(', ')}`);
         return;
       }
       saveStep(TOTAL_STEPS + 1);
@@ -964,7 +1327,9 @@ function OnboardingContent() {
   // ============================================================
   // PROGRESS WIDGET CALCULATOR
   // ============================================================
-  const checkSetupAccount = true;
+  const checkSetupAccount = isGoogleSignup
+    ? (step0FullName.trim().length > 0 && step0Phone.trim().replace(/\D/g, '').length >= 7 && step0City.trim().length > 0)
+    : (!!profileName && !!user);
   const checkProfilePhoto = !!avatarFile || (!!avatarUrl && !avatarDeleted);
   const checkBio = bio.trim().length > 10;
   const checkKyc = !!cnicFront || !!cnicBack || !!degree || hasKycDocs;
@@ -972,7 +1337,7 @@ function OnboardingContent() {
   const checkExperience = experiences.some(e => e.institution && e.role && e.year_from);
   const checkRates = !!hourlyRate && Object.values(availSlots).some(v => v && v.active);
 
-  let totalPercent = 10; // Account setup
+  let totalPercent = checkSetupAccount ? 10 : 0;
   if (checkProfilePhoto) totalPercent += 10;
   if (checkBio) totalPercent += 10;
   if (checkKyc) totalPercent += 15;
@@ -981,7 +1346,7 @@ function OnboardingContent() {
   if (checkRates) totalPercent += 25;
 
   const checklistItems = [
-    { label: 'Setup account', weight: '10%', active: checkSetupAccount },
+    { label: isGoogleSignup ? 'Contact & City Info' : 'Setup account', weight: '10%', active: checkSetupAccount },
     { label: 'Upload profile photo', weight: '10%', active: checkProfilePhoto },
     { label: 'Personal Info & Bio', weight: '10%', active: checkBio },
     { label: 'ID & Degree Upload', weight: '15%', active: checkKyc },
@@ -989,8 +1354,6 @@ function OnboardingContent() {
     { label: 'Work Experience', weight: '15%', active: checkExperience },
     { label: 'Rates & Availability', weight: '25%', active: checkRates },
   ];
-
-
 
   const getForbiddenMatches = (text) => {
     if (!text) return [];
@@ -1016,6 +1379,8 @@ function OnboardingContent() {
 
   const isStepValid = (s) => {
     switch (s) {
+      case 0:
+        return step0FullName.trim().length > 0 && step0Phone.trim().replace(/\D/g, '').length >= 7 && step0City.trim().length > 0;
       case 1:
         return (!!avatarFile || (!!avatarUrl && !avatarDeleted)) && profileName.trim().length > 0 && bio.trim().length >= 10;
       case 2:
@@ -1037,7 +1402,8 @@ function OnboardingContent() {
     }
   };
 
-  const incompleteSteps = [1, 2, 3, 4, 5, 6, 7, 8].filter(s => !isStepValid(s));
+  const checkSteps = isGoogleSignup ? [0, 1, 2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 4, 5, 6, 7, 8];
+  const incompleteSteps = checkSteps.filter(s => !isStepValid(s));
   const isAllStepsCompleted = incompleteSteps.length === 0;
 
   const getHighlightedHtml = (text) => {
@@ -1061,6 +1427,159 @@ function OnboardingContent() {
   // ============================================================
   const renderStep = () => {
     switch (step) {
+      // ------- STEP 0: Contact & Location (Google Signup) -------
+      case 0:
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <StepHeader 
+              step={0} 
+              title="Personal & Location Setup" 
+              desc="Since you registered with Google, please provide your contact and city details before continuing." 
+            />
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '16px 20px',
+              backgroundColor: 'var(--brand-green-soft)',
+              border: '1px solid var(--brand-green-dark)',
+              borderRadius: '12px'
+            }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--brand-green-dark)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                flexShrink: 0
+              }}>
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--brand-green-dark)' }}>
+                  Welcome to TutorOnline!
+                </div>
+                <div style={{ fontSize: '13px', color: 'var(--slate)', marginTop: '2px', lineHeight: '1.4' }}>
+                  We received your Google sign-in. Please confirm your full name, mobile/WhatsApp number, and primary city before proceeding.
+                </div>
+              </div>
+            </div>
+
+            {step0Error && (
+              <div style={{
+                backgroundColor: '#FEF2F2',
+                border: '1px solid #EF4444',
+                borderRadius: '10px',
+                padding: '12px 16px',
+                color: '#B91C1C',
+                fontSize: '13px',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <AlertCircle size={16} color="#EF4444" style={{ flexShrink: 0 }} />
+                <span>{step0Error}</span>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Full Name */}
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', fontSize: '14px', color: 'var(--ink)' }}>
+                  Full Name <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <User size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+                  <Input
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={step0FullName}
+                    onChange={e => setStep0FullName(e.target.value)}
+                    required
+                    style={{ paddingLeft: '44px', height: '48px', fontSize: '14px', borderRadius: '8px' }}
+                  />
+                </div>
+              </div>
+
+              {/* Email (Readonly) */}
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', fontSize: '14px', color: 'var(--ink)' }}>
+                  Email Address
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Input
+                    type="email"
+                    value={profileEmail || user?.email || ''}
+                    disabled
+                    style={{ height: '48px', fontSize: '14px', borderRadius: '8px', backgroundColor: 'var(--surface-soft)', color: 'var(--stone)', cursor: 'not-allowed' }}
+                  />
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--stone)', marginTop: '4px' }}>
+                  Linked with your Google account.
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', fontSize: '14px', color: 'var(--ink)' }}>
+                  Phone Number <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Phone size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--stone)' }} />
+                  <Input
+                    type="tel"
+                    placeholder="e.g. 0300 1234567 or +92 300 1234567"
+                    value={step0Phone}
+                    onChange={e => setStep0Phone(e.target.value)}
+                    required
+                    style={{ paddingLeft: '44px', height: '48px', fontSize: '14px', borderRadius: '8px' }}
+                  />
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--stone)', marginTop: '4px' }}>
+                  Students and parents will use this number to contact you for tutoring assignments.
+                </div>
+              </div>
+
+              {/* City / Tehsil Selector */}
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', fontSize: '14px', color: 'var(--ink)' }}>
+                  Primary City / Tehsil <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+                <TehsilSelector
+                  mode="form"
+                  value={{ tehsil: step0City, area: step0Area }}
+                  onChange={(payload, formatted) => {
+                    if (payload) {
+                      setStep0City(payload.tehsil || formatted || '');
+                      if (payload.area) setStep0Area(payload.area);
+                    } else {
+                      setStep0City('');
+                    }
+                  }}
+                  placeholder="Select your Tehsil / City"
+                  required
+                  triggerStyle={{
+                    height: '48px',
+                    paddingLeft: '16px',
+                    paddingRight: '16px',
+                    borderRadius: '8px',
+                    border: '1.5px solid var(--hairline-strong)',
+                    fontSize: '14px'
+                  }}
+                />
+                <div style={{ fontSize: '12px', color: 'var(--stone)', marginTop: '4px' }}>
+                  Select your city/tehsil to receive matching home and online tuition requests.
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
       // ------- STEP 1: Profile Photo & Cover -------
       case 1:
         return (
@@ -1279,9 +1798,51 @@ function OnboardingContent() {
                 <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--stone)' }}>{profileEmail || '—'}</div>
               </div>
               <div>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--stone)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Phone Number</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>{step0Phone || '—'}</div>
+                  {isGoogleSignup && (
+                    <Pencil
+                      size={13}
+                      style={{ cursor: 'pointer', color: 'var(--stone)', transition: 'color 0.15s ease' }}
+                      onMouseEnter={e => e.target.style.color = 'var(--ink)'}
+                      onMouseLeave={e => e.target.style.color = 'var(--stone)'}
+                      onClick={() => {
+                        setStep(0);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      title="Edit Phone in Step 0"
+                    />
+                  )}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--stone)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>City / Location</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>
+                    {step0City ? (step0Area ? `${step0Area}, ${step0City}` : step0City) : '—'}
+                  </div>
+                  {isGoogleSignup && (
+                    <Pencil
+                      size={13}
+                      style={{ cursor: 'pointer', color: 'var(--stone)', transition: 'color 0.15s ease' }}
+                      onMouseEnter={e => e.target.style.color = 'var(--ink)'}
+                      onMouseLeave={e => e.target.style.color = 'var(--stone)'}
+                      onClick={() => {
+                        setStep(0);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      title="Edit City / Location in Step 0"
+                    />
+                  )}
+                </div>
+              </div>
+              <div>
                 <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--stone)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Account Type</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--accent-orange)' }}>⚠️ Unverified</div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '14px', fontWeight: 600, color: 'var(--accent-orange)' }}>
+                    <AlertCircle size={15} color="var(--accent-orange)" /> Unverified
+                  </div>
                   <Pencil
                     size={13}
                     style={{ cursor: 'pointer', color: 'var(--stone)', transition: 'color 0.15s ease' }}
@@ -1331,27 +1892,328 @@ function OnboardingContent() {
               <AlertCircle size={16} color="#B8860B" style={{ flexShrink: 0, marginTop: '2px' }} />
               <p style={{ margin: 0, fontSize: '13px', color: '#7A5C00' }}>All documents are stored in an encrypted, private folder and are never shared or deleted even upon account closure.</p>
             </div>
-            <div className="grid-2col" style={{ gap: '16px' }}>
-              <UploadBox label="CNIC / Passport – Front" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicFront} onChange={setCnicFront} docKey="cnic_front" kycVerifications={kycVerifications} onViewObjections={showObjectionsModal} />
-              <UploadBox label="CNIC / Passport – Back" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicBack} onChange={setCnicBack} docKey="cnic_back" kycVerifications={kycVerifications} onViewObjections={showObjectionsModal} />
-            </div>
-            <UploadBox label="Latest Degree / Transcript" hint="Required for Academic Verified badge" accept="image/*,.pdf" icon={BookOpen} value={degree} onChange={setDegree} docKey="degree" kycVerifications={kycVerifications} onViewObjections={showObjectionsModal} />
+
+            {/* CNIC Upload Section */}
             <div>
-              <label style={{ display: 'block', fontWeight: 600, marginBottom: '10px', fontSize: '14px' }}>Additional Certificates <span style={{ color: 'var(--stone)', fontWeight: 400 }}>(optional)</span></label>
-              {certificates.map((cert, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                  <div style={{ flex: 1, backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-md)', padding: '8px 12px', fontSize: '13px', color: 'var(--brand-green-dark)', fontWeight: 500 }}>
-                    ✓ {cert.name}
+              <label style={{ display: 'block', fontWeight: 700, fontSize: '14px', color: 'var(--ink)', marginBottom: '10px' }}>
+                Government National Identity (CNIC / Passport)
+              </label>
+              <div className="grid-2col" style={{ gap: '16px' }}>
+                <UploadBox label="CNIC / Passport – Front" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicFront} onChange={setCnicFront} docKey="cnic_front" kycVerifications={kycVerifications} onViewObjections={showObjectionsModal} />
+                <UploadBox label="CNIC / Passport – Back" hint="JPG, PNG or PDF, max 5MB" accept="image/*,.pdf" icon={FileText} value={cnicBack} onChange={setCnicBack} docKey="cnic_back" kycVerifications={kycVerifications} onViewObjections={showObjectionsModal} />
+              </div>
+            </div>
+
+            {/* Education & Degree Document Section */}
+            <div style={{
+              backgroundColor: 'var(--canvas)',
+              border: '1px solid var(--hairline-strong)',
+              borderRadius: 'var(--rounded-lg)',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <GraduationCap size={20} color="var(--brand-green-dark)" />
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--ink)' }}>
+                      Education & Degree Documents
+                    </h4>
+                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--stone)' }}>
+                      Select your degree qualification and field of study, then upload your document.
+                    </p>
                   </div>
-                  <button onClick={() => setCertificates(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-orange)' }}>
-                    <Trash2 size={16} />
+                </div>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--brand-green-dark)', backgroundColor: 'var(--brand-green-soft)', padding: '3px 10px', borderRadius: 'var(--rounded-full)' }}>
+                  Required for Academic Verified badge
+                </span>
+              </div>
+
+              {/* Select education dropdown - text field row */}
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--slate)', marginBottom: '8px' }}>
+                  Degree / Education Name
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <select
+                    value={educationLevel}
+                    onChange={e => setEducationLevel(e.target.value)}
+                    style={{
+                      minWidth: '150px',
+                      height: '46px',
+                      padding: '0 14px',
+                      borderRadius: 'var(--rounded-md)',
+                      border: '1.5px solid var(--hairline-strong)',
+                      backgroundColor: 'var(--canvas)',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: educationLevel ? 'var(--ink)' : 'var(--stone)',
+                      cursor: 'pointer',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="" disabled>Select Level</option>
+                    {EDUCATION_LEVELS.map(lvl => (
+                      <option key={lvl} value={lvl}>{lvl}</option>
+                    ))}
+                  </select>
+
+                  <span style={{ color: 'var(--stone)', fontWeight: 700, fontSize: '18px', userSelect: 'none' }}>—</span>
+
+                  <input
+                    type="text"
+                    placeholder="Which education (e.g. Biology, Maths, Science, Computer Science)"
+                    value={educationField}
+                    onChange={e => setEducationField(e.target.value)}
+                    style={{
+                      flex: 1,
+                      minWidth: '220px',
+                      height: '46px',
+                      padding: '0 14px',
+                      borderRadius: 'var(--rounded-md)',
+                      border: '1.5px solid var(--hairline-strong)',
+                      backgroundColor: 'var(--canvas)',
+                      fontSize: '14px',
+                      color: 'var(--ink)',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                {/* Live formatted display */}
+                {(educationLevel || educationField.trim()) && (
+                  <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--stone)' }}>Appears on profile as:</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', color: 'var(--brand-green-dark)', padding: '2px 10px', borderRadius: 'var(--rounded-full)', fontSize: '12px', fontWeight: 700 }}>
+                      <GraduationCap size={13} />
+                      {[educationLevel, educationField.trim()].filter(Boolean).join(' - ')}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Document */}
+              <UploadBox
+                label="Upload Degree / Transcript Document"
+                hint="Scanned copy or photo · JPG, PNG or PDF, max 5MB"
+                accept="image/*,.pdf"
+                icon={BookOpen}
+                value={degree}
+                onChange={setDegree}
+                docKey="degree"
+                kycVerifications={kycVerifications}
+                onViewObjections={showObjectionsModal}
+              />
+
+              {/* Additional degrees if tutor holds multiple qualifications */}
+              {additionalDegrees.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--slate)' }}>
+                    Additional Education Qualifications
+                  </label>
+                  {additionalDegrees.map((ad, idx) => (
+                    <div key={ad.id || idx} style={{ padding: '14px', backgroundColor: 'var(--surface-soft)', border: '1px solid var(--hairline-strong)', borderRadius: 'var(--rounded-md)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--slate)', textTransform: 'uppercase' }}>
+                          Degree #{idx + 2}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setAdditionalDegrees(prev => prev.filter((_, i) => i !== idx))}
+                          style={{ background: 'none', border: 'none', color: 'var(--accent-orange)', cursor: 'pointer', padding: '2px 4px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <Trash2 size={14} /> Remove
+                        </button>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <select
+                          value={ad.level}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setAdditionalDegrees(prev => prev.map((item, i) => i === idx ? { ...item, level: val } : item));
+                          }}
+                          style={{
+                            minWidth: '130px',
+                            height: '42px',
+                            padding: '0 12px',
+                            borderRadius: 'var(--rounded-md)',
+                            border: '1px solid var(--hairline-strong)',
+                            backgroundColor: 'var(--canvas)',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="" disabled>Select Level</option>
+                          {EDUCATION_LEVELS.map(lvl => (
+                            <option key={lvl} value={lvl}>{lvl}</option>
+                          ))}
+                        </select>
+                        <span style={{ color: 'var(--stone)', fontWeight: 700 }}>—</span>
+                        <input
+                          type="text"
+                          placeholder="Which education (e.g. Maths, Pre-Medical)"
+                          value={ad.field}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setAdditionalDegrees(prev => prev.map((item, i) => i === idx ? { ...item, field: val } : item));
+                          }}
+                          style={{
+                            flex: 1,
+                            minWidth: '200px',
+                            height: '42px',
+                            padding: '0 12px',
+                            borderRadius: 'var(--rounded-md)',
+                            border: '1px solid var(--hairline-strong)',
+                            backgroundColor: 'var(--canvas)',
+                            fontSize: '13px'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', border: '1px dashed var(--brand-green-dark)', borderRadius: 'var(--rounded-md)', backgroundColor: 'var(--canvas)', color: 'var(--brand-green-dark)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                          <Upload size={14} />
+                          {ad.file ? (typeof ad.file === 'string' ? ad.file.split('/').pop() : ad.file.name) : 'Upload Document'}
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            style={{ display: 'none' }}
+                            onChange={e => {
+                              if (e.target.files?.[0]) {
+                                const f = e.target.files[0];
+                                setAdditionalDegrees(prev => prev.map((item, i) => i === idx ? { ...item, file: f, path: '' } : item));
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setAdditionalDegrees(prev => [...prev, { id: Date.now(), level: '', field: '', file: null, path: '' }])}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 14px',
+                    border: '1px dashed var(--hairline-strong)',
+                    borderRadius: 'var(--rounded-md)',
+                    backgroundColor: 'transparent',
+                    color: 'var(--brand-green-dark)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Plus size={14} /> Add Another Degree (optional)
+                </button>
+              </div>
+            </div>
+
+            {/* Additional Certificates Section */}
+            <div style={{
+              backgroundColor: 'var(--canvas)',
+              border: '1px solid var(--hairline-strong)',
+              borderRadius: 'var(--rounded-lg)',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Award size={20} color="var(--brand-green-dark)" />
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--ink)' }}>
+                      Additional Certificates <span style={{ color: 'var(--stone)', fontWeight: 400, fontSize: '13px' }}>(optional)</span>
+                    </h4>
+                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--stone)' }}>
+                      Add professional teaching certifications, diplomas, language test scores (e.g. IELTS), or courses.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {certificates.length === 0 ? (
+                <div style={{ padding: '16px', backgroundColor: 'var(--surface-soft)', border: '1px dashed var(--hairline-strong)', borderRadius: 'var(--rounded-md)', textAlign: 'center' }}>
+                  <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--stone)' }}>
+                    No additional certificates added yet. Adding certifications boosts client trust.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setCertificates(prev => [...prev, { id: Date.now(), title: '', file: null, path: '' }])}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 16px',
+                      backgroundColor: 'var(--canvas)',
+                      border: '1.5px solid var(--brand-green-dark)',
+                      borderRadius: 'var(--rounded-md)',
+                      color: 'var(--brand-green-dark)',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Plus size={16} /> Add Certificate
                   </button>
                 </div>
-              ))}
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 16px', border: '1px dashed var(--hairline-strong)', borderRadius: 'var(--rounded-md)', color: 'var(--steel)', fontSize: '14px' }}>
-                <Plus size={16} /> Add Certificate
-                <input type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={e => e.target.files[0] && setCertificates(prev => [...prev, e.target.files[0]])} />
-              </label>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {certificates.map((cert, index) => (
+                    <CertificateItemRow
+                      key={cert.id || index}
+                      cert={cert}
+                      index={index}
+                      onUpdateTitle={(newTitle) => {
+                        setCertificates(prev => prev.map((c, i) => i === index ? { ...c, title: newTitle } : c));
+                      }}
+                      onUpdateFile={(newFile) => {
+                        setCertificates(prev => prev.map((c, i) => i === index ? { ...c, file: newFile, path: typeof newFile === 'string' ? newFile : '' } : c));
+                      }}
+                      onRemove={() => {
+                        setCertificates(prev => prev.filter((_, i) => i !== index));
+                      }}
+                    />
+                  ))}
+
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setCertificates(prev => [...prev, { id: Date.now(), title: '', file: null, path: '' }])}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 14px',
+                        border: '1px dashed var(--hairline-strong)',
+                        borderRadius: 'var(--rounded-md)',
+                        backgroundColor: 'transparent',
+                        color: 'var(--brand-green-dark)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Plus size={14} /> Add Another Certificate
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -1624,14 +2486,16 @@ function OnboardingContent() {
             <StepHeader step={6} title="Teaching Availability" desc="How do you want to teach? Select all that apply." />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {[
-                { key: 'own_place', label: 'At My Own Place', desc: 'Students come to your home or classroom', icon: '🏠' },
-                { key: 'home_visit', label: 'Home Visits', desc: "You travel to the student's location", icon: '🚗' },
-                { key: 'online', label: 'Online / Remote', desc: 'Via Zoom, Google Meet, or WhatsApp Video', icon: '💻' },
-              ].map(({ key, label, desc, icon }) => {
+                { key: 'own_place', label: 'At My Own Place', desc: 'Students come to your home or classroom', icon: Home },
+                { key: 'home_visit', label: 'Home Visits', desc: "You travel to the student's location", icon: Car },
+                { key: 'online', label: 'Online / Remote', desc: 'Via Zoom, Google Meet, or WhatsApp Video', icon: Laptop },
+              ].map(({ key, label, desc, icon: ModeIcon }) => {
                 const active = teachingModes[key];
                 return (
                   <button key={key} onClick={() => toggleMode(key)} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px', borderRadius: 'var(--rounded-md)', border: active ? '2px solid var(--brand-green-dark)' : '2px solid var(--hairline-strong)', backgroundColor: active ? 'var(--brand-green-soft)' : 'var(--canvas)', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
-                    <span style={{ fontSize: '28px' }}>{icon}</span>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '8px', backgroundColor: active ? 'rgba(0, 104, 74, 0.1)' : 'var(--surface-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <ModeIcon size={24} color={active ? 'var(--brand-green-dark)' : 'var(--slate)'} strokeWidth={1.75} />
+                    </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{label}</div>
                       <div style={{ fontSize: '13px', color: 'var(--steel)', marginTop: '2px' }}>{desc}</div>
@@ -1644,7 +2508,9 @@ function OnboardingContent() {
 
             {teachingModes.own_place && (
               <div style={{ border: '1px solid var(--hairline-strong)', borderRadius: 'var(--rounded-md)', padding: '20px', backgroundColor: 'var(--surface-soft)' }}>
-                <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: 600 }}>🏠 Your Teaching Space</h4>
+                <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Home size={18} color="var(--brand-green-dark)" /> Your Teaching Space
+                </h4>
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>Address / Area</label>
                   <Input placeholder="e.g. DHA Phase 5, Lahore (exact address is not shown publicly)" value={ownPlaceAddress} onChange={e => setOwnPlaceAddress(e.target.value)} />
@@ -1671,7 +2537,9 @@ function OnboardingContent() {
 
             {teachingModes.home_visit && (
               <div style={{ border: '1px solid var(--hairline-strong)', borderRadius: 'var(--rounded-md)', padding: '20px', backgroundColor: 'var(--surface-soft)' }}>
-                <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: 600 }}>🚗 Home Visit Coverage</h4>
+                <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Car size={18} color="var(--brand-green-dark)" /> Home Visit Coverage
+                </h4>
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>Service Radius: <strong style={{ color: 'var(--brand-green-dark)' }}>{serviceRadius} km</strong></label>
                   <input type="range" min={1} max={50} value={serviceRadius} onChange={e => setServiceRadius(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--brand-green-dark)' }} />
@@ -1923,7 +2791,7 @@ function OnboardingContent() {
                         }}
                       >
                         {match.value}
-                        <span style={{ fontSize: '10px', opacity: 0.8 }}>ℹ️</span>
+                        <Info size={11} style={{ opacity: 0.8 }} />
                       </span>
                     ))}
                   </div>
@@ -1969,8 +2837,9 @@ function OnboardingContent() {
               </label>
             </div>
 
-            <div style={{ backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-md)', padding: '16px', fontSize: '14px', color: 'var(--brand-green-dark)', fontWeight: 500 }}>
-              🎉 You&apos;re almost done! After submitting, your profile will be reviewed by our admin team. You&apos;ll be notified when you are approved.
+            <div style={{ backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-md)', padding: '16px', fontSize: '14px', color: 'var(--brand-green-dark)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Sparkles size={18} color="var(--brand-green-dark)" style={{ flexShrink: 0 }} />
+              <span>You&apos;re almost done! After submitting, your profile will be reviewed by our admin team. You&apos;ll be notified when you are approved.</span>
             </div>
           </div>
         );
@@ -2017,25 +2886,31 @@ function OnboardingContent() {
         <div style={{ maxWidth: '1150px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--slate)' }}>Tutor Profile Setup</span>
-            <button onClick={skip} style={{ background: 'none', border: 'none', color: 'var(--steel)', fontSize: '13px', cursor: 'pointer', padding: '4px 8px' }}>
-              Skip for now →
-            </button>
+            {step !== 0 && (
+              <button onClick={skip} style={{ background: 'none', border: 'none', color: 'var(--steel)', fontSize: '13px', cursor: 'pointer', padding: '4px 8px' }}>
+                Skip for now →
+              </button>
+            )}
           </div>
 
           {/* Mobile Compact Progress Bar */}
           <div className="mobile-onboarding-stepper" style={{ marginBottom: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
-                Step {step} of {TOTAL_STEPS}: {STEP_LABELS[step - 1]}
+                {step === 0 
+                  ? 'Step 0: Contact & Location Details' 
+                  : `Step ${step} of ${TOTAL_STEPS}: ${STEP_LABELS[step - 1]}`}
               </span>
               <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-green-dark)' }}>
-                {Math.round(((step - 1) / (TOTAL_STEPS - 1)) * 100)}%
+                {isGoogleSignup
+                  ? Math.round((step / TOTAL_STEPS) * 100)
+                  : Math.round(((step - 1) / (TOTAL_STEPS - 1)) * 100)}%
               </span>
             </div>
             <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--hairline-strong)', borderRadius: '999px', overflow: 'hidden', marginTop: '6px' }}>
               <div style={{
                 height: '100%',
-                width: `${((step - 1) / (TOTAL_STEPS - 1)) * 100}%`,
+                width: `${isGoogleSignup ? (step / TOTAL_STEPS) * 100 : ((step - 1) / (TOTAL_STEPS - 1)) * 100}%`,
                 backgroundColor: '#41B01B',
                 borderRadius: '999px',
                 transition: 'width 0.4s ease'
@@ -2068,7 +2943,7 @@ function OnboardingContent() {
             <div style={{
               position: 'absolute',
               left: '30px',
-              width: `calc(${((step - 1) / (TOTAL_STEPS - 1)) * 100}% - ${((step - 1) / (TOTAL_STEPS - 1)) * 100 > 0 ? '10px' : '0px'})`,
+              width: `calc(${isGoogleSignup ? (step / TOTAL_STEPS) * 100 : ((step - 1) / (TOTAL_STEPS - 1)) * 100}% - ${(isGoogleSignup ? step / TOTAL_STEPS : (step - 1) / (TOTAL_STEPS - 1)) * 100 > 0 ? '10px' : '0px'})`,
               top: '18px',
               height: '3px',
               backgroundColor: '#41B01B',
@@ -2077,8 +2952,10 @@ function OnboardingContent() {
             }} />
 
             {/* Stepper Steps */}
-            {STEP_LABELS.map((labelText, i) => {
-              const stepNum = i + 1;
+            {(isGoogleSignup
+              ? [{ stepNum: 0, labelText: 'Contact & City' }, ...STEP_LABELS.map((labelText, i) => ({ stepNum: i + 1, labelText }))]
+              : STEP_LABELS.map((labelText, i) => ({ stepNum: i + 1, labelText }))
+            ).map(({ stepNum, labelText }) => {
               const valid = isStepValid(stepNum);
               const current = step === stepNum;
               const isPast = step > stepNum;
@@ -2107,7 +2984,7 @@ function OnboardingContent() {
 
               return (
                 <div 
-                  key={i} 
+                  key={stepNum} 
                   className="step-container" 
                   onClick={() => { setStep(stepNum); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   style={{
@@ -2148,7 +3025,7 @@ function OnboardingContent() {
                     textAlign: 'center',
                     whiteSpace: 'nowrap'
                   }}>
-                    {labelText} {isSkippedOrInvalid && '⚠️'}
+                    {labelText} {isSkippedOrInvalid && <AlertCircle size={11} color="#EF4444" style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '2px' }} />}
                   </span>
                 </div>
               );
@@ -2198,6 +3075,45 @@ function OnboardingContent() {
 
       {/* Content */}
       <div style={{ maxWidth: '1150px', margin: '0 auto', padding: '40px 24px 120px' }}>
+        {(onboardingComplete || profile?.onboarding_complete) && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+            backgroundColor: 'var(--brand-green-soft)',
+            border: '1px solid var(--brand-green-dark)',
+            borderRadius: '12px',
+            padding: '14px 20px',
+            marginBottom: '24px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <CheckCircle2 size={20} color="var(--brand-green-dark)" />
+              <div>
+                <span style={{ fontWeight: 700, color: 'var(--brand-green-dark)', fontSize: '14px' }}>
+                  Profile Settings &amp; Editing Mode
+                </span>
+                <div style={{ fontSize: '12px', color: 'var(--slate)', marginTop: '2px' }}>
+                  Your profile is live. You can review or edit any section and save your changes anytime.
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <Link href="/tutor/dashboard" style={{ textDecoration: 'none' }}>
+                <Button variant="secondary" style={{ height: '34px', fontSize: '12px', padding: '0 14px' }}>
+                  ← Dashboard
+                </Button>
+              </Link>
+              <Link href={`/tutors/${user?.id}`} style={{ textDecoration: 'none' }}>
+                <Button variant="primary" style={{ height: '34px', fontSize: '12px', padding: '0 14px', backgroundColor: 'var(--brand-green-dark)', color: '#fff' }}>
+                  View Live Profile →
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+
         <div className="onboarding-grid">
 
           {/* Left Column: Form Card */}
@@ -2262,7 +3178,7 @@ function OnboardingContent() {
                     gap: '4px'
                   }}
                 >
-                  Step {sNum}: {STEP_LABELS[sNum - 1]} ➔
+                  {getStepDisplayName(sNum)} ➔
                 </button>
               ))}
             </div>
@@ -2273,7 +3189,23 @@ function OnboardingContent() {
       {/* Bottom Nav */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: 'var(--canvas)', borderTop: '1px solid var(--hairline)', padding: '16px 24px', zIndex: 90 }}>
         <div style={{ maxWidth: '1150px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button onClick={back} disabled={step === 1} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 20px', border: '1px solid var(--hairline-strong)', borderRadius: 'var(--rounded-full)', background: 'none', color: step === 1 ? 'var(--muted)' : 'var(--slate)', cursor: step === 1 ? 'default' : 'pointer', fontSize: '14px', fontWeight: 500 }}>
+          <button 
+            onClick={back} 
+            disabled={isGoogleSignup ? step === 0 : step === 1} 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              padding: '10px 20px', 
+              border: '1px solid var(--hairline-strong)', 
+              borderRadius: 'var(--rounded-full)', 
+              background: 'none', 
+              color: (isGoogleSignup ? step === 0 : step === 1) ? 'var(--muted)' : 'var(--slate)', 
+              cursor: (isGoogleSignup ? step === 0 : step === 1) ? 'default' : 'pointer', 
+              fontSize: '14px', 
+              fontWeight: 500 
+            }}
+          >
             <ChevronLeft size={16} /> Back
           </button>
           <div style={{ fontSize: '13px', color: saveMsg === 'Saved!' ? 'var(--brand-green-dark)' : 'var(--accent-orange)', fontWeight: 500, minWidth: '80px', textAlign: 'center' }}>
@@ -2291,7 +3223,11 @@ function OnboardingContent() {
               cursor: (step === TOTAL_STEPS && (!isAllStepsCompleted || hasForbiddenContent || !acceptedTerms)) ? 'not-allowed' : 'pointer'
             }}
           >
-            {step === TOTAL_STEPS ? '🎉 Complete Profile' : <>Save & Continue <ChevronRight size={16} /></>}
+            {step === TOTAL_STEPS 
+              ? <><CheckCircle2 size={16} /> Complete Profile</> 
+              : step === 0 
+                ? <>Continue to Step 1 <ChevronRight size={16} /></> 
+                : <>Save &amp; Continue <ChevronRight size={16} /></>}
           </Button>
         </div>
       </div>
@@ -2327,9 +3263,10 @@ function OnboardingContent() {
               </h3>
               <button 
                 onClick={() => setObjectionsModal({ isOpen: false, url: '', docKey: '' })}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: 'var(--steel)' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--steel)', padding: '4px' }}
+                title="Close"
               >
-                ✕
+                <X size={20} />
               </button>
             </div>
 

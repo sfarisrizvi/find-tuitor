@@ -107,8 +107,8 @@ export async function POST(request) {
 
       // 2. Insert chat message referencing contract
       const messageContent = creator_role === 'tutor' 
-        ? `📄 Sent a Formal Tutor Contract (PKR ${amount}/${payment_plan})` 
-        : `✉️ Sent a Tuition Offer (PKR ${amount}/${payment_plan})`;
+        ? `Sent a Formal Tutor Contract (PKR ${amount}/${payment_plan})` 
+        : `Sent a Tuition Offer (PKR ${amount}/${payment_plan})`;
 
       const receiverId = creator_role === 'tutor' ? client_id : tutor_id;
 
@@ -345,7 +345,7 @@ export async function POST(request) {
       }
 
       // 4. Dispatch Notifications
-      const notifTitle = '🎉 Contract Approved & Tuition Started!';
+      const notifTitle = 'Contract Approved & Tuition Started!';
       const notifMsg = `Your tuition agreement of PKR ${approvedContract.amount}/${approvedContract.payment_plan} has been approved. Tuition is now active!`;
       
       const creatorId = approvedContract.creator_role === 'tutor' ? approvedContract.tutor_id : approvedContract.client_id;
@@ -421,7 +421,7 @@ export async function POST(request) {
         ? contractToComplete.tutor_id 
         : contractToComplete.client_id;
 
-      const completionMessage = `🏁 Tuition Contract Completed! Tuition agreement has concluded successfully. You can now leave a verified review.`;
+      const completionMessage = `Tuition Contract Completed! Tuition agreement has concluded successfully. You can now leave a verified review.`;
 
       await supabase
         .from('messages')
@@ -452,7 +452,7 @@ export async function POST(request) {
         .maybeSingle();
 
       if (receiverProf) {
-        const notifTitle = '🏁 Contract Marked Complete';
+        const notifTitle = 'Contract Marked Complete';
         const notifMsg = `Your tuition contract has ended. Please share your feedback and leave a verified review.`;
         const actionUrl = user.id === contractToComplete.client_id ? '/tutor/contracts' : '/client/dashboard';
 

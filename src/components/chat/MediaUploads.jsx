@@ -208,8 +208,9 @@ export function VoiceNoteRecorder({ onSendVoice, onCancel }) {
       {!recordedBlob ? (
         isRecording ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', padding: '4px 12px', borderRadius: '999px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#DC2626' }}>
-              🔴 {formatTime(duration)}
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#DC2626', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#DC2626', display: 'inline-block' }} />
+              {formatTime(duration)}
             </span>
             <button
               type="button"

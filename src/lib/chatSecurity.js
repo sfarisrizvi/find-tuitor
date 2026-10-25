@@ -36,7 +36,7 @@ export function inspectMessageSafety(text) {
     return {
       hasWarning: true,
       flagType,
-      warningText: `⚠️ Warning: Sharing contact information (${flagType}) in chat violates TutorOnline Terms of Service. Platform guarantees, verified tutor protections, and escrow services apply ONLY to in-app interactions.`
+      warningText: `Warning: Sharing contact information (${flagType}) in chat violates TutorOnline Terms of Service. Platform guarantees, verified tutor protections, and escrow services apply ONLY to in-app interactions.`
     };
   }
 

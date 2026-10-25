@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { 
   Search, MapPin, Star, ShieldCheck, Lock, ChevronDown, 
-  Award, BookOpen, Zap, SlidersHorizontal, User, ArrowUpDown
+  Award, BookOpen, Zap, SlidersHorizontal, User, ArrowUpDown, X
 } from 'lucide-react';
 import { createClient } from '../../../utils/supabase/client';
 import { TehsilSelector } from '../../../components/ui/TehsilSelector';
@@ -622,7 +622,7 @@ function SearchContent() {
                   cursor: 'pointer', fontSize: '18px', color: 'var(--slate)'
                 }}
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
 

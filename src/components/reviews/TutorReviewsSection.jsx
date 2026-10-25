@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Star, ShieldCheck, CheckCircle2, ThumbsUp, MessageSquare, Reply, AlertCircle, Sparkles } from 'lucide-react';
+import { Star, ShieldCheck, CheckCircle2, ThumbsUp, MessageSquare, Reply, AlertCircle, Sparkles, BookOpen, MapPin, Clock } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 export function TutorReviewsSection({
@@ -304,18 +304,21 @@ export function TutorReviewsSection({
                     color: 'var(--steel)'
                   }}>
                     {subjectsStr && (
-                      <span style={{ backgroundColor: 'var(--canvas)', padding: '3px 8px', borderRadius: '6px', border: '1px solid var(--hairline)' }}>
-                        📚 {subjectsStr}
+                      <span style={{ backgroundColor: 'var(--canvas)', padding: '3px 8px', borderRadius: '6px', border: '1px solid var(--hairline)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <BookOpen size={11} color="var(--brand-teal)" />
+                        <span>{subjectsStr}</span>
                       </span>
                     )}
                     {modeStr && (
-                      <span style={{ backgroundColor: 'var(--canvas)', padding: '3px 8px', borderRadius: '6px', border: '1px solid var(--hairline)', textTransform: 'capitalize' }}>
-                        📍 {modeStr}
+                      <span style={{ backgroundColor: 'var(--canvas)', padding: '3px 8px', borderRadius: '6px', border: '1px solid var(--hairline)', textTransform: 'capitalize', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <MapPin size={11} color="var(--brand-teal)" />
+                        <span>{modeStr}</span>
                       </span>
                     )}
                     {rev.tuition_details?.duration && (
-                      <span style={{ backgroundColor: 'var(--canvas)', padding: '3px 8px', borderRadius: '6px', border: '1px solid var(--hairline)' }}>
-                        ⏳ {rev.tuition_details.duration}
+                      <span style={{ backgroundColor: 'var(--canvas)', padding: '3px 8px', borderRadius: '6px', border: '1px solid var(--hairline)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Clock size={11} color="var(--brand-teal)" />
+                        <span>{rev.tuition_details.duration}</span>
                       </span>
                     )}
                   </div>

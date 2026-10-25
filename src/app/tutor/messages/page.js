@@ -815,7 +815,11 @@ function TutorMessagesContent() {
                             lineHeight: '1.4',
                             maxWidth: '380px'
                           }}>
-                            <strong>⚠️ Warning:</strong> Sharing contact information ({securityCheck.types?.join(', ') || 'Phone/Email/URL'}) in chat violates TutorOnline Terms of Service. Platform guarantees, verified tutor protections, and escrow services apply ONLY to in-app interactions.
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                              <AlertCircle size={14} color="#B45309" />
+                              <strong>Warning:</strong>
+                            </div>
+                            Sharing contact information ({securityCheck.types?.join(', ') || 'Phone/Email/URL'}) in chat violates TutorOnline Terms of Service. Platform guarantees, verified tutor protections, and escrow services apply ONLY to in-app interactions.
                           </div>
                         )}
 

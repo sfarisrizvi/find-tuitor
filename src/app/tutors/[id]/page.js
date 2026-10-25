@@ -8,7 +8,8 @@ import { Select } from '../../../components/ui/Select';
 import {
   Star, MapPin, ShieldCheck, Lock, Phone, Mail, Award,
   CheckCircle2, BookOpen, Globe, Clock, Briefcase, GraduationCap,
-  ChevronRight, Users, Calendar, Pencil, Camera, X, ShieldAlert
+  ChevronRight, Users, Calendar, Pencil, Camera, X, ShieldAlert,
+  Home, Car, Laptop, Settings, Banknote, Video
 } from 'lucide-react';
 import Link from 'next/link';
 import { ImageCropModal } from '../../../components/ui/ImageCropModal';
@@ -316,8 +317,22 @@ export default function TutorProfile() {
             if (profile.kyc_docs) {
               const maskedDocs = {};
               for (const key of Object.keys(profile.kyc_docs)) {
-                if (profile.kyc_docs[key]) {
-                  maskedDocs[key] = true;
+                if (['cnic_front', 'cnic_back', 'degree'].includes(key)) {
+                  maskedDocs[key] = !!profile.kyc_docs[key];
+                } else if (key === 'additional_degrees' && Array.isArray(profile.kyc_docs[key])) {
+                  maskedDocs[key] = profile.kyc_docs[key].map(ad => ({
+                    level: ad.level,
+                    field: ad.field,
+                    degree_name: ad.degree_name,
+                    hasFile: !!ad.path
+                  }));
+                } else if (key === 'certificates' && Array.isArray(profile.kyc_docs[key])) {
+                  maskedDocs[key] = profile.kyc_docs[key].map(c => ({
+                    title: typeof c === 'string' ? 'Certified' : (c.title || c.name || 'Certified'),
+                    hasFile: !!(c.path || (typeof c === 'string' && c))
+                  }));
+                } else {
+                  maskedDocs[key] = profile.kyc_docs[key];
                 }
               }
               profile.kyc_docs = maskedDocs;
@@ -488,12 +503,9 @@ export default function TutorProfile() {
       value = value ? parseFloat(value) : null;
       if (isNaN(value)) value = null;
     }
-    const updatePayload = { [field]: value };
-    // If editing location, update both city and area
-    if (field === 'location') {
-      updatePayload.city = editValues.city;
-      updatePayload.area = editValues.area;
-    }
+    const updatePayload = field === 'location' 
+      ? { city: editValues.city, area: editValues.area }
+      : { [field]: value };
     const { error } = await supabase.from('tutor_profiles').update(updatePayload).eq('id', tutor.id);
     if (!error) {
       setTutor(prev => ({ ...prev, ...updatePayload }));
@@ -638,12 +650,21 @@ export default function TutorProfile() {
 
   const renderModeBadges = () => {
     const modes = tutor.teaching_modes || [];
-    if (modes.length === 0) return <span style={{ fontSize: '15px', color: 'var(--stone)', fontWeight: 600 }}>Online 🌐</span>;
+    if (modes.length === 0) return (
+      <span style={{ fontSize: '13px', color: 'var(--stone)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+        <Globe size={13} /> Online
+      </span>
+    );
+    const modeMeta = {
+      online: { label: 'Online', Icon: Globe },
+      home_visit: { label: 'Home Visit', Icon: Car },
+      own_place: { label: 'Own Place', Icon: Home },
+    };
     return (
       <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '2px' }}>
         {modes.map(m => {
-          const label = { online: 'Online', home_visit: 'Home Visit', own_place: 'Own Place' }[m] || m;
-          const icon = { online: '🌐', home_visit: '🏠', own_place: '🏫' }[m] || '✓';
+          const item = modeMeta[m] || { label: m, Icon: CheckCircle2 };
+          const IconComp = item.Icon;
           return (
             <span key={m} style={{ 
               fontSize: '11px', 
@@ -657,8 +678,8 @@ export default function TutorProfile() {
               gap: '4px',
               color: 'var(--slate)'
             }}>
-              <span>{icon}</span>
-              <span>{label}</span>
+              <IconComp size={12} color="var(--brand-teal)" />
+              <span>{item.label}</span>
             </span>
           );
         })}
@@ -783,11 +804,19 @@ export default function TutorProfile() {
               </span>
             </div>
           ) : tutor?.kyc_status === 'approved' ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-lg)', padding: '14px 20px' }}>
-              <CheckCircle2 size={20} color="var(--brand-green-dark)" />
-              <span style={{ fontWeight: 600, color: 'var(--brand-green-dark)', fontSize: '14px' }}>
-                Your profile is complete and live!
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', borderRadius: 'var(--rounded-lg)', padding: '14px 20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <CheckCircle2 size={20} color="var(--brand-green-dark)" />
+                <span style={{ fontWeight: 600, color: 'var(--brand-green-dark)', fontSize: '14px' }}>
+                  Your profile is complete and live!
+                </span>
+              </div>
+              <Link href="/tutor/onboarding" style={{ textDecoration: 'none' }}>
+                <Button variant="outline" style={{ fontSize: '13px', height: '34px', fontWeight: 600, backgroundColor: 'rgba(255,255,255,0.9)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Settings size={14} />
+                  <span>Edit Full Profile</span>
+                </Button>
+              </Link>
             </div>
           ) : null}
         </div>
@@ -966,6 +995,12 @@ export default function TutorProfile() {
               {tutor.jss_score > 0 && (
                 <span style={{ fontSize: '13px', color: 'var(--stone)' }}>JSS Score: <strong style={{ color: 'var(--ink)' }}>{tutor.jss_score}</strong></span>
               )}
+              {(tutor.qualification || tutor.kyc_docs?.degree_name || tutor.kyc_docs?.education_level) && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--brand-green-dark)', backgroundColor: 'var(--brand-green-soft)', border: '1px solid var(--brand-green-dark)', padding: '2px 10px', borderRadius: '999px', fontWeight: 600 }}>
+                  <GraduationCap size={14} />
+                  <span>{tutor.kyc_docs?.degree_name || tutor.qualification || [tutor.kyc_docs?.education_level, tutor.kyc_docs?.education_title].filter(Boolean).join(' - ')}</span>
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -1135,13 +1170,192 @@ export default function TutorProfile() {
               </section>
             )}
 
+            {/* Education & Qualifications */}
+            {(tutor.qualification || tutor.kyc_docs?.degree_name || tutor.kyc_docs?.education_level || tutor.kyc_docs?.degree || (Array.isArray(tutor.kyc_docs?.additional_degrees) && tutor.kyc_docs.additional_degrees.length > 0) || isOwner) && (
+              <section style={{ backgroundColor: 'var(--canvas)', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--hairline)', padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <GraduationCap size={20} color="var(--brand-green-dark)" />
+                    <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Education & Qualifications</h2>
+                  </div>
+                  {isOwner && (
+                    <Link href="/tutor/onboarding?step=2" style={{ textDecoration: 'none' }}>
+                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-green-dark)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600 }}>
+                        <Pencil size={14} /> Edit
+                      </button>
+                    </Link>
+                  )}
+                </div>
+
+                {(!tutor.qualification && !tutor.kyc_docs?.degree_name && !tutor.kyc_docs?.education_level && !tutor.kyc_docs?.degree && (!Array.isArray(tutor.kyc_docs?.additional_degrees) || tutor.kyc_docs.additional_degrees.length === 0)) ? (
+                  <div style={{ padding: '20px', backgroundColor: 'var(--surface-soft)', borderRadius: 'var(--rounded-md)', textAlign: 'center' }}>
+                    <p style={{ margin: '0 0 10px', fontSize: '14px', color: 'var(--stone)' }}>No education qualifications listed yet.</p>
+                    {isOwner && (
+                      <Link href="/tutor/onboarding?step=2" style={{ textDecoration: 'none' }}>
+                        <Button variant="primary" style={{ height: '34px', fontSize: '13px', padding: '0 14px' }}>
+                          + Add Education & Degree
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {/* Primary Qualification */}
+                    {(tutor.qualification || tutor.kyc_docs?.degree_name || tutor.kyc_docs?.education_level || tutor.kyc_docs?.degree) && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        padding: '16px',
+                        backgroundColor: 'var(--surface-soft)',
+                        border: '1px solid var(--hairline)',
+                        borderRadius: 'var(--rounded-md)',
+                        gap: '12px',
+                        flexWrap: 'wrap'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                          <div style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: 'var(--rounded-md)',
+                            backgroundColor: 'var(--brand-green-soft)',
+                            border: '1px solid var(--brand-green-dark)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <GraduationCap size={22} color="var(--brand-green-dark)" />
+                          </div>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <span style={{ fontWeight: 700, fontSize: '16px', color: 'var(--ink)' }}>
+                                {tutor.kyc_docs?.degree_name || tutor.qualification || [tutor.kyc_docs?.education_level, tutor.kyc_docs?.education_title].filter(Boolean).join(' - ') || 'Degree / Transcript'}
+                              </span>
+                              {tutor.kyc_docs?.education_level && (
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand-green-dark)', backgroundColor: 'var(--brand-green-soft)', padding: '2px 8px', borderRadius: '999px' }}>
+                                  {tutor.kyc_docs.education_level}
+                                </span>
+                              )}
+                            </div>
+                            {tutor.kyc_docs?.education_title && tutor.kyc_docs?.degree_name !== tutor.kyc_docs?.education_title && (
+                              <div style={{ fontSize: '13px', color: 'var(--slate)', marginTop: '2px' }}>
+                                Major / Subject: <strong>{tutor.kyc_docs.education_title}</strong>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div style={{ flexShrink: 0 }}>
+                          {tutor.kyc_status === 'approved' || tutor.kyc_verifications?.degree?.status === 'approved' ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: 'var(--brand-green-dark)', backgroundColor: 'var(--brand-green-soft)', padding: '3px 10px', borderRadius: '999px' }}>
+                              <CheckCircle2 size={13} color="var(--brand-green-dark)" /> ACADEMIC VERIFIED
+                            </span>
+                          ) : (tutor.kyc_docs?.degree) ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#92400E', backgroundColor: '#FEF3C7', padding: '3px 10px', borderRadius: '999px' }}>
+                              VERIFICATION PENDING
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Additional Degrees */}
+                    {Array.isArray(tutor.kyc_docs?.additional_degrees) && tutor.kyc_docs.additional_degrees.map((ad, idx) => (
+                      <div key={idx} style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        padding: '14px 16px',
+                        backgroundColor: 'var(--surface-soft)',
+                        border: '1px solid var(--hairline)',
+                        borderRadius: 'var(--rounded-md)',
+                        gap: '12px',
+                        flexWrap: 'wrap'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                          <div style={{
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: 'var(--rounded-md)',
+                            backgroundColor: 'var(--surface)',
+                            border: '1px solid var(--hairline)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <BookOpen size={18} color="var(--slate)" />
+                          </div>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--ink)' }}>
+                                {ad.degree_name || [ad.level, ad.field].filter(Boolean).join(' - ') || 'Education Qualification'}
+                              </span>
+                              {ad.level && (
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--steel)', backgroundColor: 'var(--surface)', padding: '2px 8px', borderRadius: '999px', border: '1px solid var(--hairline)' }}>
+                                  {ad.level}
+                                </span>
+                              )}
+                            </div>
+                            {ad.field && (
+                              <div style={{ fontSize: '13px', color: 'var(--stone)', marginTop: '2px' }}>
+                                Major: {ad.field}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Additional Certificates */}
+                    {Array.isArray(tutor.kyc_docs?.certificates) && tutor.kyc_docs.certificates.length > 0 && (
+                      <div style={{ marginTop: '6px', paddingTop: '16px', borderTop: '1px solid var(--hairline)' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--slate)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Award size={16} color="var(--brand-green-dark)" />
+                          Certifications & Diplomas ({tutor.kyc_docs.certificates.length})
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                          {tutor.kyc_docs.certificates.map((cert, ci) => {
+                            const certTitle = typeof cert === 'string' ? `Certificate ${ci + 1}` : (cert.title || cert.name || `Certificate ${ci + 1}`);
+                            return (
+                              <div key={ci} style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '6px 14px',
+                                borderRadius: 'var(--rounded-md)',
+                                backgroundColor: 'var(--canvas)',
+                                border: '1px solid var(--hairline-strong)',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: 'var(--ink)'
+                              }}>
+                                <CheckCircle2 size={15} color="var(--brand-green-dark)" style={{ flexShrink: 0 }} />
+                                <span>{certTitle}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
+            )}
+
             {/* Teaching Availability */}
             <section style={{ backgroundColor: 'var(--canvas)', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--hairline)', padding: '24px' }}>
               <h2 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: 700 }}>Teaching Availability</h2>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
                 {(tutor.teaching_modes || ['online']).map(mode => {
-                  const modeInfo = { own_place: 'Own Place 🏠', home_visit: 'Home Visits 🚗', online: 'Online 💻' };
-                  const label = modeInfo[mode] || mode;
+                  const modeMeta = {
+                    own_place: { label: 'Own Place', Icon: Home },
+                    home_visit: { label: 'Home Visits', Icon: Car },
+                    online: { label: 'Online', Icon: Laptop },
+                  };
+                  const item = modeMeta[mode] || { label: mode, Icon: CheckCircle2 };
+                  const IconComp = item.Icon;
                   return (
                     <span key={mode} style={{ 
                       padding: '6px 14px', 
@@ -1150,9 +1364,13 @@ export default function TutorProfile() {
                       fontWeight: 500, 
                       backgroundColor: 'var(--surface)', 
                       color: 'var(--charcoal)', 
-                      border: '1px solid var(--hairline)' 
+                      border: '1px solid var(--hairline)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
                     }}>
-                      {label}
+                      <IconComp size={14} color="var(--brand-teal)" />
+                      <span>{item.label}</span>
                     </span>
                   );
                 })}
@@ -1266,9 +1484,9 @@ export default function TutorProfile() {
                                       newSlotList.splice(i, 1);
                                       setEditingSlots({ day: selectedDay, slots: newSlotList });
                                     }}
-                                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#EF4444', padding: '4px' }}
+                                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#EF4444', padding: '4px', display: 'inline-flex', alignItems: 'center' }}
                                     title="Remove slot"
-                                  >✕</button>
+                                  ><X size={15} /></button>
                                 )}
                               </div>
                             ))}
@@ -1506,7 +1724,7 @@ export default function TutorProfile() {
                         )}
                         {showDegree && (
                           <VerifyRow
-                            label="Degree / Academic Credentials"
+                            label={docs.degree_name || tutor.qualification ? `Degree: ${docs.degree_name || tutor.qualification}` : "Degree / Academic Credentials"}
                             status={degreeStatus}
                             docKey="degree"
                             helpText="degree certificate"
@@ -1515,6 +1733,20 @@ export default function TutorProfile() {
                             rejectionNote={getRejectionReason('degree')}
                           />
                         )}
+
+                        {/* Certificates */}
+                        {Array.isArray(docs.certificates) && docs.certificates.length > 0 && docs.certificates.map((cert, ci) => {
+                          const certTitle = typeof cert === 'string' ? `Certificate ${ci + 1}` : (cert.title || cert.name || `Certificate ${ci + 1}`);
+                          return (
+                            <div key={ci} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <CheckCircle2 size={18} color="var(--brand-green-dark)" style={{ flexShrink: 0 }} />
+                              <span style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 500 }}>{certTitle}</span>
+                              <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 700, color: 'var(--brand-green-dark)', backgroundColor: 'var(--brand-green-soft)', padding: '2px 8px', borderRadius: '999px' }}>
+                                CERTIFIED
+                              </span>
+                            </div>
+                          );
+                        })}
 
                         {/* Background Check — driven by kyc_verifications.background */}
                         {showBg && (
@@ -1724,12 +1956,13 @@ export default function TutorProfile() {
             <div style={{ backgroundColor: 'var(--canvas)', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--hairline)', padding: '20px' }}>
               <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700 }}>Why TutorOnline.pk?</h4>
               {[
-                { icon: '💰', text: 'Transparent direct-pay model' },
-                { icon: '🎓', text: '15-minute free video demos' },
-                { icon: '✅', text: 'Credential-vetted educator profiles' },
-              ].map(({ icon, text }) => (
+                { icon: Banknote, text: 'Transparent direct-pay model' },
+                { icon: Video, text: '15-minute free video demos' },
+                { icon: ShieldCheck, text: 'Credential-vetted educator profiles' },
+              ].map(({ icon: IconComp, text }) => (
                 <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '13px', color: 'var(--slate)' }}>
-                  <span>{icon}</span> {text}
+                  <IconComp size={15} color="var(--brand-teal)" />
+                  <span>{text}</span>
                 </div>
               ))}
             </div>

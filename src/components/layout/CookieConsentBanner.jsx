@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { createClient } from '../../utils/supabase/client';
+import { Cookie } from 'lucide-react';
 
 export function CookieConsentBanner() {
   const [mounted, setMounted] = useState(false);
@@ -86,7 +87,7 @@ export function CookieConsentBanner() {
         }
       `}</style>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-        <span style={{ fontSize: '20px' }}>🍪</span>
+        <Cookie size={22} color="var(--brand-teal)" />
         <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#fff' }}>
           Privacy & Cookie Preferences
         </h4>
