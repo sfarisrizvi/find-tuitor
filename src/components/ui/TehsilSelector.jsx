@@ -292,7 +292,7 @@ export function TehsilSelector({
   };
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%', ...style }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', textAlign: 'left', ...style }}>
       {label && (
         <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink, #0f172a)', marginBottom: '6px' }}>
           {label} {required && <span style={{ color: '#ef4444' }}>*</span>}
@@ -472,6 +472,7 @@ export function TehsilSelector({
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
+            textAlign: 'left',
             animation: 'fadeIn 0.15s ease'
           }}
         >
@@ -629,7 +630,7 @@ export function TehsilSelector({
                       if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', alignItems: 'flex-start' }}>
                       <span style={{ fontSize: '13px', fontWeight: isSelected ? 700 : 600, color: 'var(--ink, #0f172a)' }}>
                         {t.name}
                       </span>

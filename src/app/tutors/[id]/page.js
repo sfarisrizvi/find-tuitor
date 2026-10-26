@@ -165,9 +165,9 @@ function AuthGate({ tutorName, onSuccess }) {
 // status: 'not_submitted' | 'pending' | 'approved' | 'rejected'
 function VerifyRow({ label, status, docKey, helpText, isOwner, onUpload, rejectionNote }) {
   const isApproved = status === 'approved';
-  const isPending  = status === 'pending';
+  const isPending = status === 'pending';
   const isRejected = status === 'rejected';
-  const hasDoc     = isPending || isApproved || isRejected;
+  const hasDoc = isPending || isApproved || isRejected;
 
   const icon = isApproved
     ? <CheckCircle2 size={18} color="var(--brand-green-dark)" style={{ flexShrink: 0 }} />
@@ -221,7 +221,7 @@ export default function TutorProfile() {
   const [errorState, setErrorState] = useState(null);
   const [selectedDay, setSelectedDay] = useState('mon');
   const [editingSlots, setEditingSlots] = useState(null); // { day, slots: [{start, end}] }
-  
+
   // Inline editing state
   const [editingField, setEditingField] = useState(null);
   const [editValues, setEditValues] = useState({});
@@ -275,12 +275,12 @@ export default function TutorProfile() {
         const isOwner = u && u.id === id;
         const userRole = u?.user_metadata?.role;
         const isAdmin = userRole === 'admin';
-        
+
         if (!isOwner && !isAdmin && !isUnlockedDirectly) {
           profile.phone = maskPhone(profile.phone);
           profile.email = maskEmail(profile.email);
         }
-        
+
         setTimeout(() => {
           if (!signal?.aborted) {
             setTutor(profile);
@@ -305,7 +305,7 @@ export default function TutorProfile() {
 
           profile.rawPhone = profile.phone;
           profile.rawEmail = profile.email;
-          
+
           if (!isOwner && !isAdmin && !isUnlockedDirectly) {
             if (profile.about) {
               if (!u) {
@@ -503,7 +503,7 @@ export default function TutorProfile() {
       value = value ? parseFloat(value) : null;
       if (isNaN(value)) value = null;
     }
-    const updatePayload = field === 'location' 
+    const updatePayload = field === 'location'
       ? { city: editValues.city, area: editValues.area }
       : { [field]: value };
     const { error } = await supabase.from('tutor_profiles').update(updatePayload).eq('id', tutor.id);
@@ -540,7 +540,7 @@ export default function TutorProfile() {
 
     const { error: upErr } = await supabase.storage.from(bucket).upload(path, croppedBlob, { upsert: true });
     if (upErr) { alert('Upload failed'); return; }
-    
+
     const { error: dbErr } = await supabase.from('tutor_profiles').update({ [`${type}_url`]: path }).eq('id', user.id);
     if (!dbErr) {
       setTutor(prev => ({ ...prev, [`${type}_url`]: path }));
@@ -666,12 +666,12 @@ export default function TutorProfile() {
           const item = modeMeta[m] || { label: m, Icon: CheckCircle2 };
           const IconComp = item.Icon;
           return (
-            <span key={m} style={{ 
-              fontSize: '11px', 
-              fontWeight: 700, 
-              padding: '3px 8px', 
-              borderRadius: '6px', 
-              backgroundColor: 'var(--surface-soft)', 
+            <span key={m} style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              padding: '3px 8px',
+              borderRadius: '6px',
+              backgroundColor: 'var(--surface-soft)',
               border: '1px solid var(--hairline)',
               display: 'inline-flex',
               alignItems: 'center',
@@ -769,13 +769,13 @@ export default function TutorProfile() {
           }
         }
       `}</style>
-      
+
       {cropConfig && (
-        <ImageCropModal 
-          imageSrc={cropConfig.imageSrc} 
-          aspect={cropConfig.aspect} 
-          onCropComplete={handleCropComplete} 
-          onCancel={() => setCropConfig(null)} 
+        <ImageCropModal
+          imageSrc={cropConfig.imageSrc}
+          aspect={cropConfig.aspect}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setCropConfig(null)}
         />
       )}
 
@@ -822,7 +822,7 @@ export default function TutorProfile() {
         </div>
       )}
       {isEditingCategories && (
-        <CategoryEditModal 
+        <CategoryEditModal
           initialCategories={categories}
           onSave={handleSaveCategories}
           onCancel={() => setIsEditingCategories(false)}
@@ -908,11 +908,21 @@ export default function TutorProfile() {
                 <>
                   <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 800, color: 'var(--ink)' }}>{tutor.full_name}</h1>
                   {tutor.verified && (
-                    <img 
-                      src="/shield.svg" 
-                      alt="Verified Profile" 
-                      style={{ width: '22px', height: '22px', display: 'block', flexShrink: 0 }} 
-                    />
+                    <span
+                      className="premium-badge-wrapper"
+                      tabIndex={0}
+                      title="Premium Verified"
+                      aria-label="Premium Verified Tutor"
+                    >
+                      <img
+                        src="/shield.svg"
+                        alt="Premium Verified"
+                        style={{ width: '22px', height: '22px', display: 'block', flexShrink: 0, cursor: 'pointer' }}
+                      />
+                      <span className="premium-badge-tooltip">
+                        Premium Verified
+                      </span>
+                    </span>
                   )}
                   {isOwner && (
                     <button onClick={() => { setEditValues({ full_name: tutor.full_name }); setEditingField('full_name'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-green-dark)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px' }} title="Edit Name">
@@ -925,10 +935,10 @@ export default function TutorProfile() {
 
             {editingField === 'bio' ? (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', margin: '8px 0 12px', width: '100%', maxWidth: '600px' }}>
-                <textarea 
-                  value={editValues.bio || ''} 
-                  onChange={e => setEditValues(p => ({ ...p, bio: e.target.value }))} 
-                  style={{ flex: 1, minHeight: '80px', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--hairline-strong)', fontSize: '15px', fontFamily: 'inherit', resize: 'vertical' }} 
+                <textarea
+                  value={editValues.bio || ''}
+                  onChange={e => setEditValues(p => ({ ...p, bio: e.target.value }))}
+                  style={{ flex: 1, minHeight: '80px', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--hairline-strong)', fontSize: '15px', fontFamily: 'inherit', resize: 'vertical' }}
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <button onClick={() => handleSaveField('bio')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-green-dark)' }}><CheckCircle2 size={20} /></button>
@@ -1008,9 +1018,11 @@ export default function TutorProfile() {
         {/* ── Stats Row ── */}
         <div className="grid-4col" style={{ gap: '12px', marginBottom: '32px' }}>
           {[
-            { icon: Star, label: 'Rating', value: avgRating !== null
-              ? <span style={{ color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>★ <span style={{ color: 'var(--ink)' }}>{avgRating.toFixed(1)}</span><span style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 400 }}>({reviewsCount})</span></span>
-              : <span style={{ color: 'var(--stone)', fontSize: '13px' }}>No reviews</span> },
+            {
+              icon: Star, label: 'Rating', value: avgRating !== null
+                ? <span style={{ color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>★ <span style={{ color: 'var(--ink)' }}>{avgRating.toFixed(1)}</span><span style={{ fontSize: '11px', color: 'var(--stone)', fontWeight: 400 }}>({reviewsCount})</span></span>
+                : <span style={{ color: 'var(--stone)', fontSize: '13px' }}>No reviews</span>
+            },
             { icon: Briefcase, label: 'Experience', value: getExperienceText() },
             { icon: MapPin, label: 'Location', value: getLocationText() },
             { icon: Users, label: 'Teaching Mode', value: renderModeBadges() },
@@ -1055,13 +1067,13 @@ export default function TutorProfile() {
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {cats.map(cat => (
-                              <span key={cat} style={{ 
-                                padding: '6px 14px', 
-                                borderRadius: '999px', 
-                                fontSize: '13px', 
-                                fontWeight: 500, 
-                                backgroundColor: 'var(--surface)', 
-                                color: 'var(--charcoal)', 
+                              <span key={cat} style={{
+                                padding: '6px 14px',
+                                borderRadius: '999px',
+                                fontSize: '13px',
+                                fontWeight: 500,
+                                backgroundColor: 'var(--surface)',
+                                color: 'var(--charcoal)',
                                 border: '1px solid var(--hairline)',
                               }}>
                                 {cat}
@@ -1086,13 +1098,13 @@ export default function TutorProfile() {
                     </button>
                   )}
                 </div>
-                
+
                 {editingField === 'about' ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <textarea 
-                      value={editValues.about || ''} 
-                      onChange={e => setEditValues(p => ({ ...p, about: e.target.value }))} 
-                      style={{ width: '100%', minHeight: '150px', padding: '12px', borderRadius: '8px', border: '1px solid var(--hairline-strong)', fontSize: '15px', lineHeight: '1.6', fontFamily: 'inherit' }} 
+                    <textarea
+                      value={editValues.about || ''}
+                      onChange={e => setEditValues(p => ({ ...p, about: e.target.value }))}
+                      style={{ width: '100%', minHeight: '150px', padding: '12px', borderRadius: '8px', border: '1px solid var(--hairline-strong)', fontSize: '15px', lineHeight: '1.6', fontFamily: 'inherit' }}
                     />
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                       <Button variant="outline" onClick={() => setEditingField(null)} style={{ padding: '6px 12px', height: '32px', fontSize: '13px' }}>Cancel</Button>
@@ -1117,15 +1129,15 @@ export default function TutorProfile() {
                     }}>
                       {tutor.about || 'No description provided.'}
                     </div>
-                     {!isUnlocked && tutor.about && (
-                       <div style={{ position: 'absolute', bottom: '-10px', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, paddingTop: '10px' }}>
-                         <Link href={`/login?next=${encodeURIComponent(`/tutors/${id}`)}`} style={{ textDecoration: 'none' }}>
-                           <Button variant="primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', height: '36px', padding: '0 16px', boxShadow: 'var(--shadow-subtle)' }}>
-                             <Lock size={12} /> Log in to read full bio
-                           </Button>
-                         </Link>
-                       </div>
-                     )}
+                    {!isUnlocked && tutor.about && (
+                      <div style={{ position: 'absolute', bottom: '-10px', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, paddingTop: '10px' }}>
+                        <Link href={`/login?next=${encodeURIComponent(`/tutors/${id}`)}`} style={{ textDecoration: 'none' }}>
+                          <Button variant="primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', height: '36px', padding: '0 16px', boxShadow: 'var(--shadow-subtle)' }}>
+                            <Lock size={12} /> Log in to read full bio
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
               </section>
@@ -1142,7 +1154,7 @@ export default function TutorProfile() {
                     </button>
                   )}
                 </div>
-                
+
                 {experience.length === 0 ? (
                   <p style={{ margin: 0, fontSize: '15px', color: 'var(--stone)' }}>No experience added yet.</p>
                 ) : (
@@ -1357,13 +1369,13 @@ export default function TutorProfile() {
                   const item = modeMeta[mode] || { label: mode, Icon: CheckCircle2 };
                   const IconComp = item.Icon;
                   return (
-                    <span key={mode} style={{ 
-                      padding: '6px 14px', 
-                      borderRadius: '999px', 
-                      fontSize: '13px', 
-                      fontWeight: 500, 
-                      backgroundColor: 'var(--surface)', 
-                      color: 'var(--charcoal)', 
+                    <span key={mode} style={{
+                      padding: '6px 14px',
+                      borderRadius: '999px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      backgroundColor: 'var(--surface)',
+                      color: 'var(--charcoal)',
                       border: '1px solid var(--hairline)',
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -1542,7 +1554,7 @@ export default function TutorProfile() {
                   /* === PUBLIC VIEW === */
                   const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
                   const activeDays = (tutor.availability_days || []).slice().sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
-                  
+
                   if (activeDays.length === 0) {
                     return <div style={{ fontSize: '14px', color: 'var(--stone)', marginTop: '12px' }}>No availability specified.</div>;
                   }
@@ -1576,40 +1588,40 @@ export default function TutorProfile() {
                         {activeDays.map(dayKey => {
                           const daySlots = getDaySlotsStr(dayKey);
                           const dayLabel = allDays.find(d => d.key === dayKey)?.label || dayKey;
-                          
+
                           return (
-                            <div key={dayKey} style={{ 
-                              backgroundColor: 'var(--canvas)', 
-                              padding: '16px', 
-                              borderRadius: '12px', 
+                            <div key={dayKey} style={{
+                              backgroundColor: 'var(--canvas)',
+                              padding: '16px',
+                              borderRadius: '12px',
                               border: '1px solid var(--hairline)',
                               boxShadow: 'var(--shadow-subtle)',
                               display: 'flex',
                               flexDirection: 'column',
                               gap: '12px'
                             }}>
-                              <div style={{ 
-                                fontSize: '15px', 
-                                fontWeight: 600, 
-                                color: 'var(--ink)', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '8px' 
+                              <div style={{
+                                fontSize: '15px',
+                                fontWeight: 600,
+                                color: 'var(--ink)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
                               }}>
                                 <Calendar size={15} style={{ color: 'var(--brand-green-dark)', flexShrink: 0 }} />
                                 {dayLabel}
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 {daySlots.map((timeRange, idx) => (
-                                  <div key={idx} style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
+                                  <div key={idx} style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
                                     gap: '6px',
-                                    fontSize: '13px', 
-                                    color: 'var(--charcoal)', 
-                                    backgroundColor: 'var(--surface)', 
-                                    padding: '6px 12px', 
-                                    borderRadius: '8px', 
+                                    fontSize: '13px',
+                                    color: 'var(--charcoal)',
+                                    backgroundColor: 'var(--surface)',
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
                                     fontWeight: 500,
                                     border: '1px solid var(--hairline)',
                                   }}>
@@ -1641,8 +1653,8 @@ export default function TutorProfile() {
                   userSelect: isUnlocked ? 'auto' : 'none'
                 }}>
                   {(() => {
-                    const docs   = tutor.kyc_docs || {};
-                    const verif  = tutor.kyc_verifications || {};
+                    const docs = tutor.kyc_docs || {};
+                    const verif = tutor.kyc_verifications || {};
 
                     const oldApproved = tutor.kyc_status === 'approved';
 
@@ -1677,15 +1689,15 @@ export default function TutorProfile() {
                       return verif[docKey]?.reason || '';
                     };
 
-                    const hasCnic   = !!(docs.cnic_front || docs.cnic_back);
+                    const hasCnic = !!(docs.cnic_front || docs.cnic_back);
                     const hasDegree = !!docs.degree;
 
-                    const cnicStatus   = getDocStatus('cnic', hasCnic);
+                    const cnicStatus = getDocStatus('cnic', hasCnic);
                     const degreeStatus = getDocStatus('degree', hasDegree);
-                    const bgStatus     = verif.background?.status
+                    const bgStatus = verif.background?.status
                       || (oldApproved ? 'approved'
                         : (hasCnic || hasDegree) ? 'pending'
-                        : 'not_submitted');
+                          : 'not_submitted');
                     const bgNote = verif.background?.reason || '';
 
                     // Background icon/badge
@@ -1705,9 +1717,9 @@ export default function TutorProfile() {
                           ? <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 700, color: '#92400E', backgroundColor: '#FEF3C7', padding: '2px 8px', borderRadius: '999px' }}>PENDING</span>
                           : null;
 
-                    const showCnic   = isOwner || isAdmin || cnicStatus === 'approved';
+                    const showCnic = isOwner || isAdmin || cnicStatus === 'approved';
                     const showDegree = isOwner || isAdmin || degreeStatus === 'approved';
-                    const showBg     = isOwner || isAdmin || bgStatus === 'approved';
+                    const showBg = isOwner || isAdmin || bgStatus === 'approved';
 
                     return (
                       <>
@@ -1827,7 +1839,7 @@ export default function TutorProfile() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
                   <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 700 }}>{displayRate}</h3>
                   {isOwner && (
-                    <button 
+                    <button
                       onClick={() => { setEditValues({ hourly_rate: tutor.hourly_rate || '' }); setEditingField('hourly_rate'); }}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-green-dark)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px' }}
                       title="Edit Hourly Rate"
@@ -1868,7 +1880,7 @@ export default function TutorProfile() {
                           <span style={{ fontSize: '14px', fontWeight: 500 }}>{tutor.phone}</span>
                         </div>
                         {isOwner && (
-                          <button 
+                          <button
                             onClick={() => { setEditValues({ phone: tutor.phone || '' }); setEditingField('phone'); }}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-green-dark)', display: 'inline-flex', padding: '4px' }}
                             title="Edit Phone"
@@ -1942,7 +1954,7 @@ export default function TutorProfile() {
                       <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--stone)' }}>******@******.***</span>
                     </div>
                   </div>
-                  
+
                   <Link href={`/login?next=${encodeURIComponent(`/tutors/${id}`)}`} style={{ textDecoration: 'none' }}>
                     <Button variant="primary" style={{ width: '100%', height: '44px', marginBottom: '8px' }}>
                       Log in to see contact info

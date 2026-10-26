@@ -69,7 +69,7 @@ export async function POST(request) {
     const body = await request.json();
     const { tutorId, action, rejectionNotes } = body;
 
-    if (!tutorId || !['approve', 'reject'].includes(action)) {
+    if (!tutorId || !['approve', 'reject', 'set_verified'].includes(action)) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
     }
 
@@ -79,9 +79,10 @@ export async function POST(request) {
 
     const isApprove = action === 'approve';
     const updatePayload = {
-      kyc_status: isApprove ? 'approved' : 'rejected',
-      verified: isApprove,
-      ...(rejectionNotes && { kyc_rejection_notes: rejectionNotes })
+      ...(action === 'approve' && { kyc_status: 'approved' }),
+      ...(action === 'reject' && { kyc_status: 'rejected', ...(rejectionNotes && { kyc_rejection_notes: rejectionNotes }) }),
+      ...(action === 'set_verified' && { verified: Boolean(body.verified) }),
+      ...(body.verified !== undefined && action !== 'set_verified' && { verified: Boolean(body.verified) })
     };
 
     const { data, error } = await supabaseAdmin

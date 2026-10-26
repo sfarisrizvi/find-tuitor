@@ -6,14 +6,14 @@ import { Input } from '../../components/ui/Input';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Search, MapPin, Star, ShieldCheck, Lock, ChevronDown, BookOpen
+  Search, MapPin, Star, ShieldCheck, Lock, ChevronDown, BookOpen, Check
 } from 'lucide-react';
+import { TehsilSelector } from '../../components/ui/TehsilSelector';
 
 export default function FindTutorLanding() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
 
   const mockTutors = [
@@ -50,14 +50,6 @@ export default function FindTutorLanding() {
   return (
     <div style={{ backgroundColor: 'var(--surface)', minHeight: '100vh', overflowX: 'hidden' }}>
 
-      {/* Click-away overlay to dismiss dropdowns */}
-      {showCityDropdown && (
-        <div
-          onClick={() => setShowCityDropdown(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 35, backgroundColor: 'transparent' }}
-        />
-      )}
-
       <title>Find Tutors Online | Pakistan&apos;s Top Verified Tutors</title>
       <meta name="description" content="Search from our top vetted academic elite tutors for Matric, FSc, O/A Levels, and Entry Tests. Secure milestone escrow protection." />
       <link rel="canonical" href="https://tutoronline.pk/find-tutor" />
@@ -87,9 +79,10 @@ export default function FindTutorLanding() {
         color: 'var(--on-dark)',
         padding: '80px 0 100px 0',
         textAlign: 'center',
-        position: 'relative'
+        position: 'relative',
+        zIndex: 10
       }}>
-        <div className="container" style={{ maxWidth: '800px', position: 'relative', zIndex: 1 }}>
+        <div className="container" style={{ maxWidth: '800px', position: 'relative', zIndex: 10 }}>
           <h1 style={{ fontSize: '48px', color: 'white', fontWeight: 700, marginBottom: '24px' }}>
             Find Pakistan&apos;s Best Verified Tutors
           </h1>
@@ -107,64 +100,37 @@ export default function FindTutorLanding() {
             flexDirection: 'column',
             gap: '12px',
             maxWidth: '640px',
-            margin: '0 auto'
+            margin: '0 auto',
+            position: 'relative',
+            zIndex: 20
           }}>
-            {/* Row 1: City Dropdown (Left 30%) + Search Input (Right 70%) */}
+            {/* Row 1: City Selector (Left) + Search Input (Right) */}
             <div style={{ display: 'flex', gap: '10px', width: '100%', alignItems: 'center' }}>
-              {/* City Dropdown on Left (30%) */}
-              <div style={{ flex: '0 0 calc(25% - 5px)', position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowCityDropdown(!showCityDropdown)}
-                  style={{
-                    width: '100%', height: '46px', padding: '0 14px', borderRadius: '999px',
-                    border: '1px solid var(--hairline-strong)', backgroundColor: 'var(--canvas)', fontSize: '14px', color: 'var(--ink)',
-                    cursor: 'pointer', outline: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    textAlign: 'left', fontWeight: 500
+              {/* City Dropdown on Left using TehsilSelector */}
+              <div style={{ flex: '0 0 calc(32% - 5px)', minWidth: '135px', position: 'relative', textAlign: 'left' }}>
+                <TehsilSelector
+                  value={selectedCity}
+                  onChange={(payload, formatted) => {
+                    setSelectedCity(payload ? (payload.tehsil || formatted) : '');
                   }}
-                >
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '4px' }}>
-                    {selectedCity || 'City'}
-                  </span>
-                  <ChevronDown size={14} style={{ color: 'var(--stone)', transform: showCityDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease', flexShrink: 0 }} />
-                </button>
-                {showCityDropdown && (
-                  <div style={{
-                    position: 'absolute', left: 0, top: '52px', width: '100%', minWidth: '190px', maxHeight: '250px', overflowY: 'auto',
-                    backgroundColor: '#fff', borderRadius: '16px', border: '1px solid var(--hairline-strong)',
-                    boxShadow: 'var(--shadow-lg)', padding: '6px 0', zIndex: 50
-                  }}>
-                    <div
-                      onClick={() => { setSelectedCity(''); setShowCityDropdown(false); }}
-                      style={{
-                        padding: '10px 16px', fontSize: '14px', cursor: 'pointer',
-                        color: !selectedCity ? 'var(--brand-green-dark)' : 'var(--slate)',
-                        backgroundColor: !selectedCity ? 'var(--brand-green-soft)' : 'transparent',
-                        fontWeight: !selectedCity ? 600 : 500
-                      }}
-                    >
-                      All Cities
-                    </div>
-                    {['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Attock'].map(c => (
-                      <div
-                        key={c}
-                        onClick={() => { setSelectedCity(c); setShowCityDropdown(false); }}
-                        style={{
-                          padding: '10px 16px', fontSize: '14px', cursor: 'pointer',
-                          color: selectedCity === c ? 'var(--brand-green-dark)' : 'var(--slate)',
-                          backgroundColor: selectedCity === c ? 'var(--brand-green-soft)' : 'transparent',
-                          fontWeight: selectedCity === c ? 600 : 500
-                        }}
-                      >
-                        {c}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                  placeholder="City"
+                  allowAll={true}
+                  allOptionLabel="All Cities"
+                  showQuickGps={false}
+                  triggerStyle={{
+                    height: '46px',
+                    minHeight: '46px',
+                    borderRadius: '999px',
+                    border: '1px solid var(--hairline-strong)',
+                    backgroundColor: 'var(--canvas)',
+                    fontSize: '14px',
+                    padding: '0 14px'
+                  }}
+                />
               </div>
 
-              {/* Search Bar Input on Right (70%) */}
-              <div style={{ flex: '0 0 calc(70% - 5px)', position: 'relative' }}>
+              {/* Search Bar Input on Right */}
+              <div style={{ flex: '1', position: 'relative' }}>
                 <Search size={18} style={{ position: 'absolute', left: '16px', top: '14px', color: 'var(--stone)', pointerEvents: 'none' }} />
                 <Input
                   placeholder="Search by name, subject, keywords..."

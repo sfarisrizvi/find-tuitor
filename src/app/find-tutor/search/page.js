@@ -4,10 +4,12 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { 
-  Search, MapPin, Star, ShieldCheck, Lock, ChevronDown, 
-  Award, BookOpen, Zap, SlidersHorizontal, User, ArrowUpDown, X
+import Image from 'next/image';
+import { useSearchParams, useRouter } from 'next/navigation';
+import {
+  Search, MapPin, Star, ShieldCheck, Lock, ChevronDown,
+  Award, BookOpen, Zap, SlidersHorizontal, User, ArrowUpDown, X,
+  MessageSquare, Coins, AlertCircle
 } from 'lucide-react';
 import { createClient } from '../../../utils/supabase/client';
 import { TehsilSelector } from '../../../components/ui/TehsilSelector';
@@ -16,7 +18,7 @@ const getHeadingText = (tutor) => {
   const role = tutor.current_role;
   const company = tutor.current_company;
   const qual = tutor.qualification;
-  
+
   let part1 = '';
   if (role && company) {
     part1 = `${role} at ${company}`;
@@ -25,12 +27,12 @@ const getHeadingText = (tutor) => {
   } else if (company) {
     part1 = company;
   }
-  
+
   let part2 = '';
   if (qual) {
     part2 = `${qual} Qualified`;
   }
-  
+
   if (part1 && part2) {
     return `${part1} & ${part2}`;
   }
@@ -38,6 +40,7 @@ const getHeadingText = (tutor) => {
 };
 
 function SearchContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialCity = searchParams.get('city') || '';
   const initialQuery = searchParams.get('query') || '';
@@ -55,6 +58,13 @@ function SearchContent() {
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
+
+  // Book Demo & Chat Spend State
+  const [demoModalTutor, setDemoModalTutor] = useState(null);
+  const [checkingDemoTutorId, setCheckingDemoTutorId] = useState(null);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [spendError, setSpendError] = useState(null);
+  const [isConfirmingSpend, setIsConfirmingSpend] = useState(false);
 
   const getAvatarUrl = (path) => {
     if (!path) return null;
@@ -142,7 +152,7 @@ function SearchContent() {
 
       console.log('[DEBUG] Calling search_tutors RPC with params:', rpcParams);
       const { data, error } = await supabase.rpc('search_tutors', rpcParams);
-      
+
       if (error) {
         console.error("Error fetching tutors:", error);
         setTutors([]);
@@ -184,6 +194,110 @@ function SearchContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  const handleBookDemo = async (tutor) => {
+    const supabase = createClient();
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+    // 1. If not authenticated, redirect to login
+    if (!currentUser) {
+      router.push(`/login?next=${encodeURIComponent('/find-tutor/search')}`);
+      return;
+    }
+
+    // 2. Prevent messaging own profile
+    if (currentUser.id === tutor.id) {
+      alert("You cannot book a demo with your own profile.");
+      return;
+    }
+
+    setCheckingDemoTutorId(tutor.id);
+    setSpendError(null);
+
+    try {
+      // 3. Check if conversation already exists between this user and tutor
+      const { data: existingConv } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`and(client_id.eq.${currentUser.id},tutor_id.eq.${tutor.id}),and(client_id.eq.${tutor.id},tutor_id.eq.${currentUser.id})`)
+        .maybeSingle();
+
+      if (existingConv) {
+        // Conversation already exists -> open chat directly without spending credits
+        setCheckingDemoTutorId(null);
+        router.push(`/client/messages?tutorId=${tutor.id}`);
+        return;
+      }
+
+      // 4. Fetch user's wallet balance
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+      const balance = wallet ? Number(wallet.balance) : 0;
+      setWalletBalance(balance);
+      setDemoModalTutor(tutor);
+    } catch (err) {
+      console.error('Error checking demo chat state:', err);
+      router.push(`/client/messages?tutorId=${tutor.id}`);
+    } finally {
+      setCheckingDemoTutorId(null);
+    }
+  };
+
+  const handleConfirmSpend = async () => {
+    if (!demoModalTutor) return;
+    setIsConfirmingSpend(true);
+    setSpendError(null);
+
+    try {
+      const supabase = createClient();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const userId = currentUser?.id || session?.user?.id;
+
+      if (!userId) {
+        router.push(`/login?next=${encodeURIComponent('/find-tutor/search')}`);
+        return;
+      }
+
+      // 1. Deduct 100 credits via RPC
+      const { data: deductRes, error: deductErr } = await supabase.rpc('deduct_credits', {
+        p_user_id: userId,
+        p_amount: 100,
+        p_type: 'chat_initiation',
+        p_description: `Initiated demo chat with ${demoModalTutor.full_name || 'tutor'} (100 credits)`,
+        p_reference_id: demoModalTutor.id
+      });
+
+      if (deductErr || (deductRes && !deductRes.success)) {
+        setSpendError(deductRes?.error || deductErr?.message || 'Insufficient credits or deduction failed.');
+        setIsConfirmingSpend(false);
+        return;
+      }
+
+      // 2. Create conversation
+      await supabase
+        .from('conversations')
+        .insert({
+          client_id: userId,
+          tutor_id: demoModalTutor.id,
+          initiated_by: userId,
+          last_message: 'Demo class inquiry initiated',
+          last_message_at: new Date().toISOString()
+        });
+
+      const tutorId = demoModalTutor.id;
+      setDemoModalTutor(null);
+      setIsConfirmingSpend(false);
+      router.push(`/client/messages?tutorId=${tutorId}`);
+    } catch (err) {
+      console.error('Error confirming demo chat spend:', err);
+      setSpendError('An unexpected error occurred. Please try again.');
+      setIsConfirmingSpend(false);
+    }
+  };
+
   const handleFilterChange = (key, value) => {
     let newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
@@ -212,9 +326,9 @@ function SearchContent() {
     } else {
       newLevels.push(lvl);
     }
-    
+
     let newFilters = { ...filters, levels: newLevels };
-    
+
     // Clean up checked subjects if they are no longer in valid subject options
     let validSubjects = [];
     if (newLevels.length > 0) {
@@ -224,12 +338,12 @@ function SearchContent() {
     } else {
       validSubjects = getSubjectOptions('');
     }
-    
+
     newFilters.subjects = filters.subjects.filter(s => validSubjects.includes(s));
     if (!newFilters.subjects.includes('Other')) {
       newFilters.custom_subject = '';
     }
-    
+
     setFilters(newFilters);
     setPage(1);
     fetchTutors(newFilters);
@@ -242,12 +356,12 @@ function SearchContent() {
     } else {
       newSubjects.push(subj);
     }
-    
+
     let newFilters = { ...filters, subjects: newSubjects };
     if (!newSubjects.includes('Other')) {
       newFilters.custom_subject = '';
     }
-    
+
     setFilters(newFilters);
     setPage(1);
     fetchTutors(newFilters);
@@ -291,7 +405,7 @@ function SearchContent() {
         if (checkedSubsForLvl.length === 0) return true;
 
         // If subjects are checked under this level, tutor must teach at least one of those subjects
-        const teachesAnyCheckedSubject = tutor.categories?.some(c => 
+        const teachesAnyCheckedSubject = tutor.categories?.some(c =>
           c.level === lvl && checkedSubsForLvl.includes(c.subject)
         );
 
@@ -301,9 +415,9 @@ function SearchContent() {
           const isMathRelated = text.includes('algebra') || text.includes('calculus') || text.includes('math') || text.includes('linear') || text.includes('stat');
           const isPhysicsRelated = text.includes('physic') || text.includes('mechanic') || text.includes('thermo') || text.includes('quantum');
           const isChemistryRelated = text.includes('chem') || text.includes('organic');
-          
+
           const tutorSubjects = tutor.categories?.filter(c => c.level === 'BS/MS').map(c => c.subject?.toLowerCase()) || [];
-          
+
           let matchesCustom = false;
           if (isMathRelated && tutorSubjects.includes('mathematics')) {
             matchesCustom = true;
@@ -327,12 +441,17 @@ function SearchContent() {
       if (!matchesAnyCheckedLevel) return false;
     }
 
+    // Hard exclusion: Must have completed onboarding, and non-dummy profiles must have approved KYC
+    if (tutor.onboarding_complete === false) return false;
+    const isMock = Boolean(tutor.is_dummy || tutor.id?.startsWith('mock-') || tutor.full_name?.startsWith('Sir ') || tutor.full_name?.startsWith('Miss ') || tutor.full_name?.startsWith('Mr. Tutor') || tutor.full_name?.startsWith('Miss Tutor'));
+    if (!isMock && tutor.kyc_status !== 'approved') return false;
+
     return true;
   });
 
   const calculateRelevanceScore = (tutor) => {
     const cleanQuery = (debouncedQuery || '').trim().toLowerCase();
-    
+
     // 1. Keyword Relevancy (40% Weightage)
     let keywordScore = 100;
     if (cleanQuery.length > 0) {
@@ -366,8 +485,8 @@ function SearchContent() {
       }
     }
 
-    // 2. Rating Weightage (25% Weightage)
-    let ratingScore = 75; // Baseline score for new/unrated tutors
+    // 2. Rating & Reviews (25% Weightage)
+    let ratingScore = 20;
     const numRating = tutor.rating != null ? parseFloat(tutor.rating) : 0;
     const numReviews = tutor.reviews_count || 0;
     if (numReviews > 0 && numRating > 0) {
@@ -376,25 +495,23 @@ function SearchContent() {
       ratingScore = Math.min(100, baseVal + reviewBonus);
     }
 
-    // 3. Verified Status (20% Weightage)
+    // 3. Verified Status (25% Weightage - Premium verified badge ranks higher)
     const verifiedScore = tutor.verified ? 100 : 0;
 
-    // 4. Availability (15% Weightage)
-    const daysArr = tutor.availability_days;
-    const daysCount = Array.isArray(daysArr) ? daysArr.length : 5;
-    const daysRatio = Math.min(daysCount / 5, 1);
-    const daysScore = daysRatio * 70;
-    const hiringBonus = tutor.immediate_hiring ? 30 : 0;
-    const availabilityScore = Math.min(100, daysScore + hiringBonus);
+    // 4. Profile Completeness (20% Weightage - photo, bio, rate)
+    let completeness = 0;
+    if (tutor.avatar_url) completeness += 40;
+    if (tutor.bio && tutor.bio.length >= 20) completeness += 30;
+    if (tutor.hourly_rate && parseFloat(tutor.hourly_rate) > 0) completeness += 30;
 
     // Composite Weighted Sum
-    return (keywordScore * 0.40) + (ratingScore * 0.25) + (verifiedScore * 0.20) + (availabilityScore * 0.15);
+    return (keywordScore * 0.30) + (ratingScore * 0.25) + (verifiedScore * 0.25) + (completeness * 0.20);
   };
 
   const sortedTutors = [...filteredTutors].sort((a, b) => {
     // 1. Real tutors always stay on top; dummy profiles always stay on bottom
-    const aDummy = Boolean(a.is_dummy || a.id?.startsWith('mock-') || a.full_name?.startsWith('Mr. Tutor') || a.full_name?.startsWith('Miss Tutor'));
-    const bDummy = Boolean(b.is_dummy || b.id?.startsWith('mock-') || b.full_name?.startsWith('Mr. Tutor') || b.full_name?.startsWith('Miss Tutor'));
+    const aDummy = Boolean(a.is_dummy || a.id?.startsWith('mock-') || a.full_name?.startsWith('Sir ') || a.full_name?.startsWith('Miss ') || a.full_name?.startsWith('Mr. Tutor') || a.full_name?.startsWith('Miss Tutor'));
+    const bDummy = Boolean(b.is_dummy || b.id?.startsWith('mock-') || b.full_name?.startsWith('Sir ') || b.full_name?.startsWith('Miss ') || b.full_name?.startsWith('Mr. Tutor') || b.full_name?.startsWith('Miss Tutor'));
 
     if (aDummy !== bDummy) {
       return aDummy ? 1 : -1;
@@ -408,13 +525,19 @@ function SearchContent() {
       return (b.hourly_rate || 0) - (a.hourly_rate || 0);
     }
     // Default: Sort by composite relevancy score
-    return calculateRelevanceScore(b) - calculateRelevanceScore(a);
+    const scoreDiff = calculateRelevanceScore(b) - calculateRelevanceScore(a);
+    if (Math.abs(scoreDiff) > 0.001) return scoreDiff;
+
+    // Tie-breaker: New profiles start ranking from bottom (older established profiles first)
+    const aDate = new Date(a.created_at || 0).getTime();
+    const bDate = new Date(b.created_at || 0).getTime();
+    return aDate - bDate;
   });
 
   const paginatedTutors = sortedTutors.slice(0, page * pageSize);
-  const displayedTutors = session ? paginatedTutors : paginatedTutors.slice(0, 4);
+  const displayedTutors = session ? paginatedTutors : paginatedTutors.slice(0, 8);
   const hasMore = session && paginatedTutors.length < sortedTutors.length;
-  const showAuthOverlay = !session && filteredTutors.length > 3;
+  const showAuthOverlay = !session && filteredTutors.length > 7;
 
   // Count active filters for the badge
   const activeFilterCount = [
@@ -1235,11 +1358,29 @@ function SearchContent() {
                         {!tutor.avatar_url && <User size={28} color="var(--stone)" />}
                       </div>
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 4px 0', color: 'var(--ink)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                          <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, color: 'var(--ink)' }}>
                             {tutor.full_name}
                           </h3>
-                          {tutor.verified && <ShieldCheck size={16} color="var(--brand-teal)" />}
+                          {tutor.verified && (
+                            <span
+                              className="premium-badge-wrapper"
+                              tabIndex={0}
+                              title="Premium Verified"
+                              aria-label="Premium Verified Tutor"
+                            >
+                              <Image
+                                src="/shield.svg"
+                                alt="Premium Verified"
+                                width={20}
+                                height={20}
+                                style={{ display: 'block', flexShrink: 0, cursor: 'pointer' }}
+                              />
+                              <span className="premium-badge-tooltip">
+                                Premium Verified
+                              </span>
+                            </span>
+                          )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--steel)', marginBottom: '4px' }}>
                           <MapPin size={14} /> {tutor.city} {tutor.area && `- ${tutor.area}`}
@@ -1283,13 +1424,28 @@ function SearchContent() {
                       </Link>
                       <Button
                         variant="primary"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleBookDemo(tutor);
+                        }}
+                        disabled={checkingDemoTutorId === tutor.id}
                         style={{
                           height: '36px', padding: '0 16px', fontSize: '13px', borderRadius: '999px',
                           backgroundColor: 'var(--brand-green-dark)', color: '#fff', border: 'none',
-                          fontWeight: 600, cursor: 'pointer'
+                          fontWeight: 600, cursor: checkingDemoTutorId === tutor.id ? 'wait' : 'pointer',
+                          display: 'inline-flex', alignItems: 'center', gap: '6px'
                         }}
                       >
-                        Book Demo
+                        {checkingDemoTutorId === tutor.id ? (
+                          'Connecting…'
+                        ) : (
+                          <>
+                            <MessageSquare size={14} />
+                            Book Demo
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -1312,12 +1468,12 @@ function SearchContent() {
               <Button
                 type="button"
                 variant="outline"
-                style={{ 
-                  height: '48px', 
-                  padding: '0 32px', 
-                  borderRadius: '999px', 
-                  fontSize: '15px', 
-                  fontWeight: 600, 
+                style={{
+                  height: '48px',
+                  padding: '0 32px',
+                  borderRadius: '999px',
+                  fontSize: '15px',
+                  fontWeight: 600,
                   border: '1.5px solid var(--brand-green-dark)',
                   color: 'var(--brand-green-dark)',
                   backgroundColor: 'transparent',
@@ -1372,6 +1528,193 @@ function SearchContent() {
                     </Button>
                   </Link>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── BOOK DEMO / MESSAGE CONFIRM SPEND MODAL ─── */}
+          {demoModalTutor && (
+            <div 
+              style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                backdropFilter: 'blur(4px)',
+                zIndex: 999999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '20px'
+              }}
+              onClick={() => {
+                if (!isConfirmingSpend) {
+                  setDemoModalTutor(null);
+                  setSpendError(null);
+                }
+              }}
+            >
+              <div 
+                style={{
+                  background: '#FFFFFF',
+                  borderRadius: '20px',
+                  padding: '32px 28px',
+                  maxWidth: '440px',
+                  width: '100%',
+                  textAlign: 'center',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                  position: 'relative'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Close Button */}
+                {!isConfirmingSpend && (
+                  <button
+                    onClick={() => {
+                      setDemoModalTutor(null);
+                      setSpendError(null);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '18px',
+                      right: '18px',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--stone)',
+                      backgroundColor: 'var(--surface)',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                    aria-label="Close"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+
+                {/* Icon Header */}
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  backgroundColor: walletBalance >= 100 ? '#DCFCE7' : '#FEF3C7',
+                  color: walletBalance >= 100 ? '#16A34A' : '#D97706',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px auto'
+                }}>
+                  {walletBalance >= 100 ? <MessageSquare size={26} /> : <Coins size={26} />}
+                </div>
+
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 700, color: 'var(--ink)' }}>
+                  {walletBalance >= 100 ? 'Book Demo & Message Tutor' : '100 Credits Required'}
+                </h3>
+                <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--steel)', lineHeight: 1.5 }}>
+                  {walletBalance >= 100 ? (
+                    <>Initiate a direct chat to schedule a trial/demo class with <strong>{demoModalTutor.full_name}</strong>.</>
+                  ) : (
+                    <>Initiating a direct chat with <strong>{demoModalTutor.full_name}</strong> requires 100 credits.</>
+                  )}
+                </p>
+
+                {/* Credit Ledger Box */}
+                <div style={{
+                  background: 'var(--surface)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  marginBottom: '20px',
+                  border: '1px solid var(--hairline)',
+                  textAlign: 'left'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13.5px' }}>
+                    <span style={{ color: 'var(--steel)' }}>Chat Initiation Fee:</span>
+                    <strong style={{ color: 'var(--ink)' }}>100 Credits</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: walletBalance >= 100 ? '8px' : '0', fontSize: '13.5px' }}>
+                    <span style={{ color: 'var(--steel)' }}>Your Available Balance:</span>
+                    <strong style={{ color: walletBalance >= 100 ? '#16A34A' : '#DC2626' }}>
+                      {Number(walletBalance || 0).toLocaleString()} Credits
+                    </strong>
+                  </div>
+                  {walletBalance >= 100 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--hairline)', fontSize: '13.5px' }}>
+                      <span style={{ color: 'var(--steel)' }}>Remaining Balance:</span>
+                      <strong style={{ color: 'var(--ink)' }}>
+                        {Number(walletBalance - 100).toLocaleString()} Credits
+                      </strong>
+                    </div>
+                  )}
+                </div>
+
+                {spendError && (
+                  <div style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: '#FEE2E2',
+                    color: '#DC2626',
+                    fontSize: '12.5px',
+                    marginBottom: '16px',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                    <span>{spendError}</span>
+                  </div>
+                )}
+
+                {walletBalance < 100 ? (
+                  <div>
+                    <p style={{ margin: '0 0 16px 0', fontSize: '12.5px', color: '#92400E', backgroundColor: '#FEF3C7', padding: '10px 14px', borderRadius: '8px', textAlign: 'center' }}>
+                      Your balance is low. Please top up your wallet via bank deposit to message tutors directly.
+                    </p>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <Button
+                        variant="secondary"
+                        style={{ flex: 1, height: '42px', borderRadius: '8px' }}
+                        onClick={() => {
+                          setDemoModalTutor(null);
+                          setSpendError(null);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="primary"
+                        style={{ flex: 1, height: '42px', borderRadius: '8px' }}
+                        onClick={() => router.push('/client/wallet')}
+                      >
+                        Buy Credits
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <Button
+                      variant="secondary"
+                      style={{ flex: 1, height: '42px', borderRadius: '8px' }}
+                      onClick={() => {
+                        setDemoModalTutor(null);
+                        setSpendError(null);
+                      }}
+                      disabled={isConfirmingSpend}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      style={{ flex: 1.4, height: '42px', borderRadius: '8px' }}
+                      onClick={handleConfirmSpend}
+                      disabled={isConfirmingSpend}
+                    >
+                      {isConfirmingSpend ? 'Initiating Chat…' : 'Confirm Spend (100 Credits)'}
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           )}
